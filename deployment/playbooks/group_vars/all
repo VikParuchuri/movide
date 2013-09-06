@@ -1,0 +1,4 @@
+---
+app_base_dir: /opt/wwc
+secure_dir: '/home/vik/vikparuchuri/movide/deployment/secrets/'
+venv_dir: /opt/equirio

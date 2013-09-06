@@ -1,0 +1,318 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+
+    "Description" : "Setup a single EC2 instance with appropriate permissions.",
+
+    "Parameters" : {
+
+        "KeyName" : {
+            "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+            "Type" : "String"
+        },
+
+        "InstanceType" : {
+            "Description" : "WebServer EC2 instance type",
+            "Type" : "String",
+            "Default" : "m1.small",
+            "AllowedValues" : [ "t1.micro","m1.small","m1.medium","m1.large","m1.xlarge","m2.xlarge","m2.2xlarge","m2.4xlarge","m3.xlarge","m3.2xlarge","c1.medium","c1.xlarge","cc1.4xlarge","cc2.8xlarge","cg1.4xlarge"],
+            "ConstraintDescription" : "must be a valid EC2 instance type."
+        },
+        "SSHLocation" : {
+            "Description" : " The IP address range that can be used to SSH to the EC2 instances",
+            "Type": "String",
+            "MinLength": "9",
+            "MaxLength": "18",
+            "Default": "0.0.0.0/0",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+        },
+        "EnvironmentTag":{
+            "Type":"String",
+            "Description":"A tag value applied to the hosts indicating which environment to use during the configuration phase, e.g., dev, sandbox, stage, prod",
+            "Default":"prod"
+        },
+        "ApplicationTag":{
+            "Type":"String",
+            "Description":"A tag value applied to the hosts indicating the application name",
+            "Default":"movide"
+        }
+    },
+
+    "Mappings" : {
+        "AWSInstanceType2Arch" : {
+            "t1.micro"    : { "Arch" : "64" },
+            "m1.small"    : { "Arch" : "64" },
+            "m1.medium"   : { "Arch" : "64" },
+            "m1.large"    : { "Arch" : "64" },
+            "m1.xlarge"   : { "Arch" : "64" },
+            "m2.xlarge"   : { "Arch" : "64" },
+            "m2.2xlarge"  : { "Arch" : "64" },
+            "m2.4xlarge"  : { "Arch" : "64" },
+            "m3.xlarge"   : { "Arch" : "64" },
+            "m3.2xlarge"  : { "Arch" : "64" },
+            "c1.medium"   : { "Arch" : "64" },
+            "c1.xlarge"   : { "Arch" : "64" },
+            "cc1.4xlarge" : { "Arch" : "64HVM" },
+            "cc2.8xlarge" : { "Arch" : "64HVM" },
+            "cg1.4xlarge" : { "Arch" : "64HVM" }
+        },
+        "AWSRegionArch2AMI":{
+            "us-east-1":       { "32":"ami-def89fb7", "64":"ami-d0f89fb9" },
+            "us-west-1":       { "32":"ami-fc002cb9", "64":"ami-fe002cbb" },
+            "us-west-2":       { "32":"ami-0ef96e3e", "64":"ami-70f96e40" },
+            "eu-west-1":       { "32":"ami-c27b6fb6", "64":"ami-ce7b6fba" },
+            "sa-east-1":       { "32":"ami-a1da00bc", "64":"ami-a3da00be" },
+            "ap-southeast-1":  { "32":"ami-66084734", "64":"ami-64084736" },
+            "ap-southeast-2":  { "32":"ami-06ea7a3c", "64":"ami-04ea7a3e" },
+            "ap-northeast-1":  { "32":"ami-fc6ceefd", "64":"ami-fe6ceeff" }
+        }
+    },
+
+    "Resources" : {
+        "HostKeys":{
+            "Type":"AWS::IAM::AccessKey",
+            "Properties":{
+                "UserName":{
+                    "Ref":"WebServerUser"
+                }
+            }
+        },
+        "WebServerUser":{
+            "Type":"AWS::IAM::User",
+            "Properties":{
+                "Path":"/",
+                "Policies":[
+                    {
+                        "PolicyName":"root",
+                        "PolicyDocument":{
+                            "Statement":[
+                                {
+                                    "Effect":"Allow",
+                                    "Action":[
+                                        "cloudformation:DescribeStackResource",
+                                        "s3:Put",
+                                        "ses:SendEmail",
+                                        "ses:SendRawEmail",
+                                        "s3:ListAllMyBuckets",
+                                        "s3:ListBucket",
+                                        "s3:GetBucketLocation",
+                                        "s3:PutObject",
+                                        "s3:GetObject",
+                                        "s3:DeleteObject",
+                                        "s3:CreateBucket",
+                                        "ses:ListVerifiedEmailAddresses",
+                                        "ses:VerifyEmailAddress",
+                                        "s3:GetObjectAcl",
+                                        "s3:PutObjectAcl"
+                                    ],
+                                    "Resource":"*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "WebServer": {
+            "Type": "AWS::EC2::Instance",
+            "Metadata" : {
+                "AWS::CloudFormation::Init" : {
+                    "config" : {
+                        "files":{
+                            "/home/ubuntu/.s3cfg":{
+                                "content":{
+                                    "Fn::Join":[
+                                        "",
+                                        [
+                                            "[default]\n",
+                                            "access_key = ",
+                                            {
+                                                "Ref":"HostKeys"
+                                            },
+                                            "\n",
+                                            "secret_key = ",
+                                            {
+                                                "Fn::GetAtt":[
+                                                    "HostKeys",
+                                                    "SecretAccessKey"
+                                                ]
+                                            },
+                                            "\n",
+                                            "use_https = True\n"
+                                        ]
+                                    ]
+                                },
+                                "mode":"000644",
+                                "owner":"ubuntu",
+                                "group":"ubuntu"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties": {
+                "ImageId" : {
+                    "Fn::FindInMap" :
+                        [
+                            "AWSRegionArch2AMI",
+                            { "Ref" : "AWS::Region" },
+                            { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "InstanceType" }, "Arch" ] }
+                        ]
+                },
+                "InstanceType"   : { "Ref" : "InstanceType" },
+                "SecurityGroups" : [ {"Ref" : "WebServerSecurityGroup"} ],
+                "KeyName"        : { "Ref" : "KeyName" },
+                "UserData":{
+                    "Fn::Base64":{
+                        "Fn::Join":[
+                            "",
+                            [
+                                "#!/bin/bash\n",
+                                "exec >> /home/ubuntu/cflog.log\n",
+                                "exec 2>> /home/ubuntu/cflog.log\n",
+                                "function error_exit\n",
+                                "{\n",
+                                "  cfn-signal -e 1 -r \"$1\" '",
+                                {
+                                    "Ref":"WaitHandle"
+                                },
+                                "'\n",
+                                "  exit 1\n",
+                                "}\n",
+                                "sudo mkdir /opt\n",
+                                "apt-get -y update\n",
+                                "apt-get -y install python-setuptools\n",
+                                "echo \"Python Tools installed\" - `date` >> /home/ubuntu/cflog.txt\n",
+                                "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
+                                "echo \"Cloudformation Boostrap installed \" - `date` >> /home/ubuntu/cflog.txt\n",
+                                "cfn-init --region ",
+                                {
+                                    "Ref":"AWS::Region"
+                                },
+                                "    -s ",
+                                {
+                                    "Ref":"AWS::StackName"
+                                },
+                                " -r WebServer ",
+                                "         --access-key ",
+                                {
+                                    "Ref":"HostKeys"
+                                },
+                                "         --secret-key ",
+                                {
+                                    "Fn::GetAtt":[
+                                        "HostKeys",
+                                        "SecretAccessKey"
+                                    ]
+                                },
+                                " || error_exit 'Failed to run cfn-init'\n",
+                                "echo \"cfn-init run \" - `date` >> /home/ubuntu/cflog.txt\n",
+                                "# If all went well, signal success\n",
+                                "cfn-signal -e $? -r 'Server configuration done' '",
+                                {
+                                    "Ref":"WaitHandle"
+                                },
+                                "'\n"
+                            ]
+                        ]
+                    }
+                },
+                "BlockDeviceMappings":[
+                    {
+                        "DeviceName" : "/dev/sda1",
+                        "Ebs" : { "VolumeSize" : "50" }
+                    }
+                ],
+                "Tags" : [
+                    {
+                        "Key":"application",
+                        "Value": {"Ref" : "ApplicationTag"},
+                        "PropagateAtLaunch":true
+                    },
+                    {
+                        "Key":"environment",
+                        "Value": {"Ref" : "EnvironmentTag"},
+                        "PropagateAtLaunch":true
+                    },
+                    {
+                        "Key":"Group",
+                        "Value": {
+                            "Fn::Join" : [ "_", [ {"Ref" : "ApplicationTag"} , {"Ref" : "EnvironmentTag"} ] ]
+                        },
+                        "PropagateAtLaunch":true
+                    }
+                ]
+            }
+        },
+
+        "WaitHandle" : {
+            "Type" : "AWS::CloudFormation::WaitConditionHandle"
+        },
+
+        "WaitCondition" : {
+            "Type" : "AWS::CloudFormation::WaitCondition",
+            "DependsOn" : "WebServer",
+            "Properties" : {
+                "Handle" : {"Ref" : "WaitHandle"},
+                "Timeout" : "600"
+            }
+        },
+        "WebServerELB":{
+            "Type":"AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties":{
+                "Listeners":[
+                    {
+                        "LoadBalancerPort":"80",
+                        "InstancePort": "80",
+                        "Protocol":"HTTP"
+                    }
+                ],
+                "HealthCheck":{
+                    "Target":"TCP:22",
+                    "HealthyThreshold":"3",
+                    "UnhealthyThreshold":"5",
+                    "Interval":"30",
+                    "Timeout":"5"
+                },
+                "Instances": [{ "Ref" : "WebServer"}],
+                "AvailabilityZones": { "Fn::GetAZs" : { "Ref" : "AWS::Region" } }
+            }
+        },
+        "WebServerSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Enable HTTP access via port 80 and SSH access",
+                "SecurityGroupIngress" : [
+                    {
+                        "IpProtocol" : "tcp",
+                        "FromPort" : "80",
+                        "ToPort" : "80",
+                        "CidrIp" : "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol" : "tcp",
+                        "FromPort" : "22",
+                        "ToPort" : "22",
+                        "CidrIp" : { "Ref" : "SSHLocation"}
+                    },
+                    {
+                        "IpProtocol" : "tcp",
+                        "FromPort" : "443",
+                        "ToPort" : "443",
+                        "CidrIp" : "0.0.0.0/0"
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs" : {
+        "ELBAddress" : {
+            "Description" : "WebServer ELB Address",
+            "Value" :  { "Fn::GetAtt" : [ "WebServerELB", "DNSName" ]}
+        },
+        "ServerAddress" : {
+            "Description" : "WebServer EC2 Instance Address",
+            "Value" :  { "Fn::GetAtt" : [ "WebServer", "PublicDnsName" ]}
+        }
+    }
+}

@@ -1,0 +1,9 @@
+# ansible-playbook -vvv --user=ubuntu  ar_prod.yml -i ./ec2.py  -c ssh
+- hosts:
+    - tag_Group_movide_prod
+  vars_files:
+    - "{{ secure_dir }}/vars/movide_prod_vars.yml"
+    - "{{ secure_dir }}/users/users.yml"
+  roles:
+    - ar
+  sudo: True

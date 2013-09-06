@@ -1,0 +1,13 @@
+python/
+*.log
+.idea/
+*~
+*.pyc
+*.db
+movide.db
+celerybeat-schedule
+tmpfile
+!.vc
+db/*
+movide/private.py
+cache/*

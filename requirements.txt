@@ -1,0 +1,30 @@
+django
+scipy
+lxml
+requests
+django_nose
+South
+django-celery
+path.py
+MySQL-python
+gunicorn
+multiprocessing
+celery-with-redis
+scikit-learn
+nltk
+readability-lxml
+ipython
+djangorestframework
+markdown
+django-filter
+pandas
+pudb
+django-allauth
+networkx
+-e git+https://github.com/Nivl/django-bootstrap-form.git@aeedb1c8a1f05b10baebca8b8450874b8076576e#egg=django-bootstrap-form
+-e git+https://github.com/duointeractive/sea-cucumber.git@5bde28cb545a0433f4a54689caf0358fc0560760#egg=sea-cucumber
+Pillow
+fs
+facebook-sdk
+praw
+twython

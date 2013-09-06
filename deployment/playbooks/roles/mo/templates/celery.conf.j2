@@ -1,0 +1,17 @@
+#Celery task for ml api
+
+description "Celery ML api"
+author "Vik Paruchuri <vik@edx.org>"
+
+start on runlevel [2345]
+stop on runlevel [!2345]
+
+respawn
+respawn limit 3 30
+
+env DJANGO_SETTINGS_MODULE={{movide_settings}}
+
+chdir {{movide_dir}}
+setuid {{movide_user}}
+
+exec {{venv_dir}}/bin/python {{movide_dir}}/manage.py celeryd --loglevel=info --settings={{movide_settings}} --pythonpath={{movide_dir}} -B --autoscale={{ ansible_processor_cores * 2 }},1

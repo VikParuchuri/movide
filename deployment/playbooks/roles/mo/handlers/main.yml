@@ -1,0 +1,9 @@
+---
+- name: restart movide
+  service: name=movide state=restarted
+
+- name: restart celery
+  service: name=celery state=restarted
+
+- name: restart nginx
+  service: name=nginx state=restarted
