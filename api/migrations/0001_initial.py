@@ -38,6 +38,15 @@ class Migration(SchemaMigration):
         ))
         db.create_unique(m2m_table_name, ['tag_id', 'tweet_id'])
 
+        # Adding M2M table for field users on 'Tag'
+        m2m_table_name = db.shorten_name(u'api_tag_users')
+        db.create_table(m2m_table_name, (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('tag', models.ForeignKey(orm[u'api.tag'], null=False)),
+            ('user', models.ForeignKey(orm[u'auth.user'], null=False))
+        ))
+        db.create_unique(m2m_table_name, ['tag_id', 'user_id'])
+
         # Adding model 'UserProfile'
         db.create_table(u'api_userprofile', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -60,6 +69,9 @@ class Migration(SchemaMigration):
         # Removing M2M table for field tweets on 'Tag'
         db.delete_table(db.shorten_name(u'api_tag_tweets'))
 
+        # Removing M2M table for field users on 'Tag'
+        db.delete_table(db.shorten_name(u'api_tag_users'))
+
         # Deleting model 'UserProfile'
         db.delete_table(u'api_userprofile')
 
@@ -69,7 +81,8 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Tag'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '160', 'db_index': 'True'}),
-            'tweets': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'tags'", 'null': 'True', 'symmetrical': 'False', 'to': u"orm['api.Tweet']"})
+            'tweets': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'tags'", 'null': 'True', 'symmetrical': 'False', 'to': u"orm['api.Tweet']"}),
+            'users': ('django.db.models.fields.related.ManyToManyField', [], {'blank': 'True', 'related_name': "'tags'", 'null': 'True', 'symmetrical': 'False', 'to': u"orm['auth.User']"})
         },
         u'api.tweet': {
             'Meta': {'object_name': 'Tweet'},

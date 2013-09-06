@@ -7,8 +7,8 @@ import logging
 import functools
 from django.core.cache import cache
 from django.utils.timezone import now
-from celery.task import periodic_task
-from twython import TwythonStreamer
+from celery.task import periodic_task, task
+from twython import TwythonStreamer, Twython
 import json
 from django.contrib.auth.models import User
 
@@ -30,7 +30,7 @@ def single_instance_task(timeout):
     return task_exc
 
 class TwitterParser():
-    fields = ["created_at", "text", "source", "id_str", "user_id", "retweet_id", "reply_id", "tags"]
+    fields = ["created_at", "text", "source", "id_str", "user_id", "retweet_id", "reply_id", "tags", "user_name", "screen_name"]
     def __init__(self, data):
         self.data = data
         self.values = {}
@@ -71,50 +71,67 @@ class TwitterParser():
     def tags(self):
         return self.data['entities']['hashtags']
 
-class MovideStreamer(TwythonStreamer):
-    def on_success(self, data):
-        data = json.loads(data)
-        parser = TwitterParser(data)
-        user_id = parser.values['user_id']
-        try:
-            user = User.objects.get_or_create(profile__twitter_id_str=user_id)
-            user.profile.twitter_name = parser.values['user_name']
-            user.profile.twitter_screen_name = parser.values['screen_name']
-            user.save()
-        except User.DoesNotExist:
-            log.exception("Cannot find user with id {0}".format(user_id))
-            return
-        tweet = Tweet(
-            text=parser.values['text'],
-            source=parser.values['source'],
-            id_str=parser.values['id_str'],
-            created_at=parser.values['created_at'],
-            user=user,
+
+@task()
+def save_tweet(data):
+    data = json.loads(data)
+    parser = TwitterParser(data)
+    user_id = parser.values['user_id']
+    screen_name = parser.values['screen_name']
+    twitter_name = parser.values['user_name']
+    try:
+        user = User.objects.get(profile__twitter_id_str=user_id)
+        user.profile.twitter_name = twitter_name
+        user.profile.twitter_screen_name = screen_name
+        user.save()
+    except User.DoesNotExist:
+        log.exception("Cannot find user with id {0}".format(user_id))
+        return
+
+    tweet = Tweet(
+        text=parser.values['text'],
+        source=parser.values['source'],
+        id_str=parser.values['id_str'],
+        created_at=parser.values['created_at'],
+        user=user,
 
         )
 
-        reply_id = parser.values['reply_id']
-        if reply_id is not None:
-            try:
-                reply = Tweet.objects.get(id_str=reply_id)
-                tweet.reply_to = reply
-            except Tweet.DoesNotExist:
-                pass
+    tag_found = False
+    for t in parser.values['tags']:
+        try:
+            tag = Tag.objects.get(name=t)
+        except Tag.DoesNotExist:
+            continue
 
-        retweet_id = parser.values['retweet_id']
-        if retweet_id is not None:
-            try:
-                retweet = Tweet.objects.get(id_str=retweet_id)
-                tweet.retweet_of = retweet
-            except Tweet.DoesNotExist:
-                pass
-
-        for t in parser.values['tags']:
-            tag, created = Tag.objects.get_or_create(name=t)
-            if created:
-                tag.save()
+        if tag in user.tags:
+            tag_found = True
             tweet.tags.add(tag)
-        tweet.save()
+
+    if not tag_found:
+        return
+
+    reply_id = parser.values['reply_id']
+    if reply_id is not None:
+        try:
+            reply = Tweet.objects.get(id_str=reply_id)
+            tweet.reply_to = reply
+        except Tweet.DoesNotExist:
+            pass
+
+    retweet_id = parser.values['retweet_id']
+    if retweet_id is not None:
+        try:
+            retweet = Tweet.objects.get(id_str=retweet_id)
+            tweet.retweet_of = retweet
+        except Tweet.DoesNotExist:
+            pass
+
+    tweet.save()
+
+class MovideStreamer(TwythonStreamer):
+    def on_success(self, data):
+        save_tweet.delay(data)
 
     def on_error(self, status_code, data):
         log.error("Disconnected with status {0}".format(status_code))
@@ -126,3 +143,20 @@ def post_updates():
     if settings.TWITTER_STREAM:
         stream = MovideStreamer(settings.TWITTER_APP_KEY, settings.TWITTER_SECRET_APP_KEY, settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_SECRET_ACCESS_TOKEN)
         stream.statuses.filter(track=settings.TWITTER_HASHTAG)
+
+@task()
+@single_instance_task(settings.CACHE_TIMEOUT)
+def create_user_profile(twitter_screen_name, user):
+    if user.profile is not None:
+        return
+    twitter = Twython(settings.TWITTER_APP_KEY, settings.TWITTER_SECRET_APP_KEY, settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_SECRET_ACCESS_TOKEN)
+    user_data = twitter.show_user(screen_name=twitter_screen_name)
+    user_data = json.loads(user_data)
+    profile = UserProfile(
+        user=user,
+        twitter_screen_name=twitter_screen_name,
+        twitter_name=user_data['name'],
+        twitter_id_str=user_data['id_str'],
+        twitter_profile_image=user_data['profile_image_url']
+        )
+    profile.save()

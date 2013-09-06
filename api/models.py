@@ -22,12 +22,15 @@ class Tweet(models.Model):
 class Tag(models.Model):
     name = models.CharField(max_length=160, unique=True, db_index=True)
     tweets = models.ManyToManyField(Tweet, related_name="tags", blank=True, null=True)
+    users = models.ManyToManyField(User, related_name="tags", blank=True, null=True)
+    owner = models.ForeignKey(User, related_name="created_tags")
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile", unique=True, blank=True, null=True)
     twitter_name = models.CharField(max_length=100)
     twitter_id_str = models.CharField(max_length=30, unique=True, db_index=True)
-    twitter_screen_name = models.CharField(max_length=100)
+    twitter_screen_name = models.CharField(max_length=100, unique=True)
+    twitter_profile_image = models.CharField(max_length=25)
     modified = models.DateTimeField(auto_now=True, blank=True, null=True)
 
 User.profile = property(lambda u: u.get_profile())
