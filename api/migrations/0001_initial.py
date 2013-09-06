@@ -38,6 +38,17 @@ class Migration(SchemaMigration):
         ))
         db.create_unique(m2m_table_name, ['tag_id', 'tweet_id'])
 
+        # Adding model 'UserProfile'
+        db.create_table(u'api_userprofile', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('user', self.gf('django.db.models.fields.related.OneToOneField')(blank=True, related_name='profile', unique=True, null=True, to=orm['auth.User'])),
+            ('twitter_name', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('twitter_id_str', self.gf('django.db.models.fields.CharField')(unique=True, max_length=30, db_index=True)),
+            ('twitter_screen_name', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('modified', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, null=True, blank=True)),
+        ))
+        db.send_create_signal(u'api', ['UserProfile'])
+
 
     def backwards(self, orm):
         # Deleting model 'Tweet'
@@ -48,6 +59,9 @@ class Migration(SchemaMigration):
 
         # Removing M2M table for field tweets on 'Tag'
         db.delete_table(db.shorten_name(u'api_tag_tweets'))
+
+        # Deleting model 'UserProfile'
+        db.delete_table(u'api_userprofile')
 
 
     models = {
@@ -68,6 +82,15 @@ class Migration(SchemaMigration):
             'source': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'text': ('django.db.models.fields.CharField', [], {'max_length': '160'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'tweets'", 'to': u"orm['auth.User']"})
+        },
+        u'api.userprofile': {
+            'Meta': {'object_name': 'UserProfile'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'null': 'True', 'blank': 'True'}),
+            'twitter_id_str': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30', 'db_index': 'True'}),
+            'twitter_name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'twitter_screen_name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'user': ('django.db.models.fields.related.OneToOneField', [], {'blank': 'True', 'related_name': "'profile'", 'unique': 'True', 'null': 'True', 'to': u"orm['auth.User']"})
         },
         u'auth.group': {
             'Meta': {'object_name': 'Group'},

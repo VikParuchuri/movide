@@ -53,6 +53,12 @@ class TwitterParser():
     def user_id(self):
         return self.data['user']['id_str']
 
+    def user_name(self):
+        return self.data['user']['name']
+
+    def screen_name(self):
+        return self.data['user']['screen_name']
+
     def retweet_id(self):
         if ['retweeted_status'] in self.data:
             return self.data['retweeted_status']['id_str']
@@ -71,7 +77,10 @@ class MovideStreamer(TwythonStreamer):
         parser = TwitterParser(data)
         user_id = parser.values['user_id']
         try:
-            user = User.objects.get(profile__twitter_id_str=user_id)
+            user = User.objects.get_or_create(profile__twitter_id_str=user_id)
+            user.profile.twitter_name = parser.values['user_name']
+            user.profile.twitter_screen_name = parser.values['screen_name']
+            user.save()
         except User.DoesNotExist:
             log.exception("Cannot find user with id {0}".format(user_id))
             return
@@ -79,9 +88,10 @@ class MovideStreamer(TwythonStreamer):
             text=parser.values['text'],
             source=parser.values['source'],
             id_str=parser.values['id_str'],
-            created_at=parser.values['created_at']
+            created_at=parser.values['created_at'],
+            user=user,
+
         )
-        tweet.user = user
 
         reply_id = parser.values['reply_id']
         if reply_id is not None:
