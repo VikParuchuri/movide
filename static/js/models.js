@@ -62,7 +62,7 @@ $(document).ready(function() {
     });
 
     var UserView = Backbone.View.extend({
-        tagName: "div",
+        tagName: "tr",
         className: "users",
         template_name: "#userTemplate",
         events: {
@@ -97,30 +97,47 @@ $(document).ready(function() {
         el: $("#user-table"),
         collection_class : Users,
         view_class: UserView,
-        initialize: function () {
-            _.bindAll(this, 'render', 'renderTag', 'renderNone', 'refresh');
+        template_name: "#userTableTemplate",
+        tag: undefined,
+        active: undefined,
+        initialize: function (options) {
+            _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table');
             this.collection = new this.collection_class();
-            this.collection.fetch({async:false});
+            this.tag = options.tag;
+            this.active = options.active;
+            this.collection.fetch({data: {tag: this.tag}}, {async:true});
         },
         render_table: function(){
             this.render();
         },
         render: function () {
+            var model_html = "";
             var that = this;
             _.each(this.collection.models, function (item) {
-                that.renderTag(item);
+                model_html = model_html + that.renderUser(item);
             }, this);
+            var tmpl = _.template($(this.template_name).html());
+            var content_html = tmpl({content: model_html, tag: this.tag});
+            $("#tag-sidebar").find('li').removeClass("current active");
+            $(this.active).addClass("current active");
+            $("#dashboard-content").html(content_html);
         },
-        renderTag: function (item) {
-            var tagView = new this.view_class({
+        renderUser: function (item) {
+            var userView = new this.view_class({
                 model: item
             });
-            $(this.el).append(tagView.render().el);
+            return userView.render().el;
         },
         refresh: function(){
             this.collection.fetch({async:false});
             $(this.el).empty();
-            this.render_dash();
+            this.render_table();
+        },
+        destroy_view: function() {
+            this.undelegateEvents();
+            this.$el.removeData().unbind();
+            this.remove();
+            Backbone.View.prototype.remove.call(this);
         }
     });
 
@@ -202,13 +219,14 @@ $(document).ready(function() {
 
     var TagSidebarView = TagView.extend({
         tagName: "li",
-        className: "tag-name",
+        className: "tag-list-item",
         template_name: "#sidebarItemTemplate"
     });
 
     var TagsSidebarView = TagsView.extend({
         el: $("#tag-sidebar"),
         view_class: TagSidebarView,
+        user_view: undefined,
         events: {
             'click #refresh-sidebar': 'refresh',
             'click .tag-name' : 'render_tag_name'
@@ -223,50 +241,16 @@ $(document).ready(function() {
         refresh: function(){
             this.collection.fetch({async:false});
             this.render_sidebar();
-        }
-    });
-
-    var TagSidebarDetailView = TagView.extend({
-        el: $("#dashboard-content"),
-        collection_class : Users,
-        view_class: UsersView,
-        initialize: function () {
-            _.bindAll(this, 'render', 'renderTag', 'renderNone', 'refresh');
-            this.collection = new this.collection_class();
-            this.collection.fetch({async:false});
         },
-        render_dash: function(){
-            if(this.collection.length > 0){
-                this.renderUsage();
-                this.render();
-            } else{
-                this.renderNone();
+        render_tag_name: function(event){
+            if(this.user_view!=undefined){
+                this.user_view.destroy_view();
             }
-        },
-        render: function () {
-            var that = this;
-            _.each(this.collection.models, function (item) {
-                that.renderTag(item);
-            }, this);
-        },
-        renderUsage: function(){
-            var use_tag_prompt = $("#useTagPromptTemplate").html();
-            $(this.el).html(use_tag_prompt);
-        },
-        renderNone: function() {
-            var add_tag_prompt = $("#addTagPromptTemplate").html();
-            $(this.el).html(add_tag_prompt);
-        },
-        renderTag: function (item) {
-            var tagView = new this.view_class({
-                model: item
+            this.user_view = new UsersView({
+                tag: $(event.target).data('tag-name'),
+                active: $(event.target).parent()
             });
-            $(this.el).append(tagView.render().el);
-        },
-        refresh: function(){
-            this.collection.fetch({async:false});
-            $(this.el).empty();
-            this.render_dash();
+            this.user_view.render_table();
         }
     });
 

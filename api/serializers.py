@@ -53,6 +53,7 @@ class TweetSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.Serializer):
     twitter_screen_name = serializers.Field(source="username")
     twitter_name = serializers.Field(source="profile.twitter_name")
+    twitter_profile_image = serializers.Field(source="profile.twitter_profile_image")
     username = serializers.CharField()
     tweets = serializers.RelatedField()
     pk = serializers.Field()
