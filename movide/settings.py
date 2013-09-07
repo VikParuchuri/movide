@@ -291,6 +291,9 @@ TWITTER_HASHTAG = "#movide"
 TWITTER_AUTH_APP_KEY = ""
 TWITTER_AUTH_SECRET_APP_KEY = ""
 
+LOGOUT_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+
 try:
     from .private import *
 except Exception:

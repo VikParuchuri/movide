@@ -29,11 +29,13 @@ class Tag(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile", unique=True, blank=True, null=True)
-    twitter_name = models.CharField(max_length=100)
+    twitter_name = models.CharField(max_length=100, blank=True, null=True)
     twitter_id_str = models.CharField(max_length=30, unique=True, db_index=True)
     twitter_screen_name = models.CharField(max_length=100, unique=True)
-    twitter_profile_image = models.CharField(max_length=25)
+    twitter_profile_image = models.CharField(max_length=255, blank=True, null=True)
     modified = models.DateTimeField(auto_now=True, blank=True, null=True)
+    oauth_token = models.CharField(max_length=200, blank=True, null=True)
+    oauth_secret = models.CharField(max_length=200, blank=True, null=True)
 
 User.profile = property(lambda u: u.get_profile())
 

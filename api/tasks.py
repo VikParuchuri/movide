@@ -30,7 +30,7 @@ def single_instance_task(timeout):
     return task_exc
 
 class TwitterParser():
-    fields = ["created_at", "text", "source", "id_str", "user_id", "retweet_id", "reply_id", "tags", "user_name", "screen_name"]
+    fields = ["created_at", "text", "source", "id_str", "user_id", "retweet_id", "reply_id", "tags", "user_name", "screen_name", "profile_image"]
     def __init__(self, data):
         self.data = data
         self.values = {}
@@ -71,18 +71,24 @@ class TwitterParser():
     def tags(self):
         return self.data['entities']['hashtags']
 
+    def profile_image_url(self):
+        return self.data['user']['profile_image_url']
+
 @task()
 def save_tweet(data):
-    data = json.loads(data)
     parser = TwitterParser(data)
     user_id = parser.values['user_id']
     screen_name = parser.values['screen_name']
     twitter_name = parser.values['user_name']
+    profile_image = parser.values['profile_image']
     try:
         user = User.objects.get(profile__twitter_id_str=user_id)
         user.profile.twitter_name = twitter_name
         user.profile.twitter_screen_name = screen_name
+        user.profile.twitter_profile_image = profile_image
         user.profile.save()
+        user.username = screen_name
+        user.save()
     except User.DoesNotExist:
         log.exception("Cannot find user with id {0}".format(user_id))
         return
@@ -95,6 +101,8 @@ def save_tweet(data):
         user=user,
 
         )
+
+    log.info("Got tweet {0} from user {1} and tags {2}".format(parser.values['text'], parser.values['screen_name'], parser.values['tags']))
 
     tag_found = False
     for t in parser.values['tags']:
@@ -138,19 +146,25 @@ class MovideStreamer(TwythonStreamer):
 
 @periodic_task(run_every=timedelta(seconds=settings.TWITTER_STREAM_EVERY))
 @single_instance_task(settings.CACHE_TIMEOUT)
-def post_updates():
+def stream_tweets():
     if settings.TWITTER_STREAM:
         stream = MovideStreamer(settings.TWITTER_APP_KEY, settings.TWITTER_SECRET_APP_KEY, settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_SECRET_ACCESS_TOKEN)
         stream.statuses.filter(track=settings.TWITTER_HASHTAG)
 
 @task()
-@single_instance_task(settings.CACHE_TIMEOUT)
+def create_user_profile_task(twitter_screen_name, user_id):
+    user = User.objects.get(id=user_id)
+    create_user_profile(twitter_screen_name, user)
+
 def create_user_profile(twitter_screen_name, user):
-    if user.profile is not None:
+    try:
+        profile = UserProfile.objects.get(user=user)
         return
+    except UserProfile.DoesNotExist:
+        pass
+
     twitter = Twython(settings.TWITTER_APP_KEY, settings.TWITTER_SECRET_APP_KEY, settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_SECRET_ACCESS_TOKEN)
     user_data = twitter.show_user(screen_name=twitter_screen_name)
-    user_data = json.loads(user_data)
     profile = UserProfile(
         user=user,
         twitter_screen_name=twitter_screen_name,
@@ -159,3 +173,4 @@ def create_user_profile(twitter_screen_name, user):
         twitter_profile_image=user_data['profile_image_url']
         )
     profile.save()
+    return profile

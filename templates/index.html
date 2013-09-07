@@ -1,15 +1,13 @@
 {% extends "base.html" %}
 {% load staticfiles %}
-{% load socialaccount %}
+
 {% block additional_js %}
 {% endblock %}
 
 {% block title %}
-    Movide.
 {% endblock %}
 
 {% block meta_description %}
-    Movide.
 {% endblock %}
 
 {% block content %}
@@ -18,13 +16,13 @@
 			<h1>Welcome to Movide.</h1>
 			<h2>An easy way for teachers and students to communicate.</h2>
 		</div>
-	</div> <!-- //end jumbotron -->
+	</div> <!-- //end hero-unit -->
 	
 	<div class="jumbotron-sub">
 		<div class="container">
 			<div class="row">
-				<div class="col-md-12">
-					<p>With four styles and a templates for almost everything—you need look no further.</p>
+				<div class="col-xs-12">
+					<p>Form groups, start interacting, and share knowledge.</p>
 				</div>
 			</div>
 		</div>
@@ -32,136 +30,39 @@
 
 	<div class="container content underHero">
 		<div class="row">
-			<div class="col-md-12">
+			<div class="col-xs-12">
 				<h2 class="subTitle">Built with you in mind</h2>
 				<hr>
 			</div>
-			<div class="col-md-4 feature">
-				<div class="icon styles">
-					<a href="styles.html">Styles</a>
-				</div>        
-				<h3>Does it come in this color?</h3>
-				<p>Color conveys different feelings and messages to your audience, be in control and pick one of four themes which says the right things about you.</p>
+			<div class="col-sm-4 feature">
+                <div></div>
+				<h3>Form groups</h3>
+				<p>Make use of twitter hashtags to quickly form groups of students.</p>
 			</div>
-			<div class="col-md-4 feature">
-				<div class="icon templates">
-					<a href="templates.html">Templates</a>
-				</div>        
-				<h3>Do you have a template for...?</h3>
-				<p>All your bases are covered with a wide range of templates and individual components which could be reconfigured to fill almost any need you have.</p>
+			<div class="col-sm-4 feature">
+                <div></div>
+				<h3>Interact</h3>
+				<p>Communicate with students in ways that are natural to them by retweeting, replying, and posting images,</p>
 			</div>
-			<div class="col-md-4 feature">
-				<div class="icon docs">
-					<a href="support.html">Documentation and support</a>
-				</div>        
-				<h3>How do I get it to do this?</h3>
-				<p>Thorough documentation is provided for all aspects of the Colorfrog theme, helping you get the most from it in the quickest way possibly.</p>
+			<div class="col-sm-4 feature">
+                <div></div>
+				<h3>Measure</h3>
+				<p>Our detailed analytics tell you how students are engaging and interacting.</p>
 			</div>
 		</div> <!-- //end of row -->
-
-        <div class="row"><div class="col-md-12"></div></div>
+		
+		<div class="row"><div class="col-xs-12"><hr></div></div>
 
         <div class="row">
-            <div class="col-md-4"></div>
-            <div class="col-md-4">
-                <a href="{% provider_login_url "twitter" %}" class="btn btn-xlarge">Sign in with Twitter to get started!</a>
+            <div class="col-sm-4">
+                <h2 class="subTitle2">Start using Movide</h2>
             </div>
-            <div class="col-md-4"></div>
-        </div>
-		<div class="row"><div class="col-md-12"><hr></div></div>
+            <div class="col-sm-8">
+                <a class="btn btn-xlarge" href="/login/">Sign in using Twitter</a>
+            </div>
+        </div> <!-- //end of row -->
 		
-		<div class="row">
-			<div class="col-md-4">
-				<h2 class="subTitle2">What our clients say</h2>
-			</div>
-			<div class="col-md-8">
-				<blockquote class="big-quote">
-					<p>Everything we needed to get up and going quickly with a professional website - couldn't recommend Colorfrog more.</p>
-					<small><a href="http://bengoodyear.com/">Ben Goodyear</a></small>
-				</blockquote>
-			</div>
-		</div> <!-- //end of row -->
-		
-		<div class="row"><div class="col-md-12"><hr></div></div>
-		
-		<div class="row">
-			<div class="col-md-4">
-				<h2 class="subTitle2">Latest from the Frogblog</h2>
-				<p>Musings on a range of subjects from the useful to the completely useless.</p>
-				<p><a href="blog-main.html">Browse our complete archive &rarr;</a></p>
-			</div>
-			<div class="col-md-4 blog">
-				<h4>What goes into a theme?</h4>
-				<p>Executing on a consistent theme whilst coming up with templates to suit all can be a tricky task. Luckily Colorfrog has it all covered.</p>								
-				<a class="btn btn-default" href="blog-single.html">Continue reading</a>
-			</div>
-			<div class="col-md-4 blog">
-				<h4>What goes into a theme?</h4>
-				<p>Executing on a consistent theme whilst coming up with templates to suit all can be a tricky task. Luckily Colorfrog has it all covered.</p>								
-				<a class="btn btn-default" href="blog-single.html">Continue reading</a>
-			</div>
-		</div> <!-- //end of row -->
+		<div class="row"><div class="span12"><hr></div></div>
 		
 	</div> <!-- //end container -->	
-	
-		<div id="map">
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12">
-					<div class="row">
-						<div class="col-md-4 alt">
-							<div class="background-inner">
-								<h3>Subscribe</h3>
-								<p>To our newsletter to keep up to date with news and events from Colorfrog</p>
-								<div class="input-append">
-									<input class="input-large" type="text" placeholder="your email address" />							  
-									<button class="btn btn-small" type="button"><i class="glyphicon glyphicon-chevron-right glyphicon glyphicon-white"></i></button>
-								</div>
-								<small class="clearfix">We don't send out newsletters often, so no worrying about spam. Also, we never share your email address with anyone.</small>
-							</div>
-						</div>
-						<div class="col-md-4 col-md-offset-4 alt">
-							<div class="background-inner">
-								<h3>Connect</h3>
-								<ul class="contact-info">
-									<li class="contact-info-address">Cambridge, MA</li>
-									<li class="contact-info-call">301-257-3145</li>
-									<li class="contact-info-mail"><a href="mailto:">vik@equirio.com</a></li>
-								</ul>
-								<ul class="social-info">
-									<li>
-										<a href="" class="social-info-twitter">Twitter</a>
-									</li>	
-									<li>
-										<a href="" class="social-info-facebook">Facebook</a>
-									</li>
-									<li>
-										<a href="" class="social-info-pintrest">Pintrest</a>
-									</li>
-									<li>
-										<a href="" class="social-info-github">Github</a>
-									</li>					
-									<li>
-										<a href="" class="social-info-linkedin">LinkedIn</a>
-									</li>
-								</ul>																															
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div> <!-- //end container -->
-		<div id="footer-map"></div>
-	</div> <!-- //end map -->
-			
-	<footer>
-		<div class="container">
-			<div class="row">
-				<div class="col-md-6">
-					<p>Copyright &copy; 2013 Equirio. All rights reserved.</p>
-				</div>
-			</div>
-		</div>
-	</footer>
-
 {% endblock %}

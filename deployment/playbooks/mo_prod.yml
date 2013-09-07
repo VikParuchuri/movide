@@ -5,5 +5,5 @@
     - "{{ secure_dir }}/vars/movide_prod_vars.yml"
     - "{{ secure_dir }}/users/users.yml"
   roles:
-    - ar
+    - mo
   sudo: True

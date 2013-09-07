@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="818"
+   height="212"
+   id="svg7436"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="logo.svg"
+   inkscape:export-filename="/home/vik/vikparuchuri/movide/static/img/blue//logo.png"
+   inkscape:export-xdpi="22.33"
+   inkscape:export-ydpi="22.33">
+  <defs
+     id="defs7438">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient8014">
+      <stop
+         style="stop-color:#336999;stop-opacity:1;"
+         offset="0"
+         id="stop8016" />
+      <stop
+         style="stop-color:#336999;stop-opacity:0;"
+         offset="1"
+         id="stop8018" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient8014"
+       id="linearGradient8020"
+       x1="269.71072"
+       y1="961.44824"
+       x2="2408.2036"
+       y2="952.35687"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(44.014262,2.0002301)" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="549.28694"
+     inkscape:cy="337.71119"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1855"
+     inkscape:window-height="1176"
+     inkscape:window-x="65"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7441">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-840.362)">
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot7490"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       transform="translate(0,840.362)"><flowRegion
+         id="flowRegion7492"><rect
+           id="rect7494"
+           width="311.12698"
+           height="90.913727"
+           x="247.48738"
+           y="72.598946" /></flowRegion><flowPara
+         id="flowPara7496"
+         style="-inkscape-font-specification:Bitstream Charter Bold;font-family:Bitstream Charter;font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:120px">mov</flowPara></flowRoot>    <rect
+       style="fill:#003399;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="rect8032"
+       width="114.11282"
+       height="111.90011"
+       x="123.7336"
+       y="896.58838" />
+    <rect
+       y="858.90436"
+       x="-385.38306"
+       height="112.45923"
+       width="113.56183"
+       id="rect8034"
+       style="fill:#0099cc;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       transform="matrix(0.86973841,-0.49351301,0.50820596,0.86123557,0,0)" />
+    <rect
+       transform="matrix(-0.50286922,0.86436251,-0.87271536,-0.48822936,0,0)"
+       style="fill:#66ccff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="rect8036"
+       width="112.44749"
+       height="113.57347"
+       x="683.12006"
+       y="-688.23169" />
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot8040"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#003399;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       transform="translate(-15.152288,794.90514)"><flowRegion
+         id="flowRegion8042"><rect
+           id="rect8044"
+           width="513.15747"
+           height="134.3503"
+           x="291.93408"
+           y="73.6091"
+           style="fill:#003399;fill-opacity:1" /></flowRegion><flowPara
+         id="flowPara8046"
+         style="font-size:120px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;fill:#003399;fill-opacity:1">movide</flowPara></flowRoot>  </g>
+</svg>

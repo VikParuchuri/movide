@@ -3,7 +3,7 @@ from rest_framework import serializers
 from models import Tag, Tweet, UserProfile
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from tasks import create_user_profile
+from tasks import create_user_profile_task
 import logging
 log = logging.getLogger(__name__)
 
@@ -15,8 +15,8 @@ class UserField(serializers.SlugRelatedField):
 
 class TagSerializer(serializers.Serializer):
     tweets = serializers.RelatedField(many=True, read_only=True)
-    users = UserField(many=True, slug_field='profile.twitter_screen_name', queryset=User.objects.all(), blank=True, null=True)
-    owner = serializers.SlugRelatedField(slug_field="profile.twitter_screen_name", queryset=User.objects.all(), blank=True, null=True)
+    users = UserField(many=True, slug_field='username', queryset=User.objects.all(), blank=True, null=True)
+    owner = serializers.SlugRelatedField(slug_field="username", queryset=User.objects.all(), blank=True, null=True)
     name = serializers.CharField()
     modified = serializers.Field()
 
@@ -34,8 +34,8 @@ class TweetSerializer(serializers.ModelSerializer):
     retweet_count = serializers.Field(source="retweet_count")
     reply_count = serializers.Field(source="reply_count")
     tags = serializers.SlugRelatedField(many=True, slug_field="name", read_only=True)
-    user = serializers.SlugRelatedField(many=True, slug_field="profile.twitter_screen_name", read_only=True, blank=True, null=True)
-    user_name = serializers.SlugRelatedField(many=True, slug_field="profile.twitter_name", read_only=True, blank=True, null=True)
+    user = serializers.SlugRelatedField(many=True, slug_field="username", read_only=True, blank=True, null=True)
+    user_name = serializers.SlugRelatedField(many=True, slug_field="username", read_only=True, blank=True, null=True)
     retweet_of = serializers.PrimaryKeyRelatedField(read_only=True)
     reply_to = serializers.PrimaryKeyRelatedField(read_only=True)
 
@@ -44,7 +44,7 @@ class TweetSerializer(serializers.ModelSerializer):
         fields = ('text', 'source', 'created_at', 'retweet_of', 'reply_to', 'tags', 'user', 'reply_count', 'retweet_count', 'user_name', )
 
 class UserSerializer(serializers.Serializer):
-    twitter_screen_name = serializers.Field(source="profile.twitter_screen_name")
+    twitter_screen_name = serializers.Field(source="username")
     twitter_name = serializers.Field(source="profile.twitter_name")
     username = serializers.CharField()
     tweets = serializers.RelatedField()
@@ -55,7 +55,7 @@ class UserSerializer(serializers.Serializer):
         if username.startswith("@"):
             username = username[1:]
         try:
-            instance = User.objects.get(profile__twitter_screen_name=username)
+            instance = User.objects.get(username=username)
         except User.DoesNotExist:
             pass
 
@@ -68,7 +68,7 @@ class UserSerializer(serializers.Serializer):
             if instance.profile is not None:
                 return instance
         try:
-            create_user_profile(username, instance)
+            create_user_profile_task(username, instance.id)
         except Exception:
             instance.delete()
             raise serializers.ValidationError("Could not create a user profile.")
