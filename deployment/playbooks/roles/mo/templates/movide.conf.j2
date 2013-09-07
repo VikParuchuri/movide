@@ -18,4 +18,4 @@ env DJANGO_SETTINGS_MODULE={{movide_settings}}
 chdir {{movide_dir}}
 setuid {{movide_user}}
 
-exec {{venv_dir}}/bin/gunicorn --preload -b 127.0.0.1:$PORT -w $WORKERS --timeout=30 --pythonpath={{movide_dir}} article_site.wsgi
+exec {{venv_dir}}/bin/gunicorn --preload -b 127.0.0.1:$PORT -w $WORKERS --timeout=30 --pythonpath={{movide_dir}} movide.wsgi

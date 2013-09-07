@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	
+	<title>Colorfrog - Support sub</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!-- Bootstrap css -->
+	<link href="../static/colorfrog/css/bootstrap.css" rel="stylesheet" media="screen">
+	<link href="../static/colorfrog/css/bootstrap-responsive.css" rel="stylesheet" media="screen">
+	<!-- Theme css -->
+	<link href="../static/colorfrog/css/colorfrog.css" rel="stylesheet" media="screen">
+
+	<link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+	<link href="favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script src="../static/colorfrog/js/bootstrap.js"></script>
+	<script src="../static/colorfrog/js/jquery.fitvids.js"></script>
+	<script src="../static/colorfrog/js/colorfrog.js"></script>
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+	<script>google.maps.event.addDomListener(window, 'load', initialize);</script>
+	
+	<!--[if lt IE 9]>
+	<script>
+		document.createElement('header');document.createElement('nav');document.createElement('section');document.createElement('article');document.createElement('aside');document.createElement('footer');
+	</script>
+	<![endif]-->
+
+</head>
+<body>
+<!--
+Use the corresponding body tag for your chosen theme
+<body class="blue">
+<body class="orange">
+<body class="green">
+<body class="bw">
+-->
+
+	<div class="container">
+		<header>
+			<a class="navbar-brand" href="index.html">Colorfrog</a>
+		</header>
+		
+		<button class="btn navbar-btn" data-toggle="collapse" data-target=".navbar-collapse">
+			<span class="glyphicon glyphicon-bar"></span>
+			<span class="glyphicon glyphicon-bar"></span>
+			<span class="glyphicon glyphicon-bar"></span>
+		</button>
+		
+		<nav class="navbar-collapse collapse">
+			<ul class="nav nav-pills">
+				<li><a href="index.html">Home</a></li>
+				<li><a href="styles.html">Styles</a></li>
+				<li><a href="templates.html">Templates</a></li>
+				<li class="active"><a href="support.html">Support</a></li>              
+			</ul>
+		</nav>
+	</div> <!-- //end container -->	
+	
+	<div class="container content">
+		<hr>
+		<div class="row">
+
+			<div class="col-md-3">
+				<div class="well sidebar-nav">
+					<ul class="nav nav-list">
+						<li class="nav-header">Support</li>
+						<li><a href="support-sub.html">FAQs</a></li>
+						<li class="active"><a href="#">Documentation</a></li>
+						<li><a href="#">Feedback</a></li>
+					</ul>
+				</div>    	
+			</div> <!-- //end col-md-3 -->
+
+			<div class="col-md-9">
+				<div class="page-header">
+					<h1>Documentation</h1>
+				</div>
+			</div> <!-- //end col-md-9 -->
+
+			<div class="col-md-9">
+				<div class="section">
+					<div class="page-header">
+						<h2>Setting the theme style</h2>
+					</div>
+					<p>Once you've made the hard choice of selecting which theme you'd like to use, there are few things to do to disable the style switching.</p>
+					<p>On each page update the <code>&lt;body&gt;</code> tag to have the correct class for your theme:</p>
+<pre>...
+&lt;body&gt;
+&lt;!--
+Use the corresponding body tag for your chosen theme
+&lt;body class="blue"&gt;
+&lt;body class="orange"&gt;
+&lt;body class="green"&gt;
+&lt;body class="bw"&gt;
+--&gt;
+...</pre>					
+					<p>Remove the style switcher from the footer on all pages:</p>
+<pre>...
+&lt;div class="col-md-6"&gt;
+	&lt;p class="text-right"&gt;
+	Style: &lt;a href="" class="st" id="style-bw"&gt;Black & White&lt;/a&gt;, &lt;a href="" class="st" id="style-orange"&gt;Orange&lt;/a&gt;, &lt;a href="" class="st" id="style-green"&gt;Green&lt;/a&gt;, &lt;a href="" class="st" id="style-blue"&gt;Blue&lt;/a&gt;
+	&lt;/p&gt;
+&lt;/div&gt;
+...</pre>			
+					<p>In <code>colorfrog.js</code> comment out or delete the marked code blocks. There are four in total, below is an example of the first:</p>		
+<pre>
+/*
+* Set initial style
+* REMOVE WHEN YOU HAVE PICKED YOUR STYLE
+*/ 
+...
+// END OF CODE TO REMOVE
+</pre>					
+					<p>If you want to reduce the weight of the <code>colorfrog.css</code> file you can remove the style specific css that you dont need. Each block is marked as below:<p>
+<pre>
+/*
+* Blue
+*/
+...
+/*
+* //end blue styles
+*/
+</pre>			
+					<p>Likewise you can also delete the unused style image folders from the themes <code>img</code> folder.</p>	
+				</div> <!-- //end section -->
+
+				<div class="section">				
+					<div class="page-header">
+						<h2>Configuring Google maps</h2>
+					</div>
+					<p>The footer map can easily be configured to your location and the pointer made to point exactly where you want. There are two pairs of coordinates that can be manipulated to change the map.</p>
+					<p>To center the map on your office/chosen place simply change the latitude and longitude of the following line in <code>colorfrog.js</code>:</p>					
+<pre>...					
+var mapOptions = {
+	center: new google.maps.LatLng(60.170421,24.938149), 
+...</pre>
+					<p>To set the marker position simply change the latitude and longitude of the following line in <code>colorfrog.js</code>:</p>
+<pre>...
+var myLatLng = new google.maps.LatLng(60.16992,24.938707);
+...</pre>
+
+					
+				</div> <!-- //end section -->					
+
+				<div class="section">				
+					<div class="page-header">
+						<h2>Browser component</h2>
+					</div>
+					<p>The browser component address bar can be figured in two different ways. You can choose to have it with a usable anchor tag or a abstract grey bar.</p>
+					<p>Use the following code for a browser with a usable anchor:</p>
+<pre>...					
+&lt;div class="addressbar"&gt;
+	&lt;div class="search text"&gt;&lt;a href="http://leapfrogui.com"&gt;http://leapfrogui.com&lt;/a&gt;&lt;/div&gt;
+&lt;/div&gt;
+...</pre>
+
+					<p>Use the following code for a browser with an abstract address:</p>
+<pre>...					
+&lt;div class="addressbar"&gt;
+	&lt;div class="search"&gt;&lt;/div&gt;
+&lt;/div&gt;
+...</pre>
+
+				</div> <!-- //end section -->	
+				
+			</div> <!-- //end col-md-9 -->
+		</div> <!-- //end row -->	
+	</div> <!-- //end container -->	
+	
+		<div id="map">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<div class="row">
+						<div class="col-md-4 alt">
+							<div class="background-inner">
+								<h3>Subscribe</h3>
+								<p>To our newsletter to keep up to date with news and events from Colorfrog</p>
+								<div class="input-append">
+									<input class="input-large" type="text" placeholder="your email address" />							  
+									<button class="btn btn-small" type="button"><i class="glyphicon glyphicon-chevron-right glyphicon glyphicon-white"></i></button>
+								</div>
+								<small class="clearfix">We don't send out newsletters often, so no worrying about spam. Also, we never share your email address with anyone.</small>
+							</div>
+						</div>
+						<div class="col-md-4 col-md-offset-4 alt">
+							<div class="background-inner">
+								<h3>Connect</h3>
+								<ul class="contact-info">
+									<li class="contact-info-address">Some Street 30, 00000, Country</li>
+									<li class="contact-info-call">+0102345678</li>
+									<li class="contact-info-mail"><a href="mailto:">info@colorfrog.com</a></li>
+								</ul>
+								<ul class="social-info">
+									<li>
+										<a href="" class="social-info-twitter">Twitter</a>
+									</li>	
+									<li>
+										<a href="" class="social-info-facebook">Facebook</a>
+									</li>
+									<li>
+										<a href="" class="social-info-pintrest">Pintrest</a>
+									</li>
+									<li>
+										<a href="" class="social-info-github">Github</a>
+									</li>					
+									<li>
+										<a href="" class="social-info-linkedin">LinkedIn</a>
+									</li>
+								</ul>																															
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div> <!-- //end container -->
+		<div id="footer-map"></div>
+	</div> <!-- //end map -->
+			
+	<footer>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-6">
+					<p>Copyright &copy; 2013 Colorfrog. All rights reserved. <a href="">Terms</a> &amp; <a href="">Privacy</a>.</p>		
+				</div>
+				<div class="col-md-6">
+					<p class="text-right">
+					Style: <a href="" class="st" id="style-bw">Black & White</a>, <a href="" class="st" id="style-orange">Orange</a>, <a href="" class="st" id="style-green">Green</a>, <a href="" class="st" id="style-blue">Blue</a>
+					</p>
+				</div>
+			</div>
+		</div>   <!--//end container -->   
+	</footer>
+
+
+</body>
+</html>

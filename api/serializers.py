@@ -15,9 +15,10 @@ class UserField(serializers.SlugRelatedField):
 
 class TagSerializer(serializers.Serializer):
     tweets = serializers.RelatedField(many=True, read_only=True)
-    users = UserField(many=True, slug_field='profile.twitter_screen_name', queryset=User.objects.all())
-    owner = serializers.SlugRelatedField(slug_file="profile.twitter_screen_name", queryset=User.objects.all())
+    users = UserField(many=True, slug_field='profile.twitter_screen_name', queryset=User.objects.all(), blank=True, null=True)
+    owner = serializers.SlugRelatedField(slug_field="profile.twitter_screen_name", queryset=User.objects.all(), blank=True, null=True)
     name = serializers.CharField()
+    modified = serializers.Field()
 
     def restore_object(self, attrs, instance=None):
         user = self.context['request'].user
@@ -33,8 +34,8 @@ class TweetSerializer(serializers.ModelSerializer):
     retweet_count = serializers.Field(source="retweet_count")
     reply_count = serializers.Field(source="reply_count")
     tags = serializers.SlugRelatedField(many=True, slug_field="name", read_only=True)
-    user = serializers.SlugRelatedField(many=True, slug_field="profile.twitter_screen_name", read_only=True)
-    user_name = serializers.SlugRelatedField(many=True, slug_field="profile.twitter_name", read_only=True)
+    user = serializers.SlugRelatedField(many=True, slug_field="profile.twitter_screen_name", read_only=True, blank=True, null=True)
+    user_name = serializers.SlugRelatedField(many=True, slug_field="profile.twitter_name", read_only=True, blank=True, null=True)
     retweet_of = serializers.PrimaryKeyRelatedField(read_only=True)
     reply_to = serializers.PrimaryKeyRelatedField(read_only=True)
 

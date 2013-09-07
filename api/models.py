@@ -25,6 +25,8 @@ class Tag(models.Model):
     users = models.ManyToManyField(User, related_name="tags", blank=True, null=True)
     owner = models.ForeignKey(User, related_name="created_tags")
 
+    modified = models.DateTimeField(auto_now=True)
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile", unique=True, blank=True, null=True)
     twitter_name = models.CharField(max_length=100)

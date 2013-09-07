@@ -71,7 +71,6 @@ class TwitterParser():
     def tags(self):
         return self.data['entities']['hashtags']
 
-
 @task()
 def save_tweet(data):
     data = json.loads(data)
@@ -83,7 +82,7 @@ def save_tweet(data):
         user = User.objects.get(profile__twitter_id_str=user_id)
         user.profile.twitter_name = twitter_name
         user.profile.twitter_screen_name = screen_name
-        user.save()
+        user.profile.save()
     except User.DoesNotExist:
         log.exception("Cannot find user with id {0}".format(user_id))
         return

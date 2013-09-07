@@ -122,10 +122,10 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'article_site.urls'
+ROOT_URLCONF = 'movide.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'article_site.wsgi.application'
+WSGI_APPLICATION = 'movide.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -174,8 +174,6 @@ INSTALLED_APPS = (
     'allauth.socialaccount',
     'bootstrapform',
     'seacucumber',
-    'allauth.socialaccount.providers.facebook',
-    'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.twitter',
     'api',
     'frontend'
@@ -255,15 +253,6 @@ LOGGING = {
 }
 
 SOCIALACCOUNT_PROVIDERS = {
-    'facebook': {
-        'SCOPE': ['email'],
-        'AUTH_PARAMS': { 'auth_type': 'reauthenticate' },
-        'METHOD': 'js_sdk'
-    },
-    'google': {
-        'SCOPE': ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
-        'AUTH_PARAMS': { 'access_type': 'online' }
-    }
 
 }
 
@@ -298,6 +287,9 @@ TWITTER_SECRET_ACCESS_TOKEN = ""
 TWITTER_APP_KEY = ""
 TWITTER_SECRET_APP_KEY = ""
 TWITTER_HASHTAG = "#movide"
+
+TWITTER_AUTH_APP_KEY = ""
+TWITTER_AUTH_SECRET_APP_KEY = ""
 
 try:
     from .private import *

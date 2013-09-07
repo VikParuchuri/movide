@@ -11,3 +11,4 @@ tmpfile
 db/*
 movide/private.py
 cache/*
+staticfiles/*

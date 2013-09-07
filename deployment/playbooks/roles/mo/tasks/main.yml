@@ -108,7 +108,7 @@
   copy: src=git_ssh.sh dest=/tmp/git_ssh.sh force=yes owner=root group=adm mode=750
 
 - name: Upload the SSH key
-  copy: src={{secure_dir}}/files/article_deploy dest=/tmp/id_rsa_deployment mode=600
+  copy: src={{secure_dir}}/files/movide_deploy dest=/tmp/id_rsa_deployment mode=600
 
 #Grab both repos or update
 - name:  git checkout movide repo into movide_dir
