@@ -476,7 +476,8 @@ iframe {
 footer {
   padding-top: 20px;
   padding-bottom: 10px;
-  position: relative; }
+  position: relative;
+  background-color: #E4E4E4}
   footer ul {
     list-style-type: none;
     margin: 0; }

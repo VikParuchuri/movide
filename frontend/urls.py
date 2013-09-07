@@ -11,7 +11,7 @@ urlpatterns =patterns('frontend.views',
                       url(r'^login/?$', "begin_auth", name="twitter_login"),
                       url(r'^logout/?$', "logout", name="twitter_logout"),  # Calling logout and what not
                       url(r'^thanks/?$', "thanks", name="twitter_callback"),
-                      url(r'^dashboard/', 'dashboard')
+                      url(r'^dashboard/$', 'dashboard')
                       )
 
 urlpatterns += patterns('',

@@ -1,0 +1,68 @@
+.task-list {
+    position: relative;
+    margin: 0px !important;
+}
+.graph {
+    position: relative;
+    margin: 0px !important;
+}
+.task {
+    border-bottom: 1px solid #f9f9f9;
+    margin-bottom: 1px;
+}
+.task .desc {
+    display: inline-block;
+    width: 65%;
+    padding: 10px 10px;
+    font-size: 10px;
+    margin-right: -20px;
+}
+.task .desc .title {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+.task .time {
+    display: inline-block;
+    float: right;
+    width: 25%;
+    padding: 10px 10px;
+    font-size: 10px;
+    text-align: right;
+}
+.task .time .date {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+.timeslot .task span {
+    padding: 5px;
+    display: block;
+    font-size: 10px;
+}
+.timeslot .task span span {
+    border: 0px;
+    background: transparent;
+    padding: 0px;
+}
+.timeslot .task span span.details {
+    font-size: 14px;
+    margin-bottom: 0px;
+}
+.timeslot .task span span.remaining {
+    font-size: 12px;
+}
+.message-view {
+    position: relative;
+}
+
+.create-tag-form{
+    margin-top: 10px;
+}
+    .create-tag-form.has-success{
+        margin-top:30px;
+    }
+    .create-tag-form.has-error{
+        margin-top:30px;
+    }
+#tag-sidebar{
+    margin-top: 20px;
+}

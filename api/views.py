@@ -14,7 +14,7 @@ class TagView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, format=None):
-        tags= Tag.objects.all().order_by('-modified')
+        tags= Tag.objects.filter(owner=request.user).order_by('-modified')
         serializer = TagSerializer(tags, many=True)
         return Response(serializer.data)
 
@@ -77,9 +77,22 @@ class TweetDetailView(APIView):
         serializer = TweetSerializer(tag)
         return Response(serializer.data)
 
-class UserList(generics.ListAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+class UserView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def filter_tag(self, queryset, tag):
+        return queryset.filter(tags__name=tag)
+
+    def get(self, request, format=None):
+        tag = self.request.QUERY_PARAMS.get('tag', None)
+        if tag is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        queryset = User.objects.all()
+        if tag is not None:
+            queryset = self.filter_tag(queryset, tag)
+        serializer = UserSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()

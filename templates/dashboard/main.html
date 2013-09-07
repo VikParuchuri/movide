@@ -1,0 +1,30 @@
+{% extends "dashboard.html" %}
+{% load staticfiles %}
+
+{% block dashboard_js %}
+    <script type="text/javascript" src="{% static 'js/tags.js' %}"></script>
+{% endblock %}
+
+{% block title %}
+{% endblock %}
+
+{% block meta_description %}
+{% endblock %}
+
+{% block dashboard_content %}
+    <h1>Add a Tag</h1>
+    <form class="form-inline" role="form">
+        <div class="form-group create-tag-form">
+            <label class="sr-only" for="inputTag1">Hashtag</label>
+            <input type="text" class="form-control input-lg" id="inputTag1" placeholder="#myhashtag">
+            <span class="help-block"></span>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-large" id="create-tag">Create your Tag</button>
+        </div>
+    </form>
+    <div class="tag-list">
+        <h1>Your Hashtags</h1>
+        <div id="tags"></div>
+    </div>
+{% endblock %}

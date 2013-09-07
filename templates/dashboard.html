@@ -2,6 +2,12 @@
 {% load staticfiles %}
 
 {% block additional_js %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/dashboard.css' %}"/>
+    <script type="text/javascript" src="{% static 'js/models.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/sidebar.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/add_tag.js' %}"></script>
+    {% block dashboard_js %}
+    {% endblock %}
 {% endblock %}
 
 {% block title %}
@@ -11,4 +17,14 @@
 {% endblock %}
 
 {% block content %}
+    <div class="container content">
+        <div class="row">
+            {% include "snippets/sidebar.html" %}
+            <div class="col-xs-10" id="dashboard-content">
+                {% block dashboard_content %}
+                {% endblock %}
+             </div>
+        </div>
+    </div>
+    {% include "snippets/templates.html" %}
 {% endblock %}

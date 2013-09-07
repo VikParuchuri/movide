@@ -14,7 +14,7 @@ class UserField(serializers.SlugRelatedField):
         return super(UserField, self).from_native(data)
 
 class TagSerializer(serializers.Serializer):
-    tweets = serializers.RelatedField(many=True, read_only=True)
+    tweets = serializers.RelatedField(many=True, read_only=True, blank=True, null=True)
     users = UserField(many=True, slug_field='username', queryset=User.objects.all(), blank=True, null=True)
     owner = serializers.SlugRelatedField(slug_field="username", queryset=User.objects.all(), blank=True, null=True)
     name = serializers.CharField()
@@ -24,11 +24,18 @@ class TagSerializer(serializers.Serializer):
         user = self.context['request'].user
         if instance is not None:
             if instance.owner != user:
-                raise serializers.ValidationError("Tag already taken.")
+                raise serializers.ValidationError("Tag is already taken.")
 
+        name = attrs.get('name').encode('ascii', 'ignore')
+        if not name.startswith("#"):
+            name = "#" + name
         if instance is None:
-            tag = Tag(owner=user, name=attrs.get('name'))
-            tag.save()
+            try:
+                instance = Tag(owner=user, name=name)
+                instance.save()
+            except IntegrityError:
+                raise serializers.ValidationError("Tag is already taken.")
+        return instance
 
 class TweetSerializer(serializers.ModelSerializer):
     retweet_count = serializers.Field(source="retweet_count")

@@ -82,7 +82,7 @@ def create_profile(authorized_tokens, user):
     profile.save()
 
 def dashboard(request):
-    return render_to_response("dashboard.html", context_instance=RequestContext(request))
+    return render_to_response("dashboard/main.html", context_instance=RequestContext(request))
 
 def index(request):
     return render_to_response("index.html", context_instance=RequestContext(request))

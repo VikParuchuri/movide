@@ -1,0 +1,25 @@
+<script id="tagTemplate" type="text/template">
+    <div class="task">
+        <div class="desc">
+            <div class="title"><%= name %></div>
+            <div></div>
+        </div>
+        <div class="time">
+            <div class="date"><%= modified %></div>
+            <div></div>
+        </div>
+    </div>
+</script>
+
+<script id="addTagPromptTemplate" type="text/template">
+    <p>Looks like you don't have any tags yet.  Why not add one?</p>
+</script>
+
+<script id="useTagPromptTemplate" type="text/template">
+    <p>After you have created a tag, you can add students to it by clicking on the tag on the left.  Once students have been added to a tag, they can tweet to it using #movide #tag.</p>
+    <p>For example, <strong>What makes some elements heavy? #movide #scienceclass</strong></p>
+</script>
+
+<script id="sidebarItemTemplate" type="text/template">
+    <a href="#" class="tag-name" data-tag-name="<%= name %>"><%= name %></a>
+</script>
