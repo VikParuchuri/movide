@@ -4,8 +4,8 @@ import logging
 from datetime import timedelta
 from django.utils.timezone import now
 from django.template import RequestContext
-
 from django.contrib.auth import authenticate, login, logout as django_logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -58,9 +58,10 @@ def thanks(request, redirect_url=settings.LOGIN_REDIRECT_URL):
         user = User.objects.get(username=authorized_tokens['screen_name'])
         try:
             profile = UserProfile.objects.get(user=user)
-            profile.oauth_secret = authorized_tokens['oauth_token_secret']
-            profile.oauth_token = profile.oauth_token = authorized_tokens['oauth_token']
-            profile.save()
+            if profile.oauth_token is None:
+                profile.oauth_secret = authorized_tokens['oauth_token_secret']
+                profile.oauth_token = authorized_tokens['oauth_token']
+                profile.save()
         except UserProfile.DoesNotExist:
             create_profile(authorized_tokens, user)
 
@@ -81,6 +82,7 @@ def create_profile(authorized_tokens, user):
     profile.oauth_secret = authorized_tokens['oauth_token_secret']
     profile.save()
 
+@login_required()
 def dashboard(request):
     return render_to_response("dashboard/main.html", context_instance=RequestContext(request))
 

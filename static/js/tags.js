@@ -5,15 +5,18 @@ $(document).ready(function() {
     var error_display = function(model, xhr, options){
         $(".create-tag-form").removeClass("has-success").addClass("has-error");
         $(".help-block").html("This tag has been taken.  Please try another.");
+        $("#create-tag").attr('disabled', false);
     };
     var success_display = function(model, response, options){
         $(".create-tag-form").removeClass("has-error").addClass("has-success");
         $(".help-block").html("Tag created!  Click the tag on the left to add students.");
         $("#refresh-sidebar").click();
         tagview.refresh();
+        $("#create-tag").attr('disabled', false);
     };
     $("#create-tag").click( function(event){
         event.preventDefault();
+        $(event.target).attr('disabled', true);
         var tag_name = $("#inputTag1").val();
         if(tag_name.charAt(0)!="#"){
             tag_name = "#" + tag_name;

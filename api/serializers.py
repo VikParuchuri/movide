@@ -3,7 +3,7 @@ from rest_framework import serializers
 from models import Tag, Tweet, UserProfile
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from tasks import create_user_profile_task
+from tasks import create_user_profile
 import logging
 log = logging.getLogger(__name__)
 
@@ -55,13 +55,16 @@ class UserSerializer(serializers.Serializer):
     twitter_name = serializers.Field(source="profile.twitter_name")
     twitter_profile_image = serializers.Field(source="profile.twitter_profile_image")
     username = serializers.CharField()
-    tweets = serializers.RelatedField()
+    tweets = serializers.SlugRelatedField(many=True, slug_field="text", read_only=True, blank=True, null=True)
     pk = serializers.Field()
 
     def restore_object(self, attrs, instance=None):
         username = attrs.get('username')
+        tag = self.context['request'].DATA.get('tag', None)
         if username.startswith("@"):
             username = username[1:]
+        if not tag.startswith("#"):
+            tag = "#" + tag
         try:
             instance = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -73,12 +76,20 @@ class UserSerializer(serializers.Serializer):
                 instance = User.objects.create_user(username=username, password=password)
             except IntegrityError:
                 instance = User.objects.get(username=username)
-            if instance.profile is not None:
-                return instance
         try:
-            create_user_profile_task(username, instance.id)
+            create_user_profile(username, instance)
         except Exception:
+            error_msg = "Could not create a user profile."
+            log.exception(error_msg)
             instance.delete()
-            raise serializers.ValidationError("Could not create a user profile.")
+            raise serializers.ValidationError(error_msg)
+
+        try:
+            if tag is not None:
+                t = Tag.objects.get(name=tag)
+                instance.tags.add(t)
+                instance.save()
+        except Tag.DoesNotExist:
+            raise serializers.ValidationError("Invalid tag specified: {0}".format(tag))
 
         return instance

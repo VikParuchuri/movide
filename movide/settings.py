@@ -136,8 +136,6 @@ TEMPLATE_DIRS = (
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.request",
-    "allauth.account.context_processors.account",
-    "allauth.socialaccount.context_processors.socialaccount",
     "django.contrib.auth.context_processors.auth",
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
@@ -150,7 +148,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
 )
 
 
@@ -169,12 +166,8 @@ INSTALLED_APPS = (
     'djcelery',
     'south',
     'rest_framework',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
     'bootstrapform',
     'seacucumber',
-    'allauth.socialaccount.providers.twitter',
     'api',
     'frontend'
 )
@@ -293,6 +286,8 @@ TWITTER_AUTH_SECRET_APP_KEY = ""
 
 LOGOUT_REDIRECT_URL = "/"
 LOGIN_REDIRECT_URL = "/dashboard/"
+
+LOGIN_URL = "/"
 
 try:
     from .private import *

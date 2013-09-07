@@ -13,7 +13,3 @@ urlpatterns =patterns('frontend.views',
                       url(r'^thanks/?$', "thanks", name="twitter_callback"),
                       url(r'^dashboard/$', 'dashboard')
                       )
-
-urlpatterns += patterns('',
-                        (r'^accounts/', include('allauth.urls')),
-                        )

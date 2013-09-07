@@ -23,7 +23,7 @@
 <script id="userTableTemplate" type="text/template">
     <h1><%= tag %></h1>
     <div id="user-table">
-        <table class="table table-hover">
+        <table class="table table-hover table-condensed">
             <thead>
                 <tr>
                     <th></th>
@@ -39,21 +39,31 @@
         <form class="form-inline" role="form">
             <div class="form-group create-user-form">
                 <label class="sr-only" for="inputTag1">Twitter name</label>
-                <input type="text" class="form-control input-lg" id="inputTag1" placeholder="@mytwittername">
+                <input type="text" class="form-control input-lg" id="inputTag1" placeholder="@studenttwittername">
                 <span class="help-block"></span>
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-large" id="create-tag">Create user</button>
+                <button type="submit" class="btn btn-large" id="create-user">Create user</button>
             </div>
         </form>
     </div>
 </script>
 
+<script id="noUserTemplate" type="text/template">
+    <p>Looks like you don't have any students for this tag yet.  Why not add some?</p>
+</script>
+
 <script id="userTemplate" type="text/template">
-    <td><%= twitter_profile_image %></td>
-    <td><%= twitter_screen_name %></td>
-    <td><%= twitter_name %></td>
-    <td><span class="glyphicon glyphicon-remove"></span></td>
+    <tr>
+        <td>
+            <% if (typeof(twitter_profile_image) != "undefined") { %>
+                <img src="<%= twitter_profile_image %>">
+            <% } %>
+        </td>
+        <td><%= twitter_screen_name %></td>
+        <td><%= twitter_name %></td>
+        <td><span class="glyphicon glyphicon-remove"></span></td>
+    </tr>
 </script>
 
 <script id="sidebarItemTemplate" type="text/template">

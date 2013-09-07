@@ -66,3 +66,13 @@
 #tag-sidebar{
     margin-top: 20px;
 }
+
+.create-user-form{
+    margin-top: 10px;
+}
+    .create-user-form.has-success{
+        margin-top:30px;
+    }
+    .create-user-form.has-error{
+        margin-top:30px;
+    }

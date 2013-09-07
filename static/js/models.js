@@ -25,8 +25,24 @@ $(document).ready(function() {
         idAttribute: 'pk'
     });
 
-    var User = Backbone.Model.extend({
-        idAttribute: 'pk'
+    var methodModel = Backbone.Model.extend({
+        sync: function(method, model, options) {
+            if (model.methodUrl && model.methodUrl[method.toLowerCase()]) {
+                options = options || {};
+                options.url = model.methodUrl[method.toLowerCase()];
+            }
+            Backbone.sync(method, model, options);
+        }
+    });
+
+    var User = methodModel.extend({
+        idAttribute: 'pk',
+        url: function () {
+            return '/api/users/' + this.id;
+        },
+        methodUrl: {
+            'create': '/api/users/'
+        }
     });
 
     var Tweets = Backbone.Collection.extend({
@@ -34,20 +50,13 @@ $(document).ready(function() {
         url: '/api/tweets/'
     });
 
-    var Tag = Backbone.Model.extend({
+    var Tag = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
             return '/api/tags/' + this.id;
         },
         methodUrl: {
             'create': '/api/tags/'
-        },
-        sync: function(method, model, options) {
-            if (model.methodUrl && model.methodUrl[method.toLowerCase()]) {
-                options = options || {};
-                options.url = model.methodUrl[method.toLowerCase()];
-            }
-            Backbone.sync(method, model, options);
         }
     });
 
@@ -74,7 +83,6 @@ $(document).ready(function() {
         },
         get_model_json: function(){
             var model_json = this.model.toJSON();
-            model_json.modified = model_json.modified.split("T")[0];
             return model_json;
         },
         render: function () {
@@ -94,18 +102,21 @@ $(document).ready(function() {
     });
 
     var UsersView = Backbone.View.extend({
-        el: $("#user-table"),
+        el: "#user-table",
         collection_class : Users,
         view_class: UserView,
         template_name: "#userTableTemplate",
         tag: undefined,
         active: undefined,
+        events: {
+            'click #create-user': 'create_user'
+        },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table');
+            _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table', 'create_user', 'destroy_view');
             this.collection = new this.collection_class();
             this.tag = options.tag;
             this.active = options.active;
-            this.collection.fetch({data: {tag: this.tag}}, {async:true});
+            this.collection.fetch({async: false, data: {tag: this.tag}});
         },
         render_table: function(){
             this.render();
@@ -113,14 +124,21 @@ $(document).ready(function() {
         render: function () {
             var model_html = "";
             var that = this;
-            _.each(this.collection.models, function (item) {
-                model_html = model_html + that.renderUser(item);
-            }, this);
+            if(this.collection.length > 0){
+                _.each(this.collection.models, function (item) {
+                    model_html = model_html + $(that.renderUser(item)).html();
+                }, this);
+            } else {
+                model_html = $("#noUserTemplate").html()
+            }
+            console.log(model_html);
             var tmpl = _.template($(this.template_name).html());
             var content_html = tmpl({content: model_html, tag: this.tag});
             $("#tag-sidebar").find('li').removeClass("current active");
             $(this.active).addClass("current active");
             $("#dashboard-content").html(content_html);
+            $('#create-user').click(this.create_user);
+            return this;
         },
         renderUser: function (item) {
             var userView = new this.view_class({
@@ -129,7 +147,7 @@ $(document).ready(function() {
             return userView.render().el;
         },
         refresh: function(){
-            this.collection.fetch({async:false});
+            this.collection.fetch({async:false, data: {tag: this.tag}});
             $(this.el).empty();
             this.render_table();
         },
@@ -138,6 +156,28 @@ $(document).ready(function() {
             this.$el.removeData().unbind();
             this.remove();
             Backbone.View.prototype.remove.call(this);
+        },
+        error_display: function(model, xhr, options){
+            $(".create-user-form").removeClass("has-success").addClass("has-error");
+            $(".help-block").html("This username cannot be validated.  Please try another one.");
+            $("#create-user").attr('disabled', false);
+        },
+        success_display: function(model, response, options){
+            $(".create-user-form").removeClass("has-error").addClass("has-success");
+            $(".help-block").html("User added!  They will now show up in the feed for this tag.");
+            this.refresh();
+            $("#create-user").attr('disabled', false);
+        },
+        create_user: function(event){
+            event.preventDefault();
+            $(event.target).attr('disabled', true);
+            var user_name = $("#inputTag1").val();
+            if(user_name.charAt(0)=="@"){
+                user_name = user_name.substring(1,user_name.length);
+            }
+            var user = new User({'tag' : this.tag, 'username' : user_name});
+            user.save(null,{success : this.success_display, error: this.error_display});
+            return false;
         }
     });
 
@@ -174,7 +214,7 @@ $(document).ready(function() {
     });
 
     var TagsView = Backbone.View.extend({
-        el: $("#tags"),
+        el: "#tags",
         collection_class : Tags,
         view_class: TagView,
         initialize: function () {
@@ -224,7 +264,7 @@ $(document).ready(function() {
     });
 
     var TagsSidebarView = TagsView.extend({
-        el: $("#tag-sidebar"),
+        el: "#tag-sidebar",
         view_class: TagSidebarView,
         user_view: undefined,
         events: {
@@ -286,7 +326,7 @@ $(document).ready(function() {
     });
 
     var TweetsView = Backbone.View.extend({
-        el: $("#tweets"),
+        el: "#tweets",
         collection_class : Tweets,
         view_class: TweetView,
         events: {

@@ -1,6 +1,6 @@
 from __future__ import division
 from django.contrib.auth.models import User
-from models import Tag, Tweet
+from models import Tag, Tweet, UserProfile
 from rest_framework.views import APIView
 from serializers import TagSerializer, TweetSerializer, UserSerializer
 from rest_framework.response import Response
@@ -9,6 +9,7 @@ from django.db.models import Q, Count
 from django.http import Http404
 import logging
 from django.conf import settings
+log = logging.getLogger(__name__)
 
 class TagView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -54,6 +55,10 @@ class TweetView(APIView):
         user = self.request.QUERY_PARAMS.get('user', None)
         if tag is None and user is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+        if isinstance(tag, list):
+            tag = tag[0]
+        if isinstance(user, list):
+            user = user[0]
 
         queryset = Tweet.objects.all()
         if tag is not None:
@@ -87,12 +92,24 @@ class UserView(APIView):
         tag = self.request.QUERY_PARAMS.get('tag', None)
         if tag is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+        if isinstance(tag, list):
+            tag = tag[0]
 
         queryset = User.objects.all()
         if tag is not None:
             queryset = self.filter_tag(queryset, tag)
         serializer = UserSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    def post(self, request, format=None):
+        username = self.request.DATA.get('username', None)
+        if username is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        serialized = UserSerializer(data=request.DATA, context={'request' : request})
+        if serialized.is_valid():
+            return Response(serialized.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serialized._errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()

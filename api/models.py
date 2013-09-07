@@ -7,8 +7,8 @@ class Tweet(models.Model):
     source = models.CharField(max_length=255)
     id_str = models.CharField(max_length=35, unique=True, db_index=True)
     created_at = models.DateTimeField()
-    retweet_of = models.ForeignKey('self', related_name="retweets", blank=True, null=True)
-    reply_to = models.ForeignKey('self', related_name="replies", blank=True, null=True)
+    retweet_of = models.ForeignKey('self', related_name="retweets", blank=True, null=True, on_delete=models.SET_NULL)
+    reply_to = models.ForeignKey('self', related_name="replies", blank=True, null=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, related_name="tweets")
 
     modified = models.DateTimeField(auto_now=True)
@@ -23,7 +23,7 @@ class Tag(models.Model):
     name = models.CharField(max_length=160, unique=True, db_index=True)
     tweets = models.ManyToManyField(Tweet, related_name="tags", blank=True, null=True)
     users = models.ManyToManyField(User, related_name="tags", blank=True, null=True)
-    owner = models.ForeignKey(User, related_name="created_tags", blank=True, null=True)
+    owner = models.ForeignKey(User, related_name="created_tags", blank=True, null=True, on_delete=models.SET_NULL)
 
     modified = models.DateTimeField(auto_now=True)
 
