@@ -112,7 +112,7 @@ $(document).ready(function() {
             'click #create-user': 'create_user'
         },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table', 'create_user', 'destroy_view');
+            _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table', 'create_user', 'destroy_view', 'error_display', 'success_display');
             this.collection = new this.collection_class();
             this.tag = options.tag;
             this.active = options.active;
@@ -224,7 +224,6 @@ $(document).ready(function() {
         },
         render_dash: function(){
             if(this.collection.length > 0){
-                this.renderUsage();
                 this.render();
             } else{
                 this.renderNone();
@@ -235,10 +234,6 @@ $(document).ready(function() {
             _.each(this.collection.models, function (item) {
                 that.renderTag(item);
             }, this);
-        },
-        renderUsage: function(){
-            var use_tag_prompt = $("#useTagPromptTemplate").html();
-            $(this.el).html(use_tag_prompt);
         },
         renderNone: function() {
             var add_tag_prompt = $("#addTagPromptTemplate").html();

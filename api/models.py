@@ -19,6 +19,18 @@ class Tweet(models.Model):
     def reply_count(self):
         return self.replies.count()
 
+    def profile_image(self):
+        try:
+            return self.user.profile.twitter_profile_image
+        except UserProfile.DoesNotExist:
+            return None
+
+    def twitter_name(self):
+        try:
+            return self.user.profile.twitter_name
+        except UserProfile.DoesNotExist:
+            return None
+
 class Tag(models.Model):
     name = models.CharField(max_length=160, unique=True, db_index=True)
     tweets = models.ManyToManyField(Tweet, related_name="tags", blank=True, null=True)

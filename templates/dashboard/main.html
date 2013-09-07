@@ -13,9 +13,11 @@
 
 {% block dashboard_content %}
     <h1>Add a Tag</h1>
+    <p>After you have created a tag, you can add students to it by clicking on the tag on the left.  Once students have been added to a tag, they can tweet to it using #movide #tag.</p>
+    <p>For example, <strong>What makes some elements heavy? #movide #scienceclass</strong></p>
     <form class="form-inline" role="form">
         <div class="form-group create-tag-form">
-            <label class="sr-only" for="inputTag1">Hashtag</label>
+            <label class="sr-only" for="inputTag1">Tag</label>
             <input type="text" class="form-control input-lg" id="inputTag1" placeholder="#myhashtag">
             <span class="help-block"></span>
         </div>
@@ -24,7 +26,7 @@
         </div>
     </form>
     <div class="tag-list">
-        <h1>Your Hashtags</h1>
+        <h1>Your Tags</h1>
         <div id="tags"></div>
     </div>
 {% endblock %}

@@ -15,37 +15,40 @@
     <p>Looks like you don't have any tags yet.  Why not add one?</p>
 </script>
 
-<script id="useTagPromptTemplate" type="text/template">
-    <p>After you have created a tag, you can add students to it by clicking on the tag on the left.  Once students have been added to a tag, they can tweet to it using #movide #tag.</p>
-    <p>For example, <strong>What makes some elements heavy? #movide #scienceclass</strong></p>
-</script>
-
 <script id="userTableTemplate" type="text/template">
     <h1><%= tag %></h1>
-    <div id="user-table">
-        <table class="table table-hover table-condensed">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Twitter Name</th>
-                    <th>Name</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <%= content %>
-            </tbody>
-        </table>
-        <form class="form-inline" role="form">
-            <div class="form-group create-user-form">
-                <label class="sr-only" for="inputTag1">Twitter name</label>
-                <input type="text" class="form-control input-lg" id="inputTag1" placeholder="@studenttwittername">
-                <span class="help-block"></span>
+    <div class="row">
+        <div class="col-xs-5">
+            <h3>Tweets</h3>
+        </div>
+        <div class="col-xs-5">
+            <h3>Users</h3>
+            <div id="user-table">
+                <table class="table table-hover table-condensed">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Twitter Name</th>
+                            <th>Name</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <%= content %>
+                    </tbody>
+                </table>
+                <form class="form-inline" role="form">
+                    <div class="form-group create-user-form">
+                        <label class="sr-only" for="inputTag1">Twitter name</label>
+                        <input type="text" class="form-control input-lg" id="inputTag1" placeholder="@studenttwittername">
+                        <span class="help-block"></span>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-large" id="create-user">Create user</button>
+                    </div>
+                </form>
             </div>
-            <div class="form-group">
-                <button type="submit" class="btn btn-large" id="create-user">Create user</button>
-            </div>
-        </form>
+        </div>
     </div>
 </script>
 
@@ -64,6 +67,33 @@
         <td><%= twitter_name %></td>
         <td><span class="glyphicon glyphicon-remove"></span></td>
     </tr>
+</script>
+
+<script id="tweetTemplate" type="text/template">
+    <li>
+        <div class="author">
+            <% if (typeof(user_twitter_profile_image) != "undefined") { %>
+                <img src="<%= user_twitter_profile_image =>" alt="avatar">
+            <% } %>
+        </div>
+
+        <div class="name"><%= user_name %></div>
+        <div class="date"> <%= created_at %></div>
+
+        <div class="message">
+           <%= text %>
+        </div>
+    </li>
+</script>
+
+<script id="tweetsTemplate" type="text/template">
+    <div class="row">
+        <div class="col-lg-12 discussions">
+            <ul>
+                <%= tweets %>
+            </ul>
+        </div>
+    </div>
 </script>
 
 <script id="sidebarItemTemplate" type="text/template">

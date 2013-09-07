@@ -42,13 +42,14 @@ class TweetSerializer(serializers.ModelSerializer):
     reply_count = serializers.Field(source="reply_count")
     tags = serializers.SlugRelatedField(many=True, slug_field="name", read_only=True)
     user = serializers.SlugRelatedField(many=True, slug_field="username", read_only=True, blank=True, null=True)
-    user_name = serializers.SlugRelatedField(many=True, slug_field="username", read_only=True, blank=True, null=True)
+    user_name = serializers.Field(source="twitter_name")
+    user_twitter_profile_image = serializers.Field(source="profile_image")
     retweet_of = serializers.PrimaryKeyRelatedField(read_only=True)
     reply_to = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Tweet
-        fields = ('text', 'source', 'created_at', 'retweet_of', 'reply_to', 'tags', 'user', 'reply_count', 'retweet_count', 'user_name', )
+        fields = ('text', 'source', 'created_at', 'retweet_of', 'reply_to', 'tags', 'user', 'reply_count', 'retweet_count', 'user_name', 'user_twitter_profile_image', )
 
 class UserSerializer(serializers.Serializer):
     twitter_screen_name = serializers.Field(source="username")
