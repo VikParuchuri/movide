@@ -35,6 +35,17 @@ $(document).ready(function() {
         }
     });
 
+    var EmailSubscription = methodModel.extend({
+        idAttribute: 'pk',
+        url: function () {
+            return '/api/subscribe/' + this.id;
+        },
+        methodUrl: {
+            'create': '/api/subscribe/'
+        }
+    });
+
+
     var User = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
@@ -53,7 +64,7 @@ $(document).ready(function() {
     var Tag = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
-            return '/api/tags/' + this.id;
+            return '/api/tags/' + this.get('name') + "/";
         },
         methodUrl: {
             'create': '/api/tags/'
@@ -120,6 +131,8 @@ $(document).ready(function() {
         options: null,
         user_view: null,
         tweet_view: null,
+        tag_model: null,
+        chart_tag: "tweet-chart",
         events: {
 
         },
@@ -133,11 +146,35 @@ $(document).ready(function() {
             };
         },
         base_render: function() {
+            this.tag_model = new Tag({name : this.tag});
+            this.tag_model.fetch({async: false});
             var tmpl = _.template($(this.template_name).html());
-            var content_html = tmpl({tag: this.tag});
+            var tweets_by_day = [];
+            var tweets_by_day_data = this.tag_model.get('tweet_count_by_day');
+            for (var i = 0; i < tweets_by_day_data.length; i++) {
+                tweets_by_day.push({created: tweets_by_day_data[i].created, count: tweets_by_day_data[i].created_count});
+            }
+            var content_html = tmpl({
+                tag: this.tag,
+                tweet_count: parseInt(this.tag_model.get('tweet_count')),
+                tweet_count_today: parseInt(this.tag_model.get('tweet_count_today')),
+                tweets_by_day: tweets_by_day
+            });
             $("#tag-sidebar").find('li').removeClass("current active");
             $(this.active).addClass("current active");
             $(this.el).html(content_html);
+            if(tweets_by_day.length > 1){
+                this.create_chart(tweets_by_day);
+            }
+        },
+        create_chart: function(data){
+            new Morris.Line({
+                element: this.chart_tag,
+                data: data,
+                xkey: 'created',
+                ykeys: ['count'],
+                labels: ['# of tweets']
+            });
         },
         render: function () {
             this.base_render();
@@ -182,7 +219,6 @@ $(document).ready(function() {
             this.tag = options.tag;
             this.active = options.active;
             this.collection.fetch({async: false, data: {tag: this.tag}});
-            //this.collection.on('remove', this.refresh, this);
         },
         render_table: function(){
             this.render();
@@ -454,4 +490,5 @@ $(document).ready(function() {
     window.Tag = Tag;
     window.TagSidebarView = TagSidebarView;
     window.TagsSidebarView = TagsSidebarView;
+    window.EmailSubscription = EmailSubscription;
 });

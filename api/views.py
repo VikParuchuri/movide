@@ -2,7 +2,7 @@ from __future__ import division
 from django.contrib.auth.models import User
 from models import Tag, Tweet, UserProfile
 from rest_framework.views import APIView
-from serializers import TagSerializer, TweetSerializer, UserSerializer
+from serializers import TagSerializer, TweetSerializer, UserSerializer, EmailSubscriptionSerializer
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from django.db.models import Q, Count
@@ -30,14 +30,14 @@ class TagView(APIView):
 class TagDetailView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
-    def get_object(self, pk):
+    def get_object(self, tag):
         try:
-            return Tag.objects.get(pk=pk)
+            return Tag.objects.get(name=tag)
         except Tag.DoesNotExist:
             raise Http404
 
-    def get(self, request, pk, format=None):
-        tag = self.get_object(pk)
+    def get(self, request, tag, format=None):
+        tag = self.get_object(tag)
         serializer = TagSerializer(tag)
         return Response(serializer.data)
 
@@ -133,12 +133,12 @@ class UserDetail(APIView):
             raise Http404
 
     def get(self, request, pk, format=None):
+        tag = request.DATA.get('tag', None)
         user = self.get_object(pk)
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
     def delete(self, request, pk, format=None):
-        log.info(self.request.DATA)
         tag = request.DATA.get('tag', None)
         if tag is None:
             error_msg = "Need a tag in order to delete a model."
@@ -161,8 +161,18 @@ class UserDetail(APIView):
 
 class UserRegistration(APIView):
     def post(self, request, format=None):
-        serialized = UserSerializer(data=request.DATA)
-        if serialized.is_valid():
-            return Response(serialized.data, status=status.HTTP_201_CREATED)
+        serializer = UserSerializer(data=request.DATA)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            return Response(serialized._errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EmailSubscription(APIView):
+    def post(self, request, format=None):
+        serializer = EmailSubscriptionSerializer(data=request.DATA)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)

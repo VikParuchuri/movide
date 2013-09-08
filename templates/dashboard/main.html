@@ -13,8 +13,9 @@
 
 {% block dashboard_content %}
     <h1>Add a Tag</h1>
-    <p>After you have created a tag, you can add students to it by clicking on the tag on the left.  Once students have been added to a tag, they can tweet to it using #movide #tag.</p>
-    <p>For example, <strong>What makes some elements heavy? #movide #scienceclass</strong></p>
+    <p class="hidden-xs">After you have created a tag, you can add students to it by clicking on the tag on the left.</p>
+    <p class="visible-xs">After you have created a tag, you can add students to it by using the "show tag menu" button above to see all your tags, and then clicking the tag.</p>
+    <p>Once students have been added to a tag, they can tweet to it using #movide #tag. For example, <strong>Why are some elements heavier than others? #movide #scienceclass</strong></p>
     <form class="form-inline" role="form">
         <div class="form-group create-tag-form">
             <label class="sr-only" for="inputTag1">Tag</label>
@@ -32,7 +33,9 @@
                 <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Modified</th>
+                    <th>Daily Tweets</th>
+                    <th>All Tweets</th>
+                    <th>Created</th>
                 </tr>
                 </thead>
                 <tbody id="tag-content">

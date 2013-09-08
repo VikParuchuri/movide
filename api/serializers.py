@@ -1,11 +1,16 @@
 from django.forms import widgets
 from rest_framework import serializers
-from models import Tag, Tweet, UserProfile
+from models import Tag, Tweet, UserProfile, EmailSubscription
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from tasks import UserTwitterData
 import logging
 log = logging.getLogger(__name__)
+
+class EmailSubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailSubscription
+        fields = ("email_address", )
 
 class UserField(serializers.SlugRelatedField):
     def from_native(self, data):
@@ -14,9 +19,11 @@ class UserField(serializers.SlugRelatedField):
         return super(UserField, self).from_native(data)
 
 class TagSerializer(serializers.Serializer):
-    tweets = serializers.RelatedField(many=True, read_only=True, blank=True, null=True)
     users = UserField(many=True, slug_field='username', queryset=User.objects.all(), blank=True, null=True)
     owner = serializers.SlugRelatedField(slug_field="username", queryset=User.objects.all(), blank=True, null=True)
+    tweet_count = serializers.Field(source="tweet_count")
+    tweet_count_today = serializers.Field(source="tweet_count_today")
+    tweet_count_by_day = serializers.Field(source="tweet_count_by_day")
     name = serializers.CharField()
     modified = serializers.Field()
 

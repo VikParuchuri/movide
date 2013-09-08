@@ -1,6 +1,12 @@
 <script id="tagTemplate" type="text/template">
     <td>
-        <%= name %>
+        #<%= name %>
+    </td>
+    <td>
+        <%= tweet_count_today %>
+    </td>
+    <td>
+        <%= tweet_count %>
     </td>
     <td>
         <%= modified %>
@@ -15,6 +21,16 @@
     <div class="row">
         <div class="col-xs-10">
             <h1>#<%= tag %></h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-10">
+            <h3>Stats</h3>
+            <% if (tweets_by_day.length > 1) { %>
+                <div id="tweet-chart" style="height:200px;"></div>
+            <% } else { %>
+                <p>Oh no! We can't show you the daily activity chart until you have some tweets for this tag.</p>
+            <% } %>
         </div>
     </div>
     <div class="row">
@@ -58,14 +74,15 @@
 </script>
 
 <script id="noUserTemplate" type="text/template">
-    <p>Looks like you don't have any students for this tag yet.  Why not add some?</p>
+    <p>You don't have any students for this tag yet.  Why not add some?</p>
 </script>
 
 <script id="noTweetsTemplate" type="text/template">
-    <p>Looks like there aren't any tweets for this tag.</p>
+    <p>There aren't any tweets for this tag yet.</p>
     <p>Get started by tweeting and including the hashtags #movide and #<%= tag %>.</p>
-    <p>For example, <strong>Why do ice cubes float? #movide #<%= tag %>.</strong></p>
+    <p>For example, <strong>Why does ice float? #movide #<%= tag %>.</strong></p>
     <p>Any user listed to the right can tweet to this tag and show up here.</p>
+    <p>There may be a bit of a delay, which is normal.  If a tweet doesn't show up here for a while, try tweeting again with #movide #<%= tag %>.  Tweets sometimes get "stuck" and tweeting again unsticks everything.</p>
 </script>
 
 <script id="userTemplate" type="text/template">

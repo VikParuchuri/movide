@@ -1,6 +1,11 @@
 from __future__ import division
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.timezone import now
+from datetime import timedelta
+from django.db.models import Count
+from datetime import date
+from dateutil.rrule import rrule, DAILY
 
 class Tweet(models.Model):
     text = models.CharField(max_length=160)
@@ -39,6 +44,32 @@ class Tag(models.Model):
 
     modified = models.DateTimeField(auto_now=True)
 
+    def tweet_count(self):
+        return self.tweets.all().count()
+
+    def tweet_count_today(self):
+        return self.tweets.filter(created_at__gt=now() - timedelta(days=1)).count()
+
+    def tweet_count_by_day(self):
+        tweet_data = list(self.tweets.extra({'created' : "date(created_at)"}).values('created').annotate(created_count=Count('id')))
+        if len(tweet_data) == 0:
+            return []
+        first_tweet = self.tweets.values('created_at').order_by("-created_at")[0]
+        start = min(self.modified.date(), first_tweet['created_at'].date()) - timedelta(days=2)
+        end = now().date()
+
+        for dt in rrule(DAILY, dtstart=start, until=end):
+            date_found = False
+            dt_str = str(dt).split(" ")[0]
+            for rec in tweet_data:
+                if str(rec['created']) == dt_str:
+                    date_found = True
+                    break
+            if date_found:
+                continue
+            tweet_data.append({'created_count' : 0, 'created' : dt_str})
+        return tweet_data
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile", unique=True, blank=True, null=True)
     twitter_name = models.CharField(max_length=100, blank=True, null=True)
@@ -48,6 +79,10 @@ class UserProfile(models.Model):
     modified = models.DateTimeField(auto_now=True, blank=True, null=True)
     oauth_token = models.CharField(max_length=200, blank=True, null=True)
     oauth_secret = models.CharField(max_length=200, blank=True, null=True)
+
+class EmailSubscription(models.Model):
+    email_address = models.EmailField(max_length=255, unique=True)
+    modified = models.DateTimeField(auto_now=True)
 
 User.profile = property(lambda u: u.get_profile())
 
