@@ -3,7 +3,7 @@ from rest_framework import serializers
 from models import Tag, Tweet, UserProfile
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from tasks import create_user_profile
+from tasks import UserTwitterData
 import logging
 log = logging.getLogger(__name__)
 
@@ -66,10 +66,12 @@ class UserSerializer(serializers.Serializer):
         tag = self.context['request'].DATA.get('tag', None)
         if username.startswith("@"):
             username = username[1:]
-        if tag.startswith("#"):
+        if tag is not None and tag.startswith("#"):
             tag = tag[1:]
+
+        user_data = UserTwitterData(username)
         try:
-            instance = User.objects.get(username=username)
+            instance = User.objects.get(profile__twitter_id_str=user_data.id_str)
         except User.DoesNotExist:
             pass
 
@@ -79,13 +81,14 @@ class UserSerializer(serializers.Serializer):
                 instance = User.objects.create_user(username=username, password=password)
             except IntegrityError:
                 instance = User.objects.get(username=username)
-        try:
-            create_user_profile(username, instance)
-        except Exception:
-            error_msg = "Could not create a user profile."
-            log.exception(error_msg)
-            instance.delete()
-            raise serializers.ValidationError(error_msg)
+
+            try:
+                user_data.create_profile(instance)
+            except Exception:
+                error_msg = "Could not create a user profile."
+                log.exception(error_msg)
+                instance.delete()
+                raise serializers.ValidationError(error_msg)
 
         try:
             if tag is not None:

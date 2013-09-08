@@ -83,10 +83,12 @@ $(document).ready(function() {
         tagName: "tr",
         className: "users",
         template_name: "#userTemplate",
+        tag: null,
         events: {
         },
-        initialize: function(){
+        initialize: function(options){
             _.bindAll(this, 'render'); // every function that uses 'this' as the current object should be in here
+            this.tag = options.tag;
             this.model.bind('change', this.render);
             this.model.bind('remove', this.unrender);
         },
@@ -159,7 +161,6 @@ $(document).ready(function() {
             this.setElement($(this.el));
             this.user_view.refresh(this.options);
             this.tweet_view.refresh(this.options);
-            console.log($(this.el).html());
         }
     });
 
@@ -172,14 +173,16 @@ $(document).ready(function() {
         tag: undefined,
         active: undefined,
         events: {
-            'click #create-user': 'create_user'
+            'click #create-user': 'create_user',
+            'click .user-tag-delete': 'user_tag_delete'
         },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table', 'create_user', 'destroy_view', 'error_display', 'success_display');
+            _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table', 'create_user', 'destroy_view', 'error_display', 'success_display', 'user_tag_delete');
             this.collection = new this.collection_class();
             this.tag = options.tag;
             this.active = options.active;
             this.collection.fetch({async: false, data: {tag: this.tag}});
+            //this.collection.on('remove', this.refresh, this);
         },
         render_table: function(){
             this.render();
@@ -198,11 +201,13 @@ $(document).ready(function() {
             var content_html = tmpl({content: model_html, tag: this.tag});
             $(this.el).html(content_html);
             $('#create-user').click(this.create_user);
+            $('.user-tag-delete').click(this.user_tag_delete);
             return this;
         },
         renderUser: function (item) {
             var userView = new this.view_class({
-                model: item
+                model: item,
+                tag: this.tag
             });
             return userView.render().el;
         },
@@ -215,14 +220,12 @@ $(document).ready(function() {
         },
         error_display: function(model, xhr, options){
             $(".create-user-form").removeClass("has-success").addClass("has-error");
-            $(".help-block").html("This username cannot be validated.  Please try another one.");
-            $("#create-user").attr('disabled', false);
+            $(".help-block").html("This username cannot be validated.  Is it an actual twitter screen name?");
         },
         success_display: function(model, response, options){
             $(".create-user-form").removeClass("has-error").addClass("has-success");
             $(".help-block").html("User added!  They will now show up in the feed for this tag.");
-            this.refresh();
-            $("#create-user").attr('disabled', false);
+            this.refresh({tag : this.tag});
         },
         create_user: function(event){
             event.preventDefault();
@@ -232,7 +235,16 @@ $(document).ready(function() {
                 user_name = user_name.substring(1,user_name.length);
             }
             var user = new User({'tag' : this.tag, 'username' : user_name});
-            user.save(null,{success : this.success_display, error: this.error_display});
+            user.save(null,{async: false, success : this.success_display, error: this.error_display});
+            $("#create-user").attr('disabled', false);
+            return false;
+        },
+        user_tag_delete: function(event){
+            event.preventDefault();
+            var twitter_name = $(event.target).closest('tr').find('td.screen-name').data('screen-name');
+            var item_to_remove = this.collection.where({twitter_screen_name: twitter_name})[0];
+            item_to_remove.destroy({data: {tag: this.tag}, processData: true, async: false});
+            this.refresh({tag : this.tag});
             return false;
         }
     });
@@ -330,11 +342,14 @@ $(document).ready(function() {
                 that.renderTag(item);
             }, this);
         },
-        refresh: function(){
+        refresh: function(event){
+            event.preventDefault();
             this.collection.fetch({async:false});
             this.render_sidebar();
+            return false;
         },
         render_tag_name: function(event){
+            event.preventDefault();
             var options = {
                 tag: $(event.target).data('tag-name'),
                 active: $(event.target).parent()
@@ -345,6 +360,7 @@ $(document).ready(function() {
                 this.detail_view = new TagDetailView(options);
                 this.detail_view.render();
             }
+            return false;
         },
         renderTag: function (item) {
             var tagView = new this.view_class({

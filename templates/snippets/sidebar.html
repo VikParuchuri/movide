@@ -2,7 +2,7 @@
     <button type="button" class="btn btn-xs" data-toggle="offcanvas">Show tag menu</button>
 </p>
 <div class="col-xs-2 sidebar-offcanvas" id="sidebar" role="navigation">
-    <div class="well sidebar-nav">
+    <div class="sidebar-nav">
         <ul class="nav nav-list" id="tag-sidebar">
             <li><a href="#" id="refresh-sidebar"><span class="glyphicon glyphicon-refresh"></span> Refresh</a></li>
             <li {% if request.path == "/dashboard/" %}class="active current"{% endif %}><a href="/dashboard/">Quick View</a></li>

@@ -13,7 +13,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from twython import Twython
 from api.models import UserProfile
-from api.tasks import create_user_profile
+from api.tasks import UserTwitterData
 
 log=logging.getLogger(__name__)
 
@@ -53,18 +53,11 @@ def thanks(request, redirect_url=settings.LOGIN_REDIRECT_URL):
     # Retrieve the tokens we want...
     authorized_tokens = twitter.get_authorized_tokens(request.GET['oauth_verifier'])
 
+    log.info(authorized_tokens)
+
     # If they already exist, grab them, login and redirect to a page displaying stuff.
     try:
-        user = User.objects.get(username=authorized_tokens['screen_name'])
-        try:
-            profile = UserProfile.objects.get(user=user)
-            if profile.oauth_token is None:
-                profile.oauth_secret = authorized_tokens['oauth_token_secret']
-                profile.oauth_token = authorized_tokens['oauth_token']
-                profile.save()
-        except UserProfile.DoesNotExist:
-            create_profile(authorized_tokens, user)
-
+        user = User.objects.get(profile__twitter_id_str=str(authorized_tokens['user_id']))
     except User.DoesNotExist:
         user = User.objects.create_user(authorized_tokens['screen_name'], "fjdsfn@jfndjfn.com", authorized_tokens['oauth_token_secret'])
         create_profile(authorized_tokens, user)
@@ -77,7 +70,8 @@ def thanks(request, redirect_url=settings.LOGIN_REDIRECT_URL):
     return HttpResponseRedirect(redirect_url)
 
 def create_profile(authorized_tokens, user):
-    profile = create_user_profile(authorized_tokens['screen_name'], user)
+    user_data = UserTwitterData(authorized_tokens['screen_name'])
+    profile = user_data.create_profile(user)
     profile.oauth_token = authorized_tokens['oauth_token']
     profile.oauth_secret = authorized_tokens['oauth_token_secret']
     profile.save()

@@ -18,12 +18,12 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-xs-6">
+        <div class="col-sm-5">
             <h3>Tweets</h3>
             <div id="tweets">
             </div>
         </div>
-        <div class="col-xs-6">
+        <div class="col-sm-5">
             <h3>Users</h3>
             <div id="user-table">
             </div>
@@ -52,7 +52,7 @@
             <span class="help-block"></span>
         </div>
         <div class="form-group">
-            <button type="submit" class="btn btn-large" id="create-user">Create user</button>
+            <button type="submit" class="btn btn-large" id="create-user">Add user</button>
         </div>
     </form>
 </script>
@@ -75,9 +75,9 @@
                 <img src="<%= twitter_profile_image %>">
             <% } %>
         </td>
-        <td>@<%= twitter_screen_name %></td>
+        <td class="screen-name" data-screen-name="<%= twitter_screen_name %>">@<%= twitter_screen_name %></td>
         <td><%= twitter_name %></td>
-        <td><span class="glyphicon glyphicon-remove"></span></td>
+        <td><a type="button" class="btn btn-xs user-tag-delete"><span class="glyphicon glyphicon-remove"></span></a></td>
     </tr>
 </script>
 

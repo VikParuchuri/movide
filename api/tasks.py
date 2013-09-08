@@ -160,23 +160,38 @@ def stream_tweets():
 @task()
 def create_user_profile_task(twitter_screen_name, user_id):
     user = User.objects.get(id=user_id)
-    create_user_profile(twitter_screen_name, user)
+    user_data = UserTwitterData(twitter_screen_name)
+    user_data.create_profile(user)
 
-def create_user_profile(twitter_screen_name, user):
-    try:
-        profile = UserProfile.objects.get(user=user)
-        return
-    except UserProfile.DoesNotExist:
-        pass
+class UserTwitterData(object):
+    def __init__(self, screen_name):
+        if screen_name.startswith("@"):
+            screen_name = screen_name[1:]
+        screen_name = screen_name.lower()
+        self.screen_name = screen_name
+        self.twitter = Twython(settings.TWITTER_APP_KEY, settings.TWITTER_SECRET_APP_KEY, settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_SECRET_ACCESS_TOKEN)
+        self.get_data()
 
-    twitter = Twython(settings.TWITTER_APP_KEY, settings.TWITTER_SECRET_APP_KEY, settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_SECRET_ACCESS_TOKEN)
-    user_data = twitter.show_user(screen_name=twitter_screen_name)
-    profile = UserProfile(
-        user=user,
-        twitter_screen_name=twitter_screen_name,
-        twitter_name=user_data['name'],
-        twitter_id_str=user_data['id_str'],
-        twitter_profile_image=user_data['profile_image_url']
+    def get_data(self):
+        self.user_data = self.twitter.show_user(screen_name=self.screen_name)
+
+    @property
+    def id_str(self):
+        return self.user_data['id_str']
+
+    def create_profile(self, user):
+        try:
+            profile = UserProfile.objects.get(user=user)
+            return
+        except UserProfile.DoesNotExist:
+            pass
+
+        profile = UserProfile(
+            user=user,
+            twitter_screen_name=self.screen_name,
+            twitter_name=self.user_data['name'],
+            twitter_id_str=self.user_data['id_str'],
+            twitter_profile_image=self.user_data['profile_image_url']
         )
-    profile.save()
-    return profile
+        profile.save()
+        return profile

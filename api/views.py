@@ -54,7 +54,9 @@ class TweetView(APIView):
         tag = self.request.QUERY_PARAMS.get('tag', None)
         user = self.request.QUERY_PARAMS.get('user', None)
         if tag is None and user is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            error_msg = "Need to specify a username or a tag."
+            log.error(error_msg)
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
         if isinstance(tag, list):
             tag = tag[0]
         if isinstance(user, list):
@@ -95,7 +97,9 @@ class UserView(APIView):
     def get(self, request, format=None):
         tag = self.request.QUERY_PARAMS.get('tag', None)
         if tag is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            error_msg = "Need to specify a tag."
+            log.error(error_msg)
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
         if isinstance(tag, list):
             tag = tag[0]
         if tag.startswith("#"):
@@ -110,16 +114,50 @@ class UserView(APIView):
     def post(self, request, format=None):
         username = self.request.DATA.get('username', None)
         if username is None:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            error_msg = "Need to specify a username."
+            log.error(error_msg)
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
         serialized = UserSerializer(data=request.DATA, context={'request' : request})
         if serialized.is_valid():
             return Response(serialized.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serialized._errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UserDetail(generics.RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+class UserDetail(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_object(self, pk):
+        try:
+            return User.objects.get(pk=pk)
+        except Tweet.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk, format=None):
+        user = self.get_object(pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    def delete(self, request, pk, format=None):
+        log.info(self.request.DATA)
+        tag = request.DATA.get('tag', None)
+        if tag is None:
+            error_msg = "Need a tag in order to delete a model."
+            log.error(error_msg)
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+        if tag.startswith("#"):
+            tag = tag[1:]
+
+        try:
+            tag_model = Tag.objects.get(name=tag)
+        except tag.DoesNotExist:
+            error_msg = "Cannot find the specified tag."
+            log.error(error_msg)
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+        user = self.get_object(pk)
+        user.tags.remove(tag_model)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class UserRegistration(APIView):
     def post(self, request, format=None):
