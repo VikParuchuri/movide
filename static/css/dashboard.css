@@ -1,59 +1,3 @@
-.task-list {
-    position: relative;
-    margin: 0px !important;
-}
-.graph {
-    position: relative;
-    margin: 0px !important;
-}
-.task {
-    border-bottom: 1px solid #f9f9f9;
-    margin-bottom: 1px;
-}
-.task .desc {
-    display: inline-block;
-    width: 65%;
-    padding: 10px 10px;
-    font-size: 10px;
-    margin-right: -20px;
-}
-.task .desc .title {
-    font-size: 14px;
-    margin-bottom: 5px;
-}
-.task .time {
-    display: inline-block;
-    float: right;
-    width: 25%;
-    padding: 10px 10px;
-    font-size: 10px;
-    text-align: right;
-}
-.task .time .date {
-    font-size: 14px;
-    margin-bottom: 5px;
-}
-.timeslot .task span {
-    padding: 5px;
-    display: block;
-    font-size: 10px;
-}
-.timeslot .task span span {
-    border: 0px;
-    background: transparent;
-    padding: 0px;
-}
-.timeslot .task span span.details {
-    font-size: 14px;
-    margin-bottom: 0px;
-}
-.timeslot .task span span.remaining {
-    font-size: 12px;
-}
-.message-view {
-    position: relative;
-}
-
 .create-tag-form{
     margin-top: 10px;
 }
@@ -143,7 +87,6 @@
         border-radius: 2px 0px 0px 2px;
     }
     .discussions ul li .date {
-        position: absolute;
         top: 10px;
         right: 0px;
         z-index: 1;
@@ -222,3 +165,40 @@
         box-shadow: none;
         width: 98%;
     }
+
+/*
+ * Off Canvas
+ * --------------------------------------------------
+ */
+@media screen and (max-width: 768px) {
+    .row-offcanvas {
+        position: relative;
+        -webkit-transition: all 0.25s ease-out;
+        -moz-transition: all 0.25s ease-out;
+        transition: all 0.25s ease-out;
+    }
+
+    .row-offcanvas-right
+  .sidebar-offcanvas {
+        right: -50%; /* 6 columns */
+    }
+
+    .row-offcanvas-left
+  .sidebar-offcanvas {
+        left: -50%; /* 6 columns */
+    }
+
+    .row-offcanvas-right.active {
+        right: 50%; /* 6 columns */
+    }
+
+    .row-offcanvas-left.active {
+        left: 50%; /* 6 columns */
+    }
+
+    .sidebar-offcanvas {
+        position: absolute;
+        top: 0;
+        width: 50%; /* 6 columns */
+    }
+}

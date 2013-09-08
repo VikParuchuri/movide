@@ -259,8 +259,9 @@ LOGIN_REDIRECT_URL = "/"
 
 GOOGLE_ANALYTICS_KEY = None
 
-TWITTER_STREAM_EVERY = 1 * 60 #Seconds
-CACHE_TIMEOUT = 10 * 60 * 60 #seconds
+TWITTER_STREAM_EVERY = 2 * 60 #Seconds
+CACHE_TIMEOUT = 10* 60 * 60 #seconds
+TWITTER_STREAM_CACHE_TIMEOUT = 10* 365 * 24 * 60 * 60 #seconds
 TWITTER_STREAM = True
 
 #Email verification settings

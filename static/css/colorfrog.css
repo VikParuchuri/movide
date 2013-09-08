@@ -1,14 +1,8 @@
 body {
   padding-top: 10px;
   font-family: 'PT Sans', sans-serif; }
-  body.bw {
-    background: url(../img/bw/bodybg-bw.png) repeat-x; }
-  body.orange {
-    background: url(../img/orange/bodybg-orange.png) repeat-x; }
   body.blue {
     background: url(../img/blue/bodybg-blue.png) repeat-x; }
-  body.green {
-    background: url(../img/green/bodybg-green.png) repeat-x; }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'PT Sans', sans-serif;
@@ -340,7 +334,12 @@ blockquote.big-quote {
 .comments form textarea {
   width: 90%; }
 .comments .comment {
-  margin: 15px 0 30px 0; }
+  margin: 5px 0 5px 0;
+    border-bottom: 1px solid #e4e6eb;
+    padding: 10px;
+    border-radius: 10px;
+    background: #dcdcdc;
+    }
   .comments .comment.post-author .header img {
     -moz-border-radius: 30px;
     -ms-border-radius: 30px;

@@ -70,7 +70,16 @@ $(document).ready(function() {
         url: '/api/users/'
     });
 
-    var UserView = Backbone.View.extend({
+    var BaseView = Backbone.View.extend({
+        destroy_view: function() {
+            this.undelegateEvents();
+            this.$el.removeData().unbind();
+            this.remove();
+            Backbone.View.prototype.remove.call(this);
+        }
+    });
+
+    var UserView = BaseView.extend({
         tagName: "tr",
         className: "users",
         template_name: "#userTemplate",
@@ -101,8 +110,62 @@ $(document).ready(function() {
         }
     });
 
-    var UsersView = Backbone.View.extend({
+    var TagDetailView = BaseView.extend({
+        el: "#dashboard-content",
+        template_name: "#tagDetailTemplate",
+        active: null,
+        tag: null,
+        options: null,
+        user_view: null,
+        tweet_view: null,
+        events: {
+
+        },
+        initialize: function (options) {
+            _.bindAll(this, 'render', 'refresh');
+            this.tag = options.tag;
+            this.active = options.active;
+            this.options = {
+                tag: this.tag,
+                active: this.active
+            };
+        },
+        base_render: function() {
+            var tmpl = _.template($(this.template_name).html());
+            var content_html = tmpl({tag: this.tag});
+            $("#tag-sidebar").find('li').removeClass("current active");
+            $(this.active).addClass("current active");
+            $(this.el).html(content_html);
+        },
+        render: function () {
+            this.base_render();
+            this.user_view = new UsersView(this.options);
+            this.user_view.render();
+            this.tweet_view = new TweetsView(this.options);
+            this.tweet_view.render();
+        },
+        base_refresh: function() {
+            this.base_render();
+        },
+        refresh: function(options){
+            this.tag = options.tag;
+            this.active = options.active;
+            this.options = {
+                tag: this.tag,
+                active: this.active
+            };
+            $(this.el).empty();
+            this.base_refresh();
+            this.setElement($(this.el));
+            this.user_view.refresh(this.options);
+            this.tweet_view.refresh(this.options);
+            console.log($(this.el).html());
+        }
+    });
+
+    var UsersView = BaseView.extend({
         el: "#user-table",
+        el_name: "#user-table",
         collection_class : Users,
         view_class: UserView,
         template_name: "#userTableTemplate",
@@ -132,14 +195,8 @@ $(document).ready(function() {
                 model_html = $("#noUserTemplate").html()
             }
             var tmpl = _.template($(this.template_name).html());
-            var tweetview = new TweetsView({
-                tag: this.tag
-            });
-            var tweet_html = tweetview.render();
-            var content_html = tmpl({content: model_html, tag: this.tag, tweets: tweet_html});
-            $("#tag-sidebar").find('li').removeClass("current active");
-            $(this.active).addClass("current active");
-            $("#dashboard-content").html(content_html);
+            var content_html = tmpl({content: model_html, tag: this.tag});
+            $(this.el).html(content_html);
             $('#create-user').click(this.create_user);
             return this;
         },
@@ -149,16 +206,12 @@ $(document).ready(function() {
             });
             return userView.render().el;
         },
-        refresh: function(){
+        refresh: function(options){
+            this.tag = options.tag;
             this.collection.fetch({async:false, data: {tag: this.tag}});
+            this.setElement(this.el_name);
             $(this.el).empty();
             this.render_table();
-        },
-        destroy_view: function() {
-            this.undelegateEvents();
-            this.$el.removeData().unbind();
-            this.remove();
-            Backbone.View.prototype.remove.call(this);
         },
         error_display: function(model, xhr, options){
             $(".create-user-form").removeClass("has-success").addClass("has-error");
@@ -184,8 +237,8 @@ $(document).ready(function() {
         }
     });
 
-    var TagView = Backbone.View.extend({
-        tagName: "div",
+    var TagView = BaseView.extend({
+        tagName: "tr",
         className: "tags",
         template_name: "#tagTemplate",
         events: {
@@ -216,8 +269,9 @@ $(document).ready(function() {
         }
     });
 
-    var TagsView = Backbone.View.extend({
+    var TagsView = BaseView.extend({
         el: "#tags",
+        tag_item_el: "#tag-content",
         collection_class : Tags,
         view_class: TagView,
         initialize: function () {
@@ -246,7 +300,7 @@ $(document).ready(function() {
             var tagView = new this.view_class({
                 model: item
             });
-            $(this.el).append(tagView.render().el);
+            $(this.tag_item_el).append(tagView.render().el);
         },
         refresh: function(){
             this.collection.fetch({async:false});
@@ -264,7 +318,7 @@ $(document).ready(function() {
     var TagsSidebarView = TagsView.extend({
         el: "#tag-sidebar",
         view_class: TagSidebarView,
-        user_view: undefined,
+        detail_view: undefined,
         events: {
             'click #refresh-sidebar': 'refresh',
             'click .tag-name' : 'render_tag_name'
@@ -281,18 +335,26 @@ $(document).ready(function() {
             this.render_sidebar();
         },
         render_tag_name: function(event){
-            if(this.user_view!=undefined){
-                this.user_view.destroy_view();
-            }
-            this.user_view = new UsersView({
+            var options = {
                 tag: $(event.target).data('tag-name'),
                 active: $(event.target).parent()
+            };
+            if(this.detail_view!=undefined){
+                this.detail_view.refresh(options);
+            } else {
+                this.detail_view = new TagDetailView(options);
+                this.detail_view.render();
+            }
+        },
+        renderTag: function (item) {
+            var tagView = new this.view_class({
+                model: item
             });
-            this.user_view.render_table();
+            $(this.el).append(tagView.render().el);
         }
     });
 
-    var TweetView = Backbone.View.extend({
+    var TweetView = BaseView.extend({
         tagName: "div",
         className: "tweets",
         events: {
@@ -323,8 +385,9 @@ $(document).ready(function() {
         }
     });
 
-    var TweetsView = Backbone.View.extend({
+    var TweetsView = BaseView.extend({
         el: "#tweets",
+        el_name: "#tweets",
         collection_class : Tweets,
         view_class: TweetView,
         template_name: "#tweetsTemplate",
@@ -350,7 +413,8 @@ $(document).ready(function() {
                 model_html = no_tmpl({tag: this.tag});
             }
             var tmpl = _.template($(this.template_name).html());
-            return tmpl({tweets: model_html, tag: this.tag});
+            var content_html = tmpl({tweets: model_html, tag: this.tag});
+            $(this.el).html(content_html);
         },
         renderTweet: function (item) {
             var userView = new this.view_class({
@@ -358,16 +422,12 @@ $(document).ready(function() {
             });
             return userView.render().el;
         },
-        refresh: function(){
+        refresh: function(options){
+            this.tag = options.tag;
             this.collection.fetch({async:false, data: {tag: this.tag}});
+            this.setElement(this.el_name);
             $(this.el).empty();
             this.render_tweets();
-        },
-        destroy_view: function() {
-            this.undelegateEvents();
-            this.$el.removeData().unbind();
-            this.remove();
-            Backbone.View.prototype.remove.call(this);
         }
     });
 

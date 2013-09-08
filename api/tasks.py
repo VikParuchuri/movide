@@ -148,9 +148,10 @@ class MovideStreamer(TwythonStreamer):
     def on_error(self, status_code, data):
         log.error("Disconnected with status {0}".format(status_code))
         self.disconnect()
+        cache.delete("celery-single-instance-stream_tweets")
 
 @periodic_task(run_every=timedelta(seconds=settings.TWITTER_STREAM_EVERY))
-@single_instance_task(settings.CACHE_TIMEOUT)
+@single_instance_task(settings.TWITTER_STREAM_CACHE_TIMEOUT)
 def stream_tweets():
     if settings.TWITTER_STREAM:
         stream = MovideStreamer(settings.TWITTER_APP_KEY, settings.TWITTER_SECRET_APP_KEY, settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_SECRET_ACCESS_TOKEN)

@@ -1,60 +1,60 @@
 <script id="tagTemplate" type="text/template">
-    <div class="task">
-        <div class="desc">
-            <div class="title"><%= name %></div>
-            <div></div>
-        </div>
-        <div class="time">
-            <div class="date"><%= modified %></div>
-            <div></div>
-        </div>
-    </div>
+    <td>
+        <%= name %>
+    </td>
+    <td>
+        <%= modified %>
+    </td>
 </script>
 
 <script id="addTagPromptTemplate" type="text/template">
     <p>Looks like you don't have any tags yet.  Why not add one?</p>
 </script>
 
-<script id="userTableTemplate" type="text/template">
+<script id="tagDetailTemplate" type="text/template">
     <div class="row">
         <div class="col-xs-10">
             <h1>#<%= tag %></h1>
         </div>
     </div>
     <div class="row">
-        <div class="col-xs-5">
+        <div class="col-xs-6">
             <h3>Tweets</h3>
-            <%= tweets %>
+            <div id="tweets">
+            </div>
         </div>
-        <div class="col-xs-5">
+        <div class="col-xs-6">
             <h3>Users</h3>
             <div id="user-table">
-                <table class="table table-hover table-condensed">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Twitter Name</th>
-                            <th>Name</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <%= content %>
-                    </tbody>
-                </table>
-                <form class="form-inline" role="form">
-                    <div class="form-group create-user-form">
-                        <label class="sr-only" for="inputTag1">Twitter name</label>
-                        <input type="text" class="form-control input-lg" id="inputTag1" placeholder="@studenttwittername">
-                        <span class="help-block"></span>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-large" id="create-user">Create user</button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
+</script>
+
+<script id="userTableTemplate" type="text/template">
+    <table class="table table-hover table-condensed">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Twitter Name</th>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <%= content %>
+        </tbody>
+    </table>
+    <form class="form-inline" role="form">
+        <div class="form-group create-user-form">
+            <label class="sr-only" for="inputTag1">Twitter name</label>
+            <input type="text" class="form-control input-lg" id="inputTag1" placeholder="@studenttwittername">
+            <span class="help-block"></span>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-large" id="create-user">Create user</button>
+        </div>
+    </form>
 </script>
 
 <script id="noUserTemplate" type="text/template">
@@ -82,27 +82,25 @@
 </script>
 
 <script id="tweetTemplate" type="text/template">
-    <li>
-        <div class="author">
+    <div class="comment">
+        <div class="header clearfix">
             <% if (typeof(user_twitter_profile_image) != "undefined") { %>
-                <img src="<%= user_twitter_profile_image %>" alt="avatar">
+                <img src="<%= user_twitter_profile_image %>" alt="<%= user_name %>">
             <% } %>
+            <div>
+                <h4><%= user_name %></h4>
+                <span class="time"><%= created_at %></span>
+            </div>
         </div>
-
-        <div class="name"><%= user_name %></div>
-        <div class="date"> <%= created_at %></div>
-
-        <div class="message">
-           <%= text %>
+        <div class="comment-content clearfix">
+            <%= text %>
         </div>
-    </li>
+    </div>
 </script>
 
 <script id="tweetsTemplate" type="text/template">
-    <div class="discussions" data-tag-name="<%= tag %>">
-        <ul>
-            <%= tweets %>
-        </ul>
+    <div class="comments" data-tag-name="<%= tag %>" id="comments">
+         <%= tweets %>
     </div>
 </script>
 
