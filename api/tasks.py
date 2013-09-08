@@ -11,6 +11,7 @@ from celery.task import periodic_task, task
 from twython import TwythonStreamer, Twython
 import json
 from django.contrib.auth.models import User
+from dateutil import parser
 
 log=logging.getLogger(__name__)
 
@@ -29,8 +30,8 @@ def single_instance_task(timeout):
         return wrapper
     return task_exc
 
-class TwitterParser():
-    fields = ["created_at", "text", "source", "id_str", "user_id", "retweet_id", "reply_id", "tags", "user_name", "screen_name", "profile_image"]
+class TwitterParser(object):
+    fields = ["created_at", "text", "source", "id_str", "user_id", "retweet_id", "reply_id", "tags", "user_name", "screen_name", "profile_image_url"]
     def __init__(self, data):
         self.data = data
         self.values = {}
@@ -38,8 +39,7 @@ class TwitterParser():
             self.values[f] = getattr(self, f)()
 
     def created_at(self):
-        datetime_string = "%a %b %d %H:%M:%S %z %Y"
-        return datetime.strptime(self.data['created_at'], datetime_string)
+        return parser.parse(self.data['created_at'])
 
     def text(self):
         return self.data['text']
@@ -60,7 +60,7 @@ class TwitterParser():
         return self.data['user']['screen_name']
 
     def retweet_id(self):
-        if ['retweeted_status'] in self.data:
+        if 'retweeted_status' in self.data:
             return self.data['retweeted_status']['id_str']
         else:
             return None
@@ -69,7 +69,8 @@ class TwitterParser():
         return self.data['in_reply_to_status_id_str']
 
     def tags(self):
-        return self.data['entities']['hashtags']
+        hashtags = self.data['entities']['hashtags']
+        return [t['text'] for t in hashtags]
 
     def profile_image_url(self):
         return self.data['user']['profile_image_url']
@@ -80,7 +81,7 @@ def save_tweet(data):
     user_id = parser.values['user_id']
     screen_name = parser.values['screen_name']
     twitter_name = parser.values['user_name']
-    profile_image = parser.values['profile_image']
+    profile_image = parser.values['profile_image_url']
     try:
         user = User.objects.get(profile__twitter_id_str=user_id)
         user.profile.twitter_name = twitter_name
@@ -106,16 +107,20 @@ def save_tweet(data):
 
     tag_found = False
     for t in parser.values['tags']:
+        if t.startswith("#"):
+            t = t[1:]
         try:
             tag = Tag.objects.get(name=t)
         except Tag.DoesNotExist:
             continue
 
-        if tag in user.tags:
+        if tag in user.tags.all():
             tag_found = True
+            tweet.save()
             tweet.tags.add(tag)
 
     if not tag_found:
+        log.exception("Tags {0} could not be found in the list of tags.".format(parser.values['tags']))
         return
 
     reply_id = parser.values['reply_id']

@@ -59,13 +59,17 @@ class TweetView(APIView):
             tag = tag[0]
         if isinstance(user, list):
             user = user[0]
+        if user is not None and user.startswith("@"):
+            user = user[1:]
+        if tag is not None and tag.startswith("#"):
+            tag = tag[1:]
 
         queryset = Tweet.objects.all()
         if tag is not None:
             queryset = self.filter_tag(queryset, tag)
         if user is not None:
             queryset = self.filter_user(queryset, user)
-        serializer = TweetSerializer(queryset, many=True)
+        serializer = TweetSerializer(queryset.order_by("-modified"), many=True)
         return Response(serializer.data)
 
 class TweetDetailView(APIView):
@@ -94,11 +98,13 @@ class UserView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
         if isinstance(tag, list):
             tag = tag[0]
+        if tag.startswith("#"):
+            tag = tag[1:]
 
         queryset = User.objects.all()
         if tag is not None:
             queryset = self.filter_tag(queryset, tag)
-        serializer = UserSerializer(queryset, many=True)
+        serializer = UserSerializer(queryset.order_by("date_joined"), many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):

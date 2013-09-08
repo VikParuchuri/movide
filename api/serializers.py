@@ -27,12 +27,14 @@ class TagSerializer(serializers.Serializer):
                 raise serializers.ValidationError("Tag is already taken.")
 
         name = attrs.get('name').encode('ascii', 'ignore')
-        if not name.startswith("#"):
-            name = "#" + name
+        if name.startswith("#"):
+            name = name[1:]
         if instance is None:
             try:
                 instance = Tag(owner=user, name=name)
                 instance.save()
+                user.tags.add(instance)
+                user.save()
             except IntegrityError:
                 raise serializers.ValidationError("Tag is already taken.")
         return instance
@@ -49,7 +51,7 @@ class TweetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tweet
-        fields = ('text', 'source', 'created_at', 'retweet_of', 'reply_to', 'tags', 'user', 'reply_count', 'retweet_count', 'user_name', 'user_twitter_profile_image', )
+        fields = ('text', 'source', 'created_at', 'retweet_of', 'reply_to', 'tags', 'reply_count', 'retweet_count', 'user_name', 'user_twitter_profile_image', )
 
 class UserSerializer(serializers.Serializer):
     twitter_screen_name = serializers.Field(source="username")
@@ -64,8 +66,8 @@ class UserSerializer(serializers.Serializer):
         tag = self.context['request'].DATA.get('tag', None)
         if username.startswith("@"):
             username = username[1:]
-        if not tag.startswith("#"):
-            tag = "#" + tag
+        if tag.startswith("#"):
+            tag = tag[1:]
         try:
             instance = User.objects.get(username=username)
         except User.DoesNotExist:

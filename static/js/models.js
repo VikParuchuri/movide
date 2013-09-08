@@ -131,9 +131,12 @@ $(document).ready(function() {
             } else {
                 model_html = $("#noUserTemplate").html()
             }
-            console.log(model_html);
             var tmpl = _.template($(this.template_name).html());
-            var content_html = tmpl({content: model_html, tag: this.tag});
+            var tweetview = new TweetsView({
+                tag: this.tag
+            });
+            var tweet_html = tweetview.render();
+            var content_html = tmpl({content: model_html, tag: this.tag, tweets: tweet_html});
             $("#tag-sidebar").find('li').removeClass("current active");
             $(this.active).addClass("current active");
             $("#dashboard-content").html(content_html);
@@ -324,26 +327,47 @@ $(document).ready(function() {
         el: "#tweets",
         collection_class : Tweets,
         view_class: TweetView,
-        events: {
-        },
-        initialize: function () {
-            _.bindAll(this, 'render', 'renderTweet', 'change_panel_height');
+        template_name: "#tweetsTemplate",
+        tag: undefined,
+        initialize: function (options) {
+            _.bindAll(this, 'render', 'renderTweet', 'refresh', 'render_tweets', 'destroy_view');
             this.collection = new this.collection_class();
-            this.collection.fetch({async:false});
+            this.tag = options.tag;
+            this.collection.fetch({async: false, data: {tag: this.tag}});
+        },
+        render_tweets: function(){
             this.render();
         },
         render: function () {
+            var model_html = "";
             var that = this;
-            _.each(this.collection.models, function (item) {
-                that.renderTweet(item);
-            }, this);
-            var that = this;
+            if(this.collection.length > 0){
+                _.each(this.collection.models, function (item) {
+                    model_html = model_html + $(that.renderTweet(item)).html();
+                }, this);
+            } else {
+                var no_tmpl = _.template($("#noTweetsTemplate").html());
+                model_html = no_tmpl({tag: this.tag});
+            }
+            var tmpl = _.template($(this.template_name).html());
+            return tmpl({tweets: model_html, tag: this.tag});
         },
         renderTweet: function (item) {
-            var tweetView = new this.view_class({
+            var userView = new this.view_class({
                 model: item
             });
-            $(this.el).append(tweetView.render().el);
+            return userView.render().el;
+        },
+        refresh: function(){
+            this.collection.fetch({async:false, data: {tag: this.tag}});
+            $(this.el).empty();
+            this.render_tweets();
+        },
+        destroy_view: function() {
+            this.undelegateEvents();
+            this.$el.removeData().unbind();
+            this.remove();
+            Backbone.View.prototype.remove.call(this);
         }
     });
 

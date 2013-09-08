@@ -16,10 +16,15 @@
 </script>
 
 <script id="userTableTemplate" type="text/template">
-    <h1><%= tag %></h1>
+    <div class="row">
+        <div class="col-xs-10">
+            <h1>#<%= tag %></h1>
+        </div>
+    </div>
     <div class="row">
         <div class="col-xs-5">
             <h3>Tweets</h3>
+            <%= tweets %>
         </div>
         <div class="col-xs-5">
             <h3>Users</h3>
@@ -56,6 +61,13 @@
     <p>Looks like you don't have any students for this tag yet.  Why not add some?</p>
 </script>
 
+<script id="noTweetsTemplate" type="text/template">
+    <p>Looks like there aren't any tweets for this tag.</p>
+    <p>Get started by tweeting and including the hashtags #movide and #<%= tag %>.</p>
+    <p>For example, <strong>Why do ice cubes float? #movide #<%= tag %>.</strong></p>
+    <p>Any user listed to the right can tweet to this tag and show up here.</p>
+</script>
+
 <script id="userTemplate" type="text/template">
     <tr>
         <td>
@@ -63,7 +75,7 @@
                 <img src="<%= twitter_profile_image %>">
             <% } %>
         </td>
-        <td><%= twitter_screen_name %></td>
+        <td>@<%= twitter_screen_name %></td>
         <td><%= twitter_name %></td>
         <td><span class="glyphicon glyphicon-remove"></span></td>
     </tr>
@@ -73,7 +85,7 @@
     <li>
         <div class="author">
             <% if (typeof(user_twitter_profile_image) != "undefined") { %>
-                <img src="<%= user_twitter_profile_image =>" alt="avatar">
+                <img src="<%= user_twitter_profile_image %>" alt="avatar">
             <% } %>
         </div>
 
@@ -87,15 +99,13 @@
 </script>
 
 <script id="tweetsTemplate" type="text/template">
-    <div class="row">
-        <div class="col-lg-12 discussions">
-            <ul>
-                <%= tweets %>
-            </ul>
-        </div>
+    <div class="discussions" data-tag-name="<%= tag %>">
+        <ul>
+            <%= tweets %>
+        </ul>
     </div>
 </script>
 
 <script id="sidebarItemTemplate" type="text/template">
-    <a href="#" class="tag-name" data-tag-name="<%= name %>"><%= name %></a>
+    <a href="#" class="tag-name" data-tag-name="<%= name %>">#<%= name %></a>
 </script>

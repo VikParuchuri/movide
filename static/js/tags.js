@@ -24,5 +24,5 @@ $(document).ready(function() {
         var tag = new Tag({'name' : tag_name});
         tag.save(null,{success : success_display, error: error_display});
         return false;
-    })
+    });
 });
