@@ -81,6 +81,8 @@
                 <th></th>
                 <th>Twitter Name</th>
                 <th>Name</th>
+                <th>Daily Tweets</th>
+                <th>All Tweets</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -121,6 +123,8 @@
         </td>
         <td class="screen-name" data-screen-name="<%= twitter_screen_name %>">@<%= twitter_screen_name %></td>
         <td><%= twitter_name %></td>
+        <td><%= tweet_count_today %></td>
+        <td><%= tweet_count %></td>
         <td><a type="button" class="btn btn-xs user-tag-delete"><span class="glyphicon glyphicon-remove"></span></a></td>
     </tr>
 </script>

@@ -9,6 +9,8 @@ from django.db.models import Q, Count
 from django.http import Http404
 import logging
 from django.conf import settings
+from django.utils.timezone import now
+from datetime import timedelta
 log = logging.getLogger(__name__)
 
 class TagView(APIView):
@@ -109,7 +111,14 @@ class UserView(APIView):
         if tag is not None:
             queryset = self.filter_tag(queryset, tag)
         serializer = UserSerializer(queryset.order_by("date_joined"), many=True)
+        serializer = self.add_user_data(serializer, tag)
         return Response(serializer.data)
+
+    def add_user_data(self, serializer, tag):
+        for user in serializer.data:
+            user['tweet_count_today'] = Tag.objects.get(name=tag).tweets.filter(user=user['pk'], modified__gt=now() - timedelta(days=1)).count()
+            user['tweet_count'] = Tag.objects.get(name=tag).tweets.filter(user=user['pk']).count()
+        return serializer
 
     def post(self, request, format=None):
         username = self.request.DATA.get('username', None)

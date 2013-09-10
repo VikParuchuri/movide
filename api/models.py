@@ -65,23 +65,32 @@ class Tag(models.Model):
 
     def tweet_count_by_day(self):
         tweet_data = list(self.tweets.extra({'created' : "date(created_at)"}).values('created').annotate(created_count=Count('id')))
-        if len(tweet_data) == 0:
-            return []
-        first_tweet = self.tweets.values('created_at').order_by("-created_at")[0]
-        start = min(self.modified.date(), first_tweet['created_at'].date()) - timedelta(days=2)
-        end = now().date()
+        day_counts = self.count_by_day(tweet_data)
+        return day_counts
 
+    def first_tweet_time(self):
+        first_tweet = self.tweets.values('created_at').order_by("-created_at")[0]
+        return min(self.modified.date(), first_tweet['created_at'].date()) - timedelta(days=2)
+
+    def calculate_days(self, data, start, end):
         for dt in rrule(DAILY, dtstart=start, until=end):
             date_found = False
             dt_str = str(dt).split(" ")[0]
-            for rec in tweet_data:
+            for rec in data:
                 if str(rec['created']) == dt_str:
                     date_found = True
                     break
             if date_found:
                 continue
-            tweet_data.append({'created_count' : 0, 'created' : dt_str})
-        return tweet_data
+            data.append({'created_count' : 0, 'created' : dt_str})
+        return data
+
+    def count_by_day(self, objects):
+        if len(objects) == 0:
+            return []
+        end = now().date()
+        return self.calculate_days(objects, self.first_tweet_time(), end)
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile", unique=True, blank=True, null=True)
