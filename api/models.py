@@ -48,6 +48,12 @@ class Tag(models.Model):
     def tweet_count(self):
         return self.tweets.all().count()
 
+    def user_count(self):
+        return self.users.all().count()
+
+    def user_count_today(self):
+        return self.tweets.filter(created_at__gt=now() - timedelta(days=1)).values('user').distinct().count()
+
     def tweet_count_today(self):
         return self.tweets.filter(created_at__gt=now() - timedelta(days=1)).count()
 

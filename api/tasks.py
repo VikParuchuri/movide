@@ -195,3 +195,25 @@ class UserTwitterData(object):
         )
         profile.save()
         return profile
+
+class UserTweet(object):
+    def __init__(self, user):
+        try:
+            profile = user.profile
+        except UserProfile.DoesNotExist:
+            error_msg = "Cannot find a profile for user {0}".format(user)
+            log.error(error_msg)
+            raise UserProfile.DoesNotExist(error_msg)
+
+        if profile.oauth_token is None or profile.oauth_secret is None:
+            error_msg = "Cannot find oauth tokens or secrets for user {0}".format(user)
+            log.error(error_msg)
+            raise ValueError(error_msg)
+
+        self.twitter = Twython(settings.TWITTER_AUTH_APP_KEY, settings.TWITTER_AUTH_SECRET_APP_KEY, profile.oauth_token, profile.oauth_secret)
+
+    def post_reply(self, tweet_text, reply_to_id):
+        self.twitter.update_status(status=tweet_text, in_reply_to_status_id=reply_to_id)
+
+    def post_tweet(self, tweet_text):
+        self.twitter.update_status(status=tweet_text)

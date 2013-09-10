@@ -6,7 +6,13 @@
         <%= tweet_count_today %>
     </td>
     <td>
+        <%= user_count_today %>
+    </td>
+    <td>
         <%= tweet_count %>
+    </td>
+    <td>
+        <%= user_count %>
     </td>
     <td>
         <%= modified %>
@@ -129,6 +135,16 @@
                 <h4><%= user_name %></h4>
                 <span class="time"><%= created_at %></span>
             </div>
+            <div class="pull-right">
+                <span class="label label-info">
+                    <span class="glyphicon glyphicon-retweet"> <%= retweet_count %></span>
+                </span>
+            </div>
+            <div class="pull-right">
+                <span class="label label-info">
+                    <span class="glyphicon glyphicon-comment"> <%= reply_count %></span>
+                </span>
+            </div>
         </div>
         <div class="comment-content clearfix">
             <%= text %>
@@ -138,6 +154,12 @@
         <% } %>
         <div class="tweet-replies-container" data-contains-replies="false" id="tweet-replies-container-<%= pk %>">
         </div>
+    </div>
+</script>
+
+<script id="noRepliesTemplate" type="text/template">
+    <div class="comment">
+        <p>Aw, shucks!  We are unable to pull up the replies for this tweet.  The actual replies, if any, can be found on twitter.</p>
     </div>
 </script>
 

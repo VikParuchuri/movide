@@ -3,7 +3,7 @@ from rest_framework import serializers
 from models import Tag, Tweet, UserProfile, EmailSubscription
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from tasks import UserTwitterData
+from tasks import UserTwitterData, UserTweet
 import logging
 log = logging.getLogger(__name__)
 
@@ -24,6 +24,8 @@ class TagSerializer(serializers.Serializer):
     owner = serializers.SlugRelatedField(slug_field="username", queryset=User.objects.all(), blank=True, null=True)
     tweet_count = serializers.Field(source="tweet_count")
     tweet_count_today = serializers.Field(source="tweet_count_today")
+    user_count = serializers.Field(source="user_count")
+    user_count_today = serializers.Field(source="user_count_today")
     tweet_count_by_day = serializers.Field(source="tweet_count_by_day")
     display_name = serializers.Field()
     name = serializers.CharField()
@@ -63,6 +65,28 @@ class TweetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tweet
         fields = ('text', 'source', 'created_at', 'retweet_of', 'reply_to', 'tags', 'reply_count', 'retweet_count', 'user_name', 'user_twitter_profile_image', 'pk', )
+
+class TweetReplySerializer(serializers.Serializer):
+    tweet_text = serializers.CharField()
+    in_reply_to_id = serializers.CharField()
+
+    def restore_object(self, attrs, instance=None):
+        user = self.context['request'].user
+        in_reply_to_id = attrs.get('in_reply_to_id')
+        tweet_text = attrs.get('tweet_text')
+
+        user_tweet = UserTweet(user)
+
+        if in_reply_to_id is not None:
+            try:
+                tweet = Tweet.objects.get(id=int(in_reply_to_id))
+            except Tweet.DoesNotExist:
+                raise serializers.ValidationError("The given tweet for this reply id does not exist.")
+            user_tweet.post_reply(tweet_text, tweet.id_str)
+        else:
+            user_tweet.post_tweet(tweet_text)
+
+        return instance
 
 class UserSerializer(serializers.Serializer):
     twitter_screen_name = serializers.Field(source="username")

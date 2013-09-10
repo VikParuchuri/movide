@@ -117,11 +117,12 @@ class UserView(APIView):
             error_msg = "Need to specify a username."
             log.error(error_msg)
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
-        serialized = UserSerializer(data=request.DATA, context={'request' : request})
-        if serialized.is_valid():
-            return Response(serialized.data, status=status.HTTP_201_CREATED)
+        serializer = UserSerializer(data=request.DATA, context={'request' : request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            return Response(serialized._errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserDetail(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -173,6 +174,18 @@ class EmailSubscription(APIView):
         serializer = EmailSubscriptionSerializer(data=request.DATA)
         if serializer.is_valid():
 
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
+
+class TweetReply(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, format=None):
+        if 'in_reply_to_id' not in request.DATA:
+            request.DATA['in_reply_to_id'] = None
+        serializer = UserSerializer(data=request.DATA, context={'request' : request})
+        if serializer.is_valid():
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)

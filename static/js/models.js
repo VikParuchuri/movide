@@ -433,7 +433,8 @@ $(document).ready(function() {
         },
         get_model_json: function(){
             var model_json = this.model.toJSON();
-            model_json.created_at = model_json.created_at.split("T")[0];
+            model_json.created_at = model_json.created_at.replace("Z","");
+            model_json.created_at = moment.utc(model_json.created_at).local().calendar();
             return model_json;
         },
         render: function () {
@@ -493,17 +494,22 @@ $(document).ready(function() {
             var comment_container = $(event.target).parent().find('#tweet-replies-container-' + tweet_id);
             if(!comment_container.data('contains-replies')){
                 var tweet_replies = this.child_tweets(tweet_id);
-                var that = this;
-                var model_html = "";
-                _.each(tweet_replies, function (item) {
-                    model_html = model_html + $(that.renderTweet(item)).html();
-                }, this);
-                var tmpl = _.template($(this.template_name).html());
-                var content_html = tmpl({tweets: model_html, tag: this.tag, display_tag: this.display_tag});
-                $(comment_container).html(content_html);
-                comment_container.data('contains-replies', true);
-                $(this.view_tweet_replies_tag).unbind();
-                $(this.view_tweet_replies_tag).click(this.render_tweet_replies);
+                if(tweet_replies.length > 0){
+                    var that = this;
+                    var model_html = "";
+                    _.each(tweet_replies, function (item) {
+                        model_html = model_html + $(that.renderTweet(item)).html();
+                    }, this);
+                    var tmpl = _.template($(this.template_name).html());
+                    var content_html = tmpl({tweets: model_html, tag: this.tag, display_tag: this.display_tag});
+                    $(comment_container).html(content_html);
+                    comment_container.data('contains-replies', true);
+                    $(this.view_tweet_replies_tag).unbind();
+                    $(this.view_tweet_replies_tag).click(this.render_tweet_replies);
+                } else {
+                    var no_replies = $("#noRepliesTemplate").html();
+                    $(comment_container).html(no_replies);
+                }
             } else {
                 $(comment_container).html('');
                 comment_container.data('contains-replies', false);
