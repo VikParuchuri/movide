@@ -2,7 +2,7 @@ from __future__ import division
 from django.contrib.auth.models import User
 from models import Tag, Tweet, UserProfile
 from rest_framework.views import APIView
-from serializers import TagSerializer, TweetSerializer, UserSerializer, EmailSubscriptionSerializer
+from serializers import TagSerializer, TweetSerializer, UserSerializer, EmailSubscriptionSerializer, TweetReplySerializer
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from django.db.models import Q, Count
@@ -184,7 +184,7 @@ class TweetReply(APIView):
     def post(self, request, format=None):
         if 'in_reply_to_id' not in request.DATA:
             request.DATA['in_reply_to_id'] = None
-        serializer = UserSerializer(data=request.DATA, context={'request' : request})
+        serializer = TweetReplySerializer(data=request.DATA, context={'request' : request})
         if serializer.is_valid():
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:

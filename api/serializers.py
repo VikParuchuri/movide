@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 from tasks import UserTwitterData, UserTweet
 import logging
+from django.conf import settings
 log = logging.getLogger(__name__)
 
 class EmailSubscriptionSerializer(serializers.ModelSerializer):
@@ -58,30 +59,59 @@ class TweetSerializer(serializers.ModelSerializer):
     tags = serializers.SlugRelatedField(many=True, slug_field="name", read_only=True)
     user = serializers.SlugRelatedField(many=True, slug_field="username", read_only=True, blank=True, null=True)
     user_name = serializers.Field(source="twitter_name")
+    user_screen_name = serializers.Field(source="twitter_screen_name")
     user_twitter_profile_image = serializers.Field(source="profile_image")
     retweet_of = serializers.PrimaryKeyRelatedField(read_only=True)
     reply_to = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Tweet
-        fields = ('text', 'source', 'created_at', 'retweet_of', 'reply_to', 'tags', 'reply_count', 'retweet_count', 'user_name', 'user_twitter_profile_image', 'pk', )
+        fields = (
+                'text', 'source', 'created_at', 'retweet_of', 'reply_to',
+                'tags', 'reply_count', 'retweet_count', 'user_name',
+                'user_twitter_profile_image', 'pk', 'user_screen_name',
+        )
 
 class TweetReplySerializer(serializers.Serializer):
     tweet_text = serializers.CharField()
     in_reply_to_id = serializers.CharField()
+    tag = serializers.CharField()
 
     def restore_object(self, attrs, instance=None):
         user = self.context['request'].user
         in_reply_to_id = attrs.get('in_reply_to_id')
         tweet_text = attrs.get('tweet_text')
+        tag = attrs.get('tag')
+        if tag.startswith("#"):
+            tag = tag[1:]
 
         user_tweet = UserTweet(user)
+
+        try:
+            tag = Tag.objects.get(name=tag)
+        except Tag.DoesNotExist:
+            raise serializers.ValidationError("Could not find the tag that this was posted from!")
+
+        if len(tweet_text) < 1:
+            raise serializers.ValidationError("Need to enter an actual reply.")
+
+        if settings.TWITTER_HASHTAG not in tweet_text.lower():
+            tweet_text = tweet_text + " " + settings.TWITTER_HASHTAG
+        if tag.name not in tweet_text.lower():
+            tweet_text = tweet_text + " #" + tag.name
 
         if in_reply_to_id is not None:
             try:
                 tweet = Tweet.objects.get(id=int(in_reply_to_id))
+                tweet_screen_name = tweet.user.profile.twitter_screen_name
             except Tweet.DoesNotExist:
                 raise serializers.ValidationError("The given tweet for this reply id does not exist.")
+            except UserProfile.DoesNotExist:
+                raise serializers.ValidationError("Cannot find a twitter screen name for the tweet you are replying to.")
+            if not tweet_screen_name.startswith("@"):
+                tweet_screen_name = "@" + tweet_screen_name
+            if tweet_screen_name.lower() not in tweet_text.lower():
+                tweet_text = tweet_screen_name + " " + tweet_text
             user_tweet.post_reply(tweet_text, tweet.id_str)
         else:
             user_tweet.post_tweet(tweet_text)

@@ -36,6 +36,12 @@ class Tweet(models.Model):
         except UserProfile.DoesNotExist:
             return None
 
+    def twitter_screen_name(self):
+        try:
+            return self.user.profile.twitter_screen_name
+        except UserProfile.DoesNotExist:
+            return None
+
 class Tag(models.Model):
     name = models.CharField(max_length=160, unique=True, db_index=True)
     tweets = models.ManyToManyField(Tweet, related_name="tags", blank=True, null=True)

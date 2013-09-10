@@ -35,6 +35,16 @@ $(document).ready(function() {
         }
     });
 
+    var TweetReply = methodModel.extend({
+        idAttribute: 'pk',
+        url: function () {
+            return '/api/tweet_reply/' + this.id;
+        },
+        methodUrl: {
+            'create': '/api/tweet_reply/'
+        }
+    });
+
     var EmailSubscription = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
@@ -461,11 +471,14 @@ $(document).ready(function() {
         template_name: "#tweetsTemplate",
         tag: undefined,
         view_tweet_replies_tag: '.view-tweet-replies',
+        reply_to_tweet: '.reply-to-tweet-button',
+        open_reply_panel: '.reply-to-tweet',
         events: {
-            'click .view-tweet-replies': this.render_tweet_replies
+            'click .view-tweet-replies': this.render_tweet_replies,
+            'click .reply-to-tweet': this.post_reply_to_tweet
         },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'renderTweet', 'refresh', 'render_tweets', 'destroy_view', 'render_tweet_replies');
+            _.bindAll(this, 'render', 'renderTweet', 'refresh', 'render_tweets', 'destroy_view', 'render_tweet_replies', 'post_reply_to_tweet');
             this.collection = new this.collection_class();
             this.tag = options.tag;
             this.display_tag = options.display_tag;
@@ -488,6 +501,35 @@ $(document).ready(function() {
             }
             return top_level
         },
+        handle_reply_collapse: function(event){
+          event.preventDefault();
+        },
+        post_reply_to_tweet: function(event){
+            event.preventDefault();
+            var button = $(event.target);
+            var primary_key = button.data('primary-key');
+            var reply = $('#reply-to-tweet-input-' + primary_key).val();
+            console.log({in_reply_to_id : primary_key, tweet_text: reply, tag: this.tag});
+            var tweet_reply = new TweetReply({in_reply_to_id : primary_key, tweet_text: reply, tag: this.tag});
+            var tweet_div = $('#reply-to-tweet-' + primary_key);
+            var reply_form = tweet_div.find('.reply-to-tweet-form');
+            var message_block = tweet_div.find('.help-block');
+            $(button).attr('disabled', true);
+            tweet_reply.save(null,{
+                success : function(){
+                    $(reply_form).removeClass("has-error").addClass("has-success");
+                    $(message_block).html("Reply sent!  It may take some time to show up here.");
+                    $(button).attr('disabled', false);
+                },
+                error: function(){
+                    $(reply_form).removeClass("has-success").addClass("has-error");
+                    $(message_block).html("There was a problem sending your tweet.  Please try again later.");
+                    $(button).attr('disabled', false);
+                }
+            });
+
+            return false;
+        },
         render_tweet_replies: function(event){
             event.preventDefault();
             var tweet_id = $(event.target).parent().data('tweet-id');
@@ -504,8 +546,7 @@ $(document).ready(function() {
                     var content_html = tmpl({tweets: model_html, tag: this.tag, display_tag: this.display_tag});
                     $(comment_container).html(content_html);
                     comment_container.data('contains-replies', true);
-                    $(this.view_tweet_replies_tag).unbind();
-                    $(this.view_tweet_replies_tag).click(this.render_tweet_replies);
+                    this.rebind_events();
                 } else {
                     var no_replies = $("#noRepliesTemplate").html();
                     $(comment_container).html(no_replies);
@@ -515,6 +556,14 @@ $(document).ready(function() {
                 comment_container.data('contains-replies', false);
             }
             return false;
+        },
+        rebind_events: function() {
+            $(this.view_tweet_replies_tag).unbind();
+            $(this.view_tweet_replies_tag).click(this.render_tweet_replies);
+            $(this.reply_to_tweet).unbind();
+            $(this.reply_to_tweet).click(this.post_reply_to_tweet);
+            $(this.open_reply_panel).unbind();
+            $(this.open_reply_panel).click(this.handle_reply_collapse);
         },
         child_tweets: function(tweet_id){
             tweet_id = parseInt(tweet_id);
@@ -546,8 +595,7 @@ $(document).ready(function() {
             var tmpl = _.template($(this.template_name).html());
             var content_html = tmpl({tweets: model_html, tag: this.tag, display_tag: this.display_tag});
             $(this.el).html(content_html);
-            $(this.view_tweet_replies_tag).unbind();
-            $(this.view_tweet_replies_tag).click(this.render_tweet_replies);
+            this.rebind_events();
         },
         renderTweet: function (item) {
             var userView = new this.view_class({

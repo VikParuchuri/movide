@@ -126,7 +126,7 @@
 </script>
 
 <script id="tweetTemplate" type="text/template">
-    <div class="comment" data-tweet-id="<%= pk %>">
+    <div class="comment" data-tweet-id="<%= pk %>" data-reply-username="@<%= user_screen_name %>">
         <div class="header clearfix">
             <% if (typeof(user_twitter_profile_image) != "undefined") { %>
                 <img src="<%= user_twitter_profile_image %>" alt="<%= user_name %>">
@@ -149,8 +149,23 @@
         <div class="comment-content clearfix">
             <%= text %>
         </div>
+        <a type="button" class="reply-to-tweet" data-toggle="collapse" data-target="#reply-to-tweet-<%= pk %>" href="#">
+            Reply
+        </a>
+        <div id="reply-to-tweet-<%= pk %>" class="collapse">
+            <form role="form">
+                <div class="form-group reply-to-tweet-form">
+                    <label class="sr-only" for="reply-to-tweet-input-<%= pk %>">Tag</label>
+                    <input type="text" class="form-control input-lg" id="reply-to-tweet-input-<%= pk %>" placeholder="Enter reply here...">
+                    <span class="help-block" id="reply-to-tweet-message-<%= pk %>"></span>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-small reply-to-tweet-button" id="reply-to-tweet-button-<%= pk %>" data-primary-key="<%= pk %>">Send Tweet</button>
+                </div>
+            </form>
+        </div>
         <% if (reply_count > 0 || retweet_count > 0) { %>
-            <a type="button" href="#" class="view-tweet-replies">View replies</a>
+            <a type="button" href="#" class="view-tweet-replies">  View replies</a>
         <% } %>
         <div class="tweet-replies-container" data-contains-replies="false" id="tweet-replies-container-<%= pk %>">
         </div>
