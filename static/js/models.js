@@ -192,9 +192,11 @@ $(document).ready(function() {
         refresh: function(options){
             this.tag = options.tag;
             this.active = options.active;
+            this.display_tag = options.display_tag;
             this.options = {
                 tag: this.tag,
-                active: this.active
+                active: this.active,
+                display_tag: this.display_tag
             };
             $(this.el).empty();
             this.base_refresh();
@@ -253,6 +255,7 @@ $(document).ready(function() {
         },
         refresh: function(options){
             this.tag = options.tag;
+            this.display_tag = options.display_tag;
             this.collection.fetch({async:false, data: {tag: this.tag}});
             this.setElement(this.el_name);
             $(this.el).empty();
@@ -260,11 +263,11 @@ $(document).ready(function() {
         },
         error_display: function(model, xhr, options){
             $(".create-user-form").removeClass("has-success").addClass("has-error");
-            $(".help-block").html("This username cannot be validated.  Is it an actual twitter screen name?");
+            $("#create-user-message").html("This username cannot be validated.  Is it an actual twitter screen name?");
         },
         success_display: function(model, response, options){
             $(".create-user-form").removeClass("has-error").addClass("has-success");
-            $(".help-block").html("User added!  They will now show up in the feed for this tag.");
+            $("#create-user-message").html("User added!  They will now show up in the feed for this tag.");
             this.refresh({tag : this.tag});
         },
         create_user: function(event){
@@ -356,7 +359,7 @@ $(document).ready(function() {
         },
         refresh: function(){
             this.collection.fetch({async:false});
-            $(this.el).empty();
+            $(this.tag_item_el).empty();
             this.render_dash();
         }
     });
@@ -482,6 +485,7 @@ $(document).ready(function() {
         },
         refresh: function(options){
             this.tag = options.tag;
+            this.display_tag = options.display_tag;
             this.collection.fetch({async:false, data: {tag: this.tag}});
             this.setElement(this.el_name);
             $(this.el).empty();
