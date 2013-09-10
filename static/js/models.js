@@ -140,9 +140,11 @@ $(document).ready(function() {
             _.bindAll(this, 'render', 'refresh');
             this.tag = options.tag;
             this.active = options.active;
+            this.display_tag = options.display_tag;
             this.options = {
                 tag: this.tag,
-                active: this.active
+                active: this.active,
+                display_tag: this.display_tag
             };
         },
         base_render: function() {
@@ -156,6 +158,7 @@ $(document).ready(function() {
             }
             var content_html = tmpl({
                 tag: this.tag,
+                display_tag: this.display_tag,
                 tweet_count: parseInt(this.tag_model.get('tweet_count')),
                 tweet_count_today: parseInt(this.tag_model.get('tweet_count_today')),
                 tweets_by_day: tweets_by_day
@@ -218,6 +221,7 @@ $(document).ready(function() {
             this.collection = new this.collection_class();
             this.tag = options.tag;
             this.active = options.active;
+            this.display_tag = options.display_tag;
             this.collection.fetch({async: false, data: {tag: this.tag}});
         },
         render_table: function(){
@@ -234,7 +238,7 @@ $(document).ready(function() {
                 model_html = $("#noUserTemplate").html()
             }
             var tmpl = _.template($(this.template_name).html());
-            var content_html = tmpl({content: model_html, tag: this.tag});
+            var content_html = tmpl({content: model_html, tag: this.tag, display_tag: this.display_tag});
             $(this.el).html(content_html);
             $('#create-user').click(this.create_user);
             $('.user-tag-delete').click(this.user_tag_delete);
@@ -388,7 +392,8 @@ $(document).ready(function() {
             event.preventDefault();
             var options = {
                 tag: $(event.target).data('tag-name'),
-                active: $(event.target).parent()
+                active: $(event.target).parent(),
+                display_tag:$(event.target).data('display-tag-name')
             };
             if(this.detail_view!=undefined){
                 this.detail_view.refresh(options);
@@ -448,6 +453,7 @@ $(document).ready(function() {
             _.bindAll(this, 'render', 'renderTweet', 'refresh', 'render_tweets', 'destroy_view');
             this.collection = new this.collection_class();
             this.tag = options.tag;
+            this.display_tag = options.display_tag;
             this.collection.fetch({async: false, data: {tag: this.tag}});
         },
         render_tweets: function(){
@@ -462,10 +468,10 @@ $(document).ready(function() {
                 }, this);
             } else {
                 var no_tmpl = _.template($("#noTweetsTemplate").html());
-                model_html = no_tmpl({tag: this.tag});
+                model_html = no_tmpl({tag: this.tag, display_tag: this.display_tag});
             }
             var tmpl = _.template($(this.template_name).html());
-            var content_html = tmpl({tweets: model_html, tag: this.tag});
+            var content_html = tmpl({tweets: model_html, tag: this.tag, display_tag: this.display_tag});
             $(this.el).html(content_html);
         },
         renderTweet: function (item) {

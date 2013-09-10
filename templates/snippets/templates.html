@@ -1,6 +1,6 @@
 <script id="tagTemplate" type="text/template">
     <td>
-        #<%= name %>
+        #<%= display_name %>
     </td>
     <td>
         <%= tweet_count_today %>
@@ -20,7 +20,7 @@
 <script id="tagDetailTemplate" type="text/template">
     <div class="row">
         <div class="col-xs-10">
-            <h1>#<%= tag %></h1>
+            <h1>#<%= display_tag %></h1>
         </div>
     </div>
     <div class="row">
@@ -79,10 +79,10 @@
 
 <script id="noTweetsTemplate" type="text/template">
     <p>There aren't any tweets for this tag yet.</p>
-    <p>Get started by tweeting and including the hashtags #movide and #<%= tag %>.</p>
-    <p>For example, <strong>Why does ice float? #movide #<%= tag %>.</strong></p>
+    <p>Get started by tweeting and including the hashtags #movide and #<%= display_tag %>.</p>
+    <p>For example, <strong>Why does ice float? #movide #<%= display_tag %>.</strong></p>
     <p>Any user listed to the right can tweet to this tag and show up here.</p>
-    <p>There may be a bit of a delay, which is normal.  If a tweet doesn't show up here for a while, try tweeting again with #movide #<%= tag %>.  Tweets sometimes get "stuck" and tweeting again unsticks everything.</p>
+    <p>There may be a bit of a delay, which is normal.  If a tweet doesn't show up here for a while, try tweeting again with #movide #<%= display_tag %>.  Tweets sometimes get "stuck" and tweeting again unsticks everything.</p>
 </script>
 
 <script id="userTemplate" type="text/template">
@@ -122,5 +122,5 @@
 </script>
 
 <script id="sidebarItemTemplate" type="text/template">
-    <a href="#" class="tag-name" data-tag-name="<%= name %>">#<%= name %></a>
+    <a href="#" class="tag-name" data-tag-name="<%= name %>" data-display-tag-name="<%= display_name %>">#<%= display_name %></a>
 </script>

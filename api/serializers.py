@@ -24,6 +24,7 @@ class TagSerializer(serializers.Serializer):
     tweet_count = serializers.Field(source="tweet_count")
     tweet_count_today = serializers.Field(source="tweet_count_today")
     tweet_count_by_day = serializers.Field(source="tweet_count_by_day")
+    display_name = serializers.Field()
     name = serializers.CharField()
     modified = serializers.Field()
 
@@ -36,9 +37,10 @@ class TagSerializer(serializers.Serializer):
         name = attrs.get('name').encode('ascii', 'ignore')
         if name.startswith("#"):
             name = name[1:]
+
         if instance is None:
             try:
-                instance = Tag(owner=user, name=name)
+                instance = Tag(owner=user, name=name.lower(), display_name=name)
                 instance.save()
                 user.tags.add(instance)
                 user.save()

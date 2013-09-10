@@ -41,6 +41,7 @@ class Tag(models.Model):
     tweets = models.ManyToManyField(Tweet, related_name="tags", blank=True, null=True)
     users = models.ManyToManyField(User, related_name="tags", blank=True, null=True)
     owner = models.ForeignKey(User, related_name="created_tags", blank=True, null=True, on_delete=models.SET_NULL)
+    display_name = models.CharField(max_length=160)
 
     modified = models.DateTimeField(auto_now=True)
 
