@@ -57,6 +57,7 @@ $(document).ready(function() {
     });
 
     var Tweets = Backbone.Collection.extend({
+        idAttribute: 'pk',
         model: Tweet,
         url: '/api/tweets/'
     });
@@ -72,11 +73,13 @@ $(document).ready(function() {
     });
 
     var Tags = Backbone.Collection.extend({
+        idAttribute: 'pk',
         model: Tag,
         url: '/api/tags/'
     });
 
     var Users = Backbone.Collection.extend({
+        idAttribute: 'pk',
         model: User,
         url: '/api/users/'
     });
@@ -244,6 +247,8 @@ $(document).ready(function() {
             var tmpl = _.template($(this.template_name).html());
             var content_html = tmpl({content: model_html, tag: this.tag, display_tag: this.display_tag});
             $(this.el).html(content_html);
+            $('#create-user').unbind();
+            $('.user-tag-delete').unbind();
             $('#create-user').click(this.create_user);
             $('.user-tag-delete').click(this.user_tag_delete);
             return this;
@@ -454,8 +459,12 @@ $(document).ready(function() {
         view_class: TweetView,
         template_name: "#tweetsTemplate",
         tag: undefined,
+        view_tweet_replies_tag: '.view-tweet-replies',
+        events: {
+            'click .view-tweet-replies': this.render_tweet_replies
+        },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'renderTweet', 'refresh', 'render_tweets', 'destroy_view');
+            _.bindAll(this, 'render', 'renderTweet', 'refresh', 'render_tweets', 'destroy_view', 'render_tweet_replies');
             this.collection = new this.collection_class();
             this.tag = options.tag;
             this.display_tag = options.display_tag;
@@ -464,11 +473,64 @@ $(document).ready(function() {
         render_tweets: function(){
             this.render();
         },
+        top_level_tweets: function(){
+            var top_level = [];
+            var i;
+            var m;
+            for(i=0; i<this.collection.models.length;i++){
+                m = this.collection.models[i];
+                var reply_to = m.get('reply_to');
+                var retweet_of = m.get('retweet_of');
+                if(reply_to == null && retweet_of == null){
+                    top_level.push(m);
+                }
+            }
+            return top_level
+        },
+        render_tweet_replies: function(event){
+            event.preventDefault();
+            var tweet_id = $(event.target).parent().data('tweet-id');
+            var comment_container = $(event.target).parent().find('#tweet-replies-container-' + tweet_id);
+            if(!comment_container.data('contains-replies')){
+                var tweet_replies = this.child_tweets(tweet_id);
+                var that = this;
+                var model_html = "";
+                _.each(tweet_replies, function (item) {
+                    model_html = model_html + $(that.renderTweet(item)).html();
+                }, this);
+                var tmpl = _.template($(this.template_name).html());
+                var content_html = tmpl({tweets: model_html, tag: this.tag, display_tag: this.display_tag});
+                $(comment_container).html(content_html);
+                comment_container.data('contains-replies', true);
+                $(this.view_tweet_replies_tag).unbind();
+                $(this.view_tweet_replies_tag).click(this.render_tweet_replies);
+            } else {
+                $(comment_container).html('');
+                comment_container.data('contains-replies', false);
+            }
+            return false;
+        },
+        child_tweets: function(tweet_id){
+            tweet_id = parseInt(tweet_id);
+            var children = [];
+            var i;
+            var m;
+            for(i=0; i<this.collection.models.length;i++){
+                m = this.collection.models[i];
+                var reply_to = parseInt(m.get('reply_to'));
+                var retweet_of = parseInt(m.get('retweet_of'));
+                if(reply_to == tweet_id || retweet_of == tweet_id){
+                    children.push(m);
+                }
+            }
+            return children
+        },
         render: function () {
             var model_html = "";
             var that = this;
+            var top_level_tweets = this.top_level_tweets();
             if(this.collection.length > 0){
-                _.each(this.collection.models, function (item) {
+                _.each(top_level_tweets, function (item) {
                     model_html = model_html + $(that.renderTweet(item)).html();
                 }, this);
             } else {
@@ -478,6 +540,8 @@ $(document).ready(function() {
             var tmpl = _.template($(this.template_name).html());
             var content_html = tmpl({tweets: model_html, tag: this.tag, display_tag: this.display_tag});
             $(this.el).html(content_html);
+            $(this.view_tweet_replies_tag).unbind();
+            $(this.view_tweet_replies_tag).click(this.render_tweet_replies);
         },
         renderTweet: function (item) {
             var userView = new this.view_class({

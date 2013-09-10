@@ -19,6 +19,7 @@ class UserField(serializers.SlugRelatedField):
         return super(UserField, self).from_native(data)
 
 class TagSerializer(serializers.Serializer):
+    pk = serializers.Field()
     users = UserField(many=True, slug_field='username', queryset=User.objects.all(), blank=True, null=True)
     owner = serializers.SlugRelatedField(slug_field="username", queryset=User.objects.all(), blank=True, null=True)
     tweet_count = serializers.Field(source="tweet_count")
@@ -49,6 +50,7 @@ class TagSerializer(serializers.Serializer):
         return instance
 
 class TweetSerializer(serializers.ModelSerializer):
+    pk = serializers.Field()
     retweet_count = serializers.Field(source="retweet_count")
     reply_count = serializers.Field(source="reply_count")
     tags = serializers.SlugRelatedField(many=True, slug_field="name", read_only=True)
@@ -60,7 +62,7 @@ class TweetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tweet
-        fields = ('text', 'source', 'created_at', 'retweet_of', 'reply_to', 'tags', 'reply_count', 'retweet_count', 'user_name', 'user_twitter_profile_image', )
+        fields = ('text', 'source', 'created_at', 'retweet_of', 'reply_to', 'tags', 'reply_count', 'retweet_count', 'user_name', 'user_twitter_profile_image', 'pk', )
 
 class UserSerializer(serializers.Serializer):
     twitter_screen_name = serializers.Field(source="username")

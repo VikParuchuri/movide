@@ -120,7 +120,7 @@
 </script>
 
 <script id="tweetTemplate" type="text/template">
-    <div class="comment">
+    <div class="comment" data-tweet-id="<%= pk %>">
         <div class="header clearfix">
             <% if (typeof(user_twitter_profile_image) != "undefined") { %>
                 <img src="<%= user_twitter_profile_image %>" alt="<%= user_name %>">
@@ -132,6 +132,11 @@
         </div>
         <div class="comment-content clearfix">
             <%= text %>
+        </div>
+        <% if (reply_count > 0 || retweet_count > 0) { %>
+            <a type="button" href="#" class="view-tweet-replies">View replies</a>
+        <% } %>
+        <div class="tweet-replies-container" data-contains-replies="false" id="tweet-replies-container-<%= pk %>">
         </div>
     </div>
 </script>
