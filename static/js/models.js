@@ -167,6 +167,8 @@ $(document).ready(function() {
             $(this.active).addClass("current active");
             $(this.el).html(content_html);
             if(tweets_by_day.length > 1){
+                var chart_width = $("#tweets").width();
+                $('#' + this.chart_tag).css('width', chart_width);
                 this.create_chart(tweets_by_day);
             }
         },
