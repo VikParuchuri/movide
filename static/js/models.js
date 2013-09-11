@@ -233,7 +233,9 @@ $(document).ready(function() {
           console.log("error");
         },
         render_additional_charts: function(model, success, options){
-            if(model.get('network_info').nodes.length==0 || model.get('network_info').edges.length==0){
+            $("#student-network-chart").empty();
+            if(model.get('network_info').nodes.length < 2 || model.get('network_info').edges.length < 1){
+                $("#student-network-chart").html($('#noNetworkChartTemplate').html());
                 return
             }
             $('a[href="#stats-container"]').on('shown.bs.tab', function (e) {
