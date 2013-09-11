@@ -35,6 +35,13 @@ $(document).ready(function() {
         }
     });
 
+    var TagInformation = methodModel.extend({
+        idAttribute: 'pk',
+        url: function () {
+            return '/api/tag_information/' + this.get('name') + "/";
+        }
+    });
+
     var TweetReply = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
@@ -146,6 +153,7 @@ $(document).ready(function() {
         tweet_view: null,
         tag_model: null,
         chart_tag: "tweet-chart",
+        network_chart_tag: "student-network-chart",
         events: {
 
         },
@@ -179,6 +187,8 @@ $(document).ready(function() {
             $("#tag-sidebar").find('li').removeClass("current active");
             $(this.active).addClass("current active");
             $(this.el).html(content_html);
+            var tag_information = new TagInformation({'name' : this.tag});
+            tag_information.fetch({success: this.render_additional_charts, error: this.render_additional_charts_error});
             if(tweets_by_day.length > 1){
                 var chart_width = $("#tweets").width();
                 $('#' + this.chart_tag).css('width', chart_width);
@@ -218,6 +228,101 @@ $(document).ready(function() {
             this.setElement($(this.el));
             this.user_view.refresh(this.options);
             this.tweet_view.refresh(this.options);
+        },
+        render_additional_charts_error: function(){
+          console.log("error");
+        },
+        render_additional_charts: function(model, success, options){
+            if(model.get('network_info').nodes.length==0 || model.get('network_info').edges.length==0){
+                return
+            }
+            $('a[href="#stats-container"]').on('shown.bs.tab', function (e) {
+                var sigInst = sigma.init(document.getElementById("student-network-chart")).drawingProperties({
+                    defaultLabelColor: '#fff'
+                }).graphProperties({
+                        minNodeSize: 0.5,
+                        maxNodeSize: 5,
+                        minEdgeSize: 1,
+                        maxEdgeSize: 1
+                    }).mouseProperties({
+                        maxRatio: 4
+                    });
+
+                var i;
+                var clusters = [{
+                        'id': 1,
+                        'nodes': [],
+                        'color': 'rgb('+0+','+
+                            0+','+
+                            0+')'
+                    }];
+
+                var cluster = clusters[0];
+                var nodes = model.get('network_info').nodes;
+                var edges = model.get('network_info').edges;
+                var palette = colorbrewer.Paired[9];
+                for(i=0;i<nodes.length;i++){
+                    var node = nodes[i];
+                    sigInst.addNode(node.name,{
+                        'x': Math.random(),
+                        'y': Math.random(),
+                        'size': node.size,
+                        'color': palette[(Math.random()*palette.length|0)],
+                        'cluster': cluster['id'],
+                        'label': node.name
+                    });
+                    cluster.nodes.push(node.name);
+                }
+
+                for(i = 0; i < edges.length; i++){
+                     var edge = edges[i];
+                     sigInst.addEdge(i,edge.start, edge.end, {'size' : 'strength'});
+                }
+
+                var greyColor = '#FFFFFF';
+                sigInst.bind('overnodes',function(event){
+                    var nodes = event.content;
+                    var neighbors = {};
+                    sigInst.iterEdges(function(e){
+                        if(nodes.indexOf(e.source)<0 && nodes.indexOf(e.target)<0){
+                            if(!e.attr['grey']){
+                                e.attr['true_color'] = e.color;
+                                e.color = greyColor;
+                                e.attr['grey'] = 1;
+                            }
+                        }else{
+                            e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+                            e.attr['grey'] = 0;
+
+                            neighbors[e.source] = 1;
+                            neighbors[e.target] = 1;
+                        }
+                    }).iterNodes(function(n){
+                            if(!neighbors[n.id]){
+                                if(!n.attr['grey']){
+                                    n.attr['true_color'] = n.color;
+                                    n.color = greyColor;
+                                    n.attr['grey'] = 1;
+                                }
+                            }else{
+                                n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+                                n.attr['grey'] = 0;
+                            }
+                        }).draw(2,2,2);
+                }).bind('outnodes',function(){
+                        sigInst.iterEdges(function(e){
+                            e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+                            e.attr['grey'] = 0;
+                        }).iterNodes(function(n){
+                                n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+                                n.attr['grey'] = 0;
+                            }).draw(2,2,2);
+                    });
+
+                sigInst.startForceAtlas2();
+                setTimeout(function(){sigInst.stopForceAtlas2();}, 1500);
+                $('a[href="#stats-container"]').unbind();
+            });
         }
     });
 

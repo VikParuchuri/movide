@@ -2,7 +2,7 @@ from __future__ import division
 from django.contrib.auth.models import User
 from models import Tag, Tweet, UserProfile
 from rest_framework.views import APIView
-from serializers import TagSerializer, TweetSerializer, UserSerializer, EmailSubscriptionSerializer, TweetReplySerializer
+from serializers import TagSerializer, TweetSerializer, UserSerializer, EmailSubscriptionSerializer, TweetReplySerializer, TagInformationSerializer
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from django.db.models import Q, Count
@@ -40,6 +40,11 @@ class TagDetailView(APIView):
 
     def get(self, request, tag, format=None):
         tag = self.get_object(tag)
+        if tag.owner != request.user:
+            error_msg = "Tag owner is not the user making the request."
+            log.error(error_msg)
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = TagSerializer(tag)
         return Response(serializer.data)
 
@@ -198,3 +203,21 @@ class TweetReply(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
+
+class TagInformation(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    def get_object(self, tag):
+        try:
+            return Tag.objects.get(name=tag)
+        except Tag.DoesNotExist:
+            raise Http404
+
+    def get(self, request, tag, format=None):
+        tag = self.get_object(tag)
+        if tag.owner != request.user:
+            error_msg = "Tag owner is not the user making the request."
+            log.error(error_msg)
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+        serializer = TagInformationSerializer(tag)
+        return Response(serializer.data)
+

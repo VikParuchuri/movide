@@ -47,7 +47,14 @@
             <div class="row">
                 <h3>Stats</h3>
                 <% if (tweets_by_day.length > 1) { %>
+                    <h4>Tweet Activity</h4>
                     <div id="tweet-chart" style="height:250px;"></div>
+                    <h4>Student Network</h4>
+                    <p>Each point represents a student in the group, and each line between points represents replies and retweets between the students.  A larger point means that the student has tweeted more, and a larger line means that the two students have interacted more.</p>
+                    <p>Click and drag to move around, and use the mousewheel to zoom in and out.  Hovering over a point shows you only the connections with which that student has has conversations.</p>
+                    <div id="student-network-chart-container">
+                        <div id="student-network-chart"></div>
+                    </div>
                 <% } else { %>
                 <p>Oh no! We can't show you the daily activity chart until you have some tweets for this tag.</p>
                 <% } %>

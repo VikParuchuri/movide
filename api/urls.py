@@ -4,7 +4,8 @@ from django.conf import settings
 
 from rest_framework import viewsets, routers
 from views import (TagView, TagDetailView, TweetView, TweetDetailView,
-                   UserView, UserDetail, UserRegistration, EmailSubscription, TweetReply)
+                   UserView, UserDetail, UserRegistration, EmailSubscription, TweetReply,
+                   TagInformation)
 
 
 urlpatterns = patterns('',
@@ -17,5 +18,6 @@ urlpatterns = patterns('',
                        url(r'^tweets/(?P<pk>[0-9]+)/$', TweetDetailView.as_view()),
                        url(r'^subscribe/$', EmailSubscription.as_view()),
                        url(r'^tweet_reply/$', TweetReply.as_view()),
+                       url(r'^tag_information/(?P<tag>[0-9A-Za-z]+)/$', TagInformation.as_view()),
                        )
 

@@ -52,6 +52,13 @@ class TagSerializer(serializers.Serializer):
                 raise serializers.ValidationError("Tag is already taken.")
         return instance
 
+class TagInformationSerializer(serializers.Serializer):
+    pk = serializers.Field()
+    network_info = serializers.Field(source="network_info")
+    display_name = serializers.Field()
+    name = serializers.CharField()
+    modified = serializers.Field()
+
 class TweetSerializer(serializers.ModelSerializer):
     pk = serializers.Field()
     retweet_count = serializers.Field(source="retweet_count")

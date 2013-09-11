@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.db.models import Count
 from datetime import date
 from dateutil.rrule import rrule, DAILY
+from collections import Counter
 
 class Tweet(models.Model):
     text = models.CharField(max_length=160)
@@ -91,6 +92,22 @@ class Tag(models.Model):
         end = now().date()
         return self.calculate_days(objects, self.first_tweet_time(), end)
 
+    def network_info(self):
+        users = self.users.all()
+        user_relations = {}
+        nodes = []
+        for u in users:
+            nodes.append({'name' : u.username, 'screen_name' : u.profile.twitter_screen_name, 'image' : u.profile.twitter_profile_image, 'size' : self.tweets.filter(user=u).count()})
+        for u in users:
+            replied_to_names = [i['reply_to__user__username'] for i in self.tweets.filter(user=u, reply_to__isnull=False).values('reply_to__user__username')]
+            retweet_of_names = [i['retweet_of__user__username'] for i in self.tweets.filter(user=u, retweet_of__isnull=False).values('retweet_of__user__username')]
+            user_relations[u.username] = Counter(replied_to_names + retweet_of_names)
+        edges = []
+        for u in user_relations:
+            for k in user_relations[u]:
+                if u!=k:
+                    edges.append({'start' : u, 'end' : k, 'strength' : user_relations[u][k]})
+        return {'nodes' : nodes, 'edges' : edges}
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile", unique=True, blank=True, null=True)

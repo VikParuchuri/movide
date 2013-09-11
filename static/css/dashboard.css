@@ -33,6 +33,18 @@
     margin-right: 20px;
 }
 
+#student-network-chart-container{
+    height: 350px;
+    position: relative;
+}
+
+#student-network-chart{
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 1px solid black;
+}
+
 /*
  * Off Canvas
  * --------------------------------------------------
@@ -69,4 +81,6 @@
         width: 50%; /* 6 columns */
     }
 }
+
+
 
