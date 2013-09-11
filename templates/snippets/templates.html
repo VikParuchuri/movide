@@ -25,49 +25,39 @@
 
 <script id="tagDetailTemplate" type="text/template">
     <div class="row">
-        <div class="col-xs-10">
-            <h1 class="tag-heading">#<%= display_tag %></h1>
-        </div>
+        <h1 class="tag-heading">#<%= display_tag %></h1>
     </div>
     <div class="row">
-        <div class="col-xs-10">
-            <ul class="nav nav-tabs" id="myTab">
-                <li class="active"><a href="#tweets-container" data-toggle="tab">Tweets</a></li>
-                <li><a href="#stats-container" data-toggle="tab">Stats</a></li>
-                <li><a href="#users-container" data-toggle="tab">Users</a></li>
-            </ul>
-        </div>
+        <ul class="nav nav-tabs" id="myTab">
+            <li class="active"><a href="#tweets-container" data-toggle="tab">Tweets</a></li>
+            <li><a href="#stats-container" data-toggle="tab">Stats</a></li>
+            <li><a href="#users-container" data-toggle="tab">Users</a></li>
+        </ul>
     </div>
     <div class="tab-content">
         <div class="tab-pane active" id="tweets-container">
             <div class="row">
-                <div class="col-xs-10">
-                    <h3>Tweets</h3>
-                    <div id="tweets">
+                <h3>Tweets</h3>
+                <div id="tweets">
 
-                    </div>
                 </div>
             </div>
         </div>
         <div class="tab-pane" id="stats-container">
             <div class="row">
-                <div class="col-xs-10">
-                    <h3>Stats</h3>
-                    <% if (tweets_by_day.length > 1) { %>
-                        <div id="tweet-chart" style="height:250px;"></div>
-                    <% } else { %>
-                    <p>Oh no! We can't show you the daily activity chart until you have some tweets for this tag.</p>
-                    <% } %>
-                </div>
+                <h3>Stats</h3>
+                <% if (tweets_by_day.length > 1) { %>
+                    <div id="tweet-chart" style="height:250px;"></div>
+                <% } else { %>
+                <p>Oh no! We can't show you the daily activity chart until you have some tweets for this tag.</p>
+                <% } %>
             </div>
         </div>
         <div class="tab-pane" id="users-container">
             <div class="row">
-                <div class="col-xs-10">
-                    <h3>Users</h3>
-                    <div id="user-table">
+                <h3>Users</h3>
+                <div id="user-table">
 
-                    </div>
                 </div>
             </div>
         </div>
