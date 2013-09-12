@@ -153,6 +153,9 @@ h2.light {
       height: 150px; }
   .feature h3 {
     margin: 0; }
+  .feature div{
+      padding-bottom: 10px;
+  }
 
 blockquote.big-quote {
   background: url(../img/big-quote-bg.png) 0 0 no-repeat;
