@@ -143,11 +143,14 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.static",
     "django.core.context_processors.tz",
     "django.contrib.messages.context_processors.messages",
-    'api.context_processors.google_analytics'
+    'api.context_processors.google_analytics',
+    "allauth.account.context_processors.account",
+    "allauth.socialaccount.context_processors.socialaccount",
 )
 
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend"
 )
 
 
@@ -169,7 +172,12 @@ INSTALLED_APPS = (
     'bootstrapform',
     'seacucumber',
     'api',
-    'frontend'
+    'frontend',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.google'
 )
 
 REST_FRAMEWORK = {
@@ -185,6 +193,19 @@ REST_FRAMEWORK = {
         'anon': '1000/day',
         'user': '10000/day'
     }
+}
+
+SOCIALACCOUNT_PROVIDERS = {
+    'facebook': {
+        'SCOPE': ['email'],
+        'AUTH_PARAMS': { 'auth_type': 'reauthenticate' },
+        'METHOD': 'js_sdk'
+    },
+    'google': {
+        'SCOPE': ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
+        'AUTH_PARAMS': { 'access_type': 'online' }
+    }
+
 }
 
 # A sample logging configuration. The only tangible logging
@@ -260,7 +281,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 #Authentication settings
 ACCOUNT_AUTHENTICATION_METHOD="username_email"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
-LOGIN_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/dashboard/"
 
 GOOGLE_ANALYTICS_KEY = None
 

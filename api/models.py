@@ -8,70 +8,78 @@ from datetime import date
 from dateutil.rrule import rrule, DAILY
 from collections import Counter
 
-class Tweet(models.Model):
-    text = models.CharField(max_length=160)
-    source = models.CharField(max_length=255)
-    id_str = models.CharField(max_length=35, unique=True, db_index=True)
-    created_at = models.DateTimeField()
-    retweet_of = models.ForeignKey('self', related_name="retweets", blank=True, null=True, on_delete=models.SET_NULL)
+MAX_CHARFIELD_LENGTH = 255
+
+class Message(models.Model):
+    text = models.TextField()
+    source = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
     reply_to = models.ForeignKey('self', related_name="replies", blank=True, null=True, on_delete=models.SET_NULL)
-    user = models.ForeignKey(User, related_name="tweets")
+    user = models.ForeignKey(User, related_name="messages")
+    classgroup = models.ForeignKey(Classgroup, related_name="messages")
+    approved = models.BooleanField(default=False)
+    resources = models.ManyToManyField(Resource, related_name="messages", blank=True, null=True)
 
     modified = models.DateTimeField(auto_now=True)
-
-    def retweet_count(self):
-        return self.retweets.count()
+    created = models.DateTimeField(auto_now_add=True)
 
     def reply_count(self):
         return self.replies.count()
 
     def profile_image(self):
         try:
-            return self.user.profile.twitter_profile_image
+            return self.user.profile.image
         except UserProfile.DoesNotExist:
             return None
 
-    def twitter_name(self):
-        try:
-            return self.user.profile.twitter_name
-        except UserProfile.DoesNotExist:
-            return None
-
-    def twitter_screen_name(self):
-        try:
-            return self.user.profile.twitter_screen_name
-        except UserProfile.DoesNotExist:
-            return None
-
-class Tag(models.Model):
-    name = models.CharField(max_length=160, unique=True, db_index=True)
-    tweets = models.ManyToManyField(Tweet, related_name="tags", blank=True, null=True)
-    users = models.ManyToManyField(User, related_name="tags", blank=True, null=True)
-    owner = models.ForeignKey(User, related_name="created_tags", blank=True, null=True, on_delete=models.SET_NULL)
-    display_name = models.CharField(max_length=160)
+class Rating(models.Model):
+    rating = models.IntegerField(default=0)
+    message = models.ForeignKey(Message, related_name="ratings")
+    owner = models.ForeignKey(User, related_name="ratings", blank=True, null=True, on_delete=models.SET_NULL)
 
     modified = models.DateTimeField(auto_now=True)
 
-    def tweet_count(self):
-        return self.tweets.all().count()
+class ClassSettings(models.Model):
+    classgroup = models.OneToOneField(Classgroup, related_name="class_settings", blank=True, null=True)
+    is_public = models.BooleanField(default=False)
+    moderate_posts = models.BooleanField(default=True)
+    access_key = models.CharField(max_length=MAX_CHARFIELD_LENGTH, unique=True)
+    allow_signups = models.BooleanField(default=True)
+
+    modified = models.DateTimeField(auto_now=True)
+
+class Classgroup(models.Model):
+    name = models.CharField(max_length=MAX_CHARFIELD_LENGTH, unique=True, db_index=True)
+    display_name = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
+    owner = models.ForeignKey(User, related_name="created_classgroups", blank=True, null=True, on_delete=models.SET_NULL)
+    users = models.ManyToManyField(User, related_name="classgroups", blank=True, null=True, on_delete=models.SET_NULL)
+    description = models.TextField()
+
+    def queryset(self, tag=None):
+        queryset = self.messages.all()
+        if tag is not None and self.tags.filter(id=tag.id) > 0:
+            queryset = queryset.filter(tags=tag)
+        return queryset
+
+    def message_count(self, tag=None):
+        return self.queryset(tag).count()
 
     def user_count(self):
         return self.users.all().count()
 
-    def user_count_today(self):
-        return self.tweets.filter(created_at__gt=now() - timedelta(days=1)).values('user').distinct().count()
+    def user_count_today(self, tag=None):
+        return self.queryset(tag).filter(created_at__gt=now() - timedelta(days=1)).values('user').distinct().count()
 
-    def tweet_count_today(self):
-        return self.tweets.filter(created_at__gt=now() - timedelta(days=1)).count()
+    def message_count_today(self, tag=None):
+        return self.queryset(tag).filter(created_at__gt=now() - timedelta(days=1)).count()
 
-    def tweet_count_by_day(self):
-        tweet_data = list(self.tweets.extra({'created' : "date(created_at)"}).values('created').annotate(created_count=Count('id')))
-        day_counts = self.count_by_day(tweet_data)
+    def message_count_by_day(self, tag=None):
+        message_data = list(self.queryset(tag).extra({'created' : "date(created_at)"}).values('created').annotate(created_count=Count('id')))
+        day_counts = self.count_by_day(message_data)
         return day_counts
 
-    def first_tweet_time(self):
-        first_tweet = self.tweets.values('created_at').order_by("-created_at")[0]
-        return min(self.modified.date(), first_tweet['created_at'].date()) - timedelta(days=2)
+    def first_message_time(self, tag=None):
+        first_message = self.queryset(tag).values('created_at').order_by("-created_at")[0]
+        return min(self.modified.date(), first_message['created_at'].date()) - timedelta(days=2)
 
     def calculate_days(self, data, start, end):
         for dt in rrule(DAILY, dtstart=start, until=end):
@@ -92,16 +100,15 @@ class Tag(models.Model):
         end = now().date()
         return self.calculate_days(objects, self.first_tweet_time(), end)
 
-    def network_info(self):
+    def network_info(self, tag=None):
         users = self.users.all()
         user_relations = {}
         nodes = []
         for u in users:
-            nodes.append({'name' : u.username, 'screen_name' : u.profile.twitter_screen_name, 'image' : u.profile.twitter_profile_image, 'size' : self.tweets.filter(user=u).count()})
+            nodes.append({'name' : u.username, 'image' : u.profile.image, 'size' : self.queryset(tag).filter(user=u).count()})
         for u in users:
-            replied_to_names = [i['reply_to__user__username'] for i in self.tweets.filter(user=u, reply_to__isnull=False).values('reply_to__user__username')]
-            retweet_of_names = [i['retweet_of__user__username'] for i in self.tweets.filter(user=u, retweet_of__isnull=False).values('retweet_of__user__username')]
-            user_relations[u.username] = Counter(replied_to_names + retweet_of_names)
+            replied_to_names = [i['reply_to__user__username'] for i in self.queryset(tag).filter(user=u, reply_to__isnull=False).values('reply_to__user__username')]
+            user_relations[u.username] = Counter(replied_to_names)
         edges = []
         for u in user_relations:
             for k in user_relations[u]:
@@ -109,18 +116,30 @@ class Tag(models.Model):
                     edges.append({'start' : u, 'end' : k, 'strength' : user_relations[u][k]})
         return {'nodes' : nodes, 'edges' : edges}
 
+class Tag(models.Model):
+    name = models.CharField(max_length=MAX_CHARFIELD_LENGTH, unique=True, db_index=True)
+    display_name = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
+    messages = models.ManyToManyField(Message, related_name="tags", blank=True, null=True)
+    classgroup = models.ForeignKey(Classgroup, related_name="tags")
+    description = models.TextField()
+
+    modified = models.DateTimeField(auto_now=True)
+
+class Resource(models.Model):
+    owner = models.ForeignKey(User, related_name="resources")
+    classgroup = models.ForeignKey(Classgroup, related_name="resources")
+
+    data = models.TextField(blank=True, null=True)
+    approved = models.BooleanField(default=False)
+    modified = models.DateTimeField(auto_now=True)
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile", unique=True, blank=True, null=True)
-    twitter_name = models.CharField(max_length=100, blank=True, null=True)
-    twitter_id_str = models.CharField(max_length=30, unique=True, db_index=True)
-    twitter_screen_name = models.CharField(max_length=100, unique=True)
-    twitter_profile_image = models.CharField(max_length=255, blank=True, null=True)
+    image = models.CharField(max_length=MAX_CHARFIELD_LENGTH, blank=True, null=True, unique=True)
     modified = models.DateTimeField(auto_now=True, blank=True, null=True)
-    oauth_token = models.CharField(max_length=200, blank=True, null=True)
-    oauth_secret = models.CharField(max_length=200, blank=True, null=True)
 
 class EmailSubscription(models.Model):
-    email_address = models.EmailField(max_length=255, unique=True)
+    email_address = models.EmailField(max_length=MAX_CHARFIELD_LENGTH, unique=True, db_index=True)
     modified = models.DateTimeField(auto_now=True)
 
 User.profile = property(lambda u: u.get_profile())
