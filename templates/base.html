@@ -87,11 +87,12 @@
                             <b class="caret"></b>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a href="/logout/">Logout</a></li>
+                            <li><a href="/accounts/logout/">Logout</a></li>
                         </ul>
                     </li>
                 {% else %}
-                    <li {% if request.path == "/login/" %}class="active"{% endif %}><a href="/login/">Login</a></li>
+                    <li {% if request.path == "/accounts/signup/" %}class="active"{% endif %}><a href="/accounts/signup/">Signup</a></li>
+                    <li {% if request.path == "/accounts/login/" %}class="active"{% endif %}><a href="/accounts/login/">Login</a></li>
                 {% endif %}
             </ul>
         </nav>

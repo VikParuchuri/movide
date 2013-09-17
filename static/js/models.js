@@ -21,10 +21,6 @@ $(document).ready(function() {
         return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
     }
 
-    var Tweet = Backbone.Model.extend({
-        idAttribute: 'pk'
-    });
-
     var methodModel = Backbone.Model.extend({
         sync: function(method, model, options) {
             if (model.methodUrl && model.methodUrl[method.toLowerCase()]) {
@@ -35,20 +31,13 @@ $(document).ready(function() {
         }
     });
 
-    var TagInformation = methodModel.extend({
+    var Message = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
-            return '/api/tag_information/' + this.get('name') + "/";
-        }
-    });
-
-    var TweetReply = methodModel.extend({
-        idAttribute: 'pk',
-        url: function () {
-            return '/api/tweet_reply/' + this.id;
+            return '/api/messages/' + this.id;
         },
         methodUrl: {
-            'create': '/api/tweet_reply/'
+            'create': '/api/messages/'
         }
     });
 
@@ -73,26 +62,26 @@ $(document).ready(function() {
         }
     });
 
-    var Tweets = Backbone.Collection.extend({
+    var Messages = Backbone.Collection.extend({
         idAttribute: 'pk',
-        model: Tweet,
-        url: '/api/tweets/'
+        model: Message,
+        url: '/api/messages/'
     });
 
-    var Tag = methodModel.extend({
+    var Class = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
-            return '/api/tags/' + this.get('name') + "/";
+            return '/api/classes/' + this.get('name') + "/";
         },
         methodUrl: {
-            'create': '/api/tags/'
+            'create': '/api/classes/'
         }
     });
 
-    var Tags = Backbone.Collection.extend({
+    var Classes = Backbone.Collection.extend({
         idAttribute: 'pk',
-        model: Tag,
-        url: '/api/tags/'
+        model: Class,
+        url: '/api/classes/'
     });
 
     var Users = Backbone.Collection.extend({
@@ -119,7 +108,7 @@ $(document).ready(function() {
         },
         initialize: function(options){
             _.bindAll(this, 'render'); // every function that uses 'this' as the current object should be in here
-            this.tag = options.tag;
+            this.classgroup = options.classgroup;
             this.model.bind('change', this.render);
             this.model.bind('remove', this.unrender);
         },
@@ -143,57 +132,44 @@ $(document).ready(function() {
         }
     });
 
-    var TagDetailView = BaseView.extend({
+    var ClassDetailView = BaseView.extend({
         el: "#dashboard-content",
-        template_name: "#tagDetailTemplate",
-        active: null,
-        tag: null,
+        template_name: "#classDetailTemplate",
+        classgroup: null,
         options: null,
         user_view: null,
-        tweet_view: null,
+        message_view: null,
         tag_model: null,
-        chart_tag: "tweet-chart",
+        chart_tag: "message-chart",
         network_chart_tag: "student-network-chart",
         events: {
 
         },
         initialize: function (options) {
             _.bindAll(this, 'render', 'refresh');
-            this.tag = options.tag;
-            this.active = options.active;
+            this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
             this.options = {
-                tag: this.tag,
-                active: this.active,
+                classgroup: this.classgroup,
                 display_tag: this.display_tag
             };
         },
         base_render: function() {
-            this.tag_model = new Tag({name : this.tag});
-            this.tag_model.fetch({async: false});
+            this.class_model = new Class({name : this.classgroup});
+            this.class_model.fetch({async: false});
             var tmpl = _.template($(this.template_name).html());
-            var tweets_by_day = [];
-            var tweets_by_day_data = this.tag_model.get('tweet_count_by_day');
-            for (var i = 0; i < tweets_by_day_data.length; i++) {
-                tweets_by_day.push({created: tweets_by_day_data[i].created, count: tweets_by_day_data[i].created_count});
-            }
             var content_html = tmpl({
-                tag: this.tag,
-                display_tag: this.display_tag,
-                tweet_count: parseInt(this.tag_model.get('tweet_count')),
-                tweet_count_today: parseInt(this.tag_model.get('tweet_count_today')),
-                tweets_by_day: tweets_by_day
+                classgroup: this.classgroup,
+                display_tag: this.display_tag
             });
-            $("#tag-sidebar").find('li').removeClass("current active");
-            $(this.active).addClass("current active");
             $(this.el).html(content_html);
-            var tag_information = new TagInformation({'name' : this.tag});
+            /*var tag_information = new TagInformation({name : this.classgroup});
             tag_information.fetch({success: this.render_additional_charts, error: this.render_additional_charts_error});
-            if(tweets_by_day.length > 1){
-                var chart_width = $("#tweets").width();
+            if(messages_by_day.length > 1){
+                var chart_width = $("#messages").width();
                 $('#' + this.chart_tag).css('width', chart_width);
-                this.create_chart(tweets_by_day);
-            }
+                this.create_chart(messages_by_day);
+            }*/
         },
         create_chart: function(data){
             new Morris.Line({
@@ -201,33 +177,31 @@ $(document).ready(function() {
                 data: data,
                 xkey: 'created',
                 ykeys: ['count'],
-                labels: ['# of tweets']
+                labels: ['# of messages']
             });
         },
         render: function () {
             this.base_render();
             this.user_view = new UsersView(this.options);
             this.user_view.render();
-            this.tweet_view = new TweetsView(this.options);
-            this.tweet_view.render();
+            this.message_view = new MessagesView(this.options);
+            this.message_view.render();
         },
         base_refresh: function() {
             this.base_render();
         },
         refresh: function(options){
-            this.tag = options.tag;
-            this.active = options.active;
+            this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
             this.options = {
-                tag: this.tag,
-                active: this.active,
+                classgroup: this.classgroup,
                 display_tag: this.display_tag
             };
             $(this.el).empty();
             this.base_refresh();
             this.setElement($(this.el));
             this.user_view.refresh(this.options);
-            this.tweet_view.refresh(this.options);
+            this.message_view.refresh(this.options);
         },
         render_additional_charts_error: function(){
           console.log("error");
@@ -334,19 +308,18 @@ $(document).ready(function() {
         collection_class : Users,
         view_class: UserView,
         template_name: "#userTableTemplate",
-        tag: undefined,
+        classgroup: undefined,
         active: undefined,
         events: {
-            'click #create-user': 'create_user',
             'click .user-tag-delete': 'user_tag_delete'
         },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table', 'create_user', 'destroy_view', 'error_display', 'success_display', 'user_tag_delete');
+            _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table', 'destroy_view', 'user_tag_delete');
             this.collection = new this.collection_class();
-            this.tag = options.tag;
+            this.classgroup = options.classgroup;
             this.active = options.active;
             this.display_tag = options.display_tag;
-            this.collection.fetch({async: false, data: {tag: this.tag}});
+            this.collection.fetch({async: false, data: {classgroup: this.classgroup}});
         },
         render_table: function(){
             this.render();
@@ -362,64 +335,41 @@ $(document).ready(function() {
                 model_html = $("#noUserTemplate").html()
             }
             var tmpl = _.template($(this.template_name).html());
-            var content_html = tmpl({content: model_html, tag: this.tag, display_tag: this.display_tag});
+            var content_html = tmpl({content: model_html, classgroup: this.classgroup, display_tag: this.display_tag});
             $(this.el).html(content_html);
-            $('#create-user').unbind();
             $('.user-tag-delete').unbind();
-            $('#create-user').click(this.create_user);
             $('.user-tag-delete').click(this.user_tag_delete);
             return this;
         },
         renderUser: function (item) {
             var userView = new this.view_class({
                 model: item,
-                tag: this.tag
+                classgroup: this.classgroup
             });
             return userView.render().el;
         },
         refresh: function(options){
-            this.tag = options.tag;
+            this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
-            this.collection.fetch({async:false, data: {tag: this.tag}});
+            this.collection.fetch({async:false, data: {classgroup: this.classgroup}});
             this.setElement(this.el_name);
             $(this.el).empty();
             this.render_table();
-        },
-        error_display: function(model, xhr, options){
-            $(".create-user-form").removeClass("has-success").addClass("has-error");
-            $("#create-user-message").html("This username cannot be validated.  Is it an actual twitter screen name?");
-        },
-        success_display: function(model, response, options){
-            $(".create-user-form").removeClass("has-error").addClass("has-success");
-            $("#create-user-message").html("User added!  They will now show up in the feed for this tag.");
-            this.refresh({tag : this.tag});
-        },
-        create_user: function(event){
-            event.preventDefault();
-            $(event.target).attr('disabled', true);
-            var user_name = $("#inputTag1").val();
-            if(user_name.charAt(0)=="@"){
-                user_name = user_name.substring(1,user_name.length);
-            }
-            var user = new User({'tag' : this.tag, 'username' : user_name});
-            user.save(null,{async: false, success : this.success_display, error: this.error_display});
-            $("#create-user").attr('disabled', false);
-            return false;
         },
         user_tag_delete: function(event){
             event.preventDefault();
             var twitter_name = $(event.target).closest('tr').find('td.screen-name').data('screen-name');
             var item_to_remove = this.collection.where({twitter_screen_name: twitter_name})[0];
-            item_to_remove.destroy({data: {tag: this.tag}, processData: true, async: false});
-            this.refresh({tag : this.tag});
+            item_to_remove.destroy({data: {classgroup: this.classgroup}, processData: true, async: false});
+            this.refresh({classgroup : this.classgroup});
             return false;
         }
     });
 
-    var TagView = BaseView.extend({
+    var ClassView = BaseView.extend({
         tagName: "tr",
-        className: "tags",
-        template_name: "#tagTemplate",
+        className: "classes",
+        template_name: "#classTemplate",
         events: {
         },
         initialize: function(){
@@ -438,6 +388,9 @@ $(document).ready(function() {
             var model_html = tmpl(model_json);
 
             $(this.el).html(model_html);
+            if (window.location.pathname === model_json.link){
+                $(this.el).addClass("active");
+            }
             return this;
         },
         destroy: function() {
@@ -448,13 +401,13 @@ $(document).ready(function() {
         }
     });
 
-    var TagsView = BaseView.extend({
-        el: "#tags",
-        tag_item_el: "#tag-content",
-        collection_class : Tags,
-        view_class: TagView,
+    var ClassesView = BaseView.extend({
+        el: "#classes",
+        class_item_el: "#class-content",
+        collection_class : Classes,
+        view_class: ClassView,
         initialize: function () {
-            _.bindAll(this, 'render', 'renderTag', 'renderNone', 'refresh');
+            _.bindAll(this, 'render', 'renderClass', 'renderNone', 'refresh');
             this.collection = new this.collection_class();
             this.collection.fetch({async:false});
         },
@@ -468,45 +421,44 @@ $(document).ready(function() {
         render: function () {
             var that = this;
             _.each(this.collection.models, function (item) {
-                that.renderTag(item);
+                that.renderClass(item);
             }, this);
         },
         renderNone: function() {
-            var add_tag_prompt = $("#addTagPromptTemplate").html();
+            var add_tag_prompt = $("#addClassPromptTemplate").html();
             $(this.el).html(add_tag_prompt);
         },
-        renderTag: function (item) {
+        renderClass: function (item) {
             var tagView = new this.view_class({
                 model: item
             });
-            $(this.tag_item_el).append(tagView.render().el);
+            $(this.class_item_el).append(tagView.render().el);
         },
         refresh: function(){
             this.collection.fetch({async:false});
-            $(this.tag_item_el).empty();
+            $(this.class_item_el).empty();
             this.render_dash();
         }
     });
 
-    var TagSidebarView = TagView.extend({
+    var ClassSidebarView = ClassView.extend({
         tagName: "li",
         className: "tag-list-item",
         template_name: "#sidebarItemTemplate"
     });
 
-    var TagsSidebarView = TagsView.extend({
+    var ClassesSidebarView = ClassesView.extend({
         el: "#tag-sidebar",
-        view_class: TagSidebarView,
+        view_class: ClassSidebarView,
         detail_view: undefined,
         events: {
-            'click #refresh-sidebar': 'refresh',
-            'click .tag-name' : 'render_tag_name'
+            'click #refresh-sidebar': 'refresh'
         },
         render_sidebar: function(){
-            $('.tag-name', this.el).remove();
+            $('.class-name', this.el).remove();
             var that = this;
             _.each(this.collection.models, function (item) {
-                that.renderTag(item);
+                that.renderClass(item);
             }, this);
         },
         refresh: function(event){
@@ -515,47 +467,32 @@ $(document).ready(function() {
             this.render_sidebar();
             return false;
         },
-        render_tag_name: function(event){
-            event.preventDefault();
-            var options = {
-                tag: $(event.target).data('tag-name'),
-                active: $(event.target).parent(),
-                display_tag:$(event.target).data('display-tag-name')
-            };
-            if(this.detail_view!=undefined){
-                this.detail_view.refresh(options);
-            } else {
-                this.detail_view = new TagDetailView(options);
-                this.detail_view.render();
-            }
-            return false;
-        },
-        renderTag: function (item) {
-            var tagView = new this.view_class({
+        renderClass: function (item) {
+            var classView = new this.view_class({
                 model: item
             });
-            $(this.el).append(tagView.render().el);
+            $(this.el).append(classView.render().el);
         }
     });
 
-    var TweetView = BaseView.extend({
+    var MessageView = BaseView.extend({
         tagName: "div",
-        className: "tweets",
+        className: "messages",
         events: {
         },
         initialize: function(){
-            _.bindAll(this, 'render'); // every function that uses 'this' as the current object should be in here
+            _.bindAll(this, 'render');
             this.model.bind('change', this.render);
             this.model.bind('remove', this.unrender);
         },
         get_model_json: function(){
             var model_json = this.model.toJSON();
-            model_json.created_at = model_json.created_at.replace("Z","");
-            model_json.created_at = moment.utc(model_json.created_at).local().calendar();
+            model_json.created = model_json.created.replace("Z","");
+            model_json.created = moment.utc(model_json.created).local().calendar();
             return model_json;
         },
         render: function () {
-            var tmpl = _.template($("#tweetTemplate").html());
+            var tmpl = _.template($("#messageTemplate").html());
             var model_json = this.get_model_json();
             var model_html = tmpl(model_json);
 
@@ -570,39 +507,40 @@ $(document).ready(function() {
         }
     });
 
-    var TweetsView = BaseView.extend({
-        el: "#tweets",
-        el_name: "#tweets",
-        collection_class : Tweets,
-        view_class: TweetView,
-        template_name: "#tweetsTemplate",
-        tag: undefined,
-        view_tweet_replies_tag: '.view-tweet-replies',
-        reply_to_tweet: '.reply-to-tweet-button',
-        open_reply_panel: '.reply-to-tweet',
+    var MessagesView = BaseView.extend({
+        el: "#messages",
+        el_name: "#messages",
+        collection_class : Messages,
+        view_class: MessageView,
+        template_name: "#messagesTemplate",
+        classgroup: undefined,
+        view_message_replies_tag: '.view-message-replies',
+        reply_to_message: '.reply-to-message-button',
+        start_a_discussion: '.start-a-discussion-button',
+        open_reply_panel: '.reply-to-message',
         events: {
-            'click .view-tweet-replies': this.render_tweet_replies,
-            'click .reply-to-tweet': this.post_reply_to_tweet
+            'click .view-message-replies': this.render_message_replies,
+            'click .reply-to-message-button': this.post_reply_to_message,
+            'click .start-a-discussion-button': this.post_reply_to_message
         },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'renderTweet', 'refresh', 'render_tweets', 'destroy_view', 'render_tweet_replies', 'post_reply_to_tweet');
+            _.bindAll(this, 'render', 'renderMessage', 'refresh', 'render_messages', 'destroy_view', 'render_message_replies', 'post_reply_to_message');
             this.collection = new this.collection_class();
-            this.tag = options.tag;
+            this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
-            this.collection.fetch({async: false, data: {tag: this.tag}});
+            this.collection.fetch({async: false, data: {classgroup: this.classgroup}});
         },
-        render_tweets: function(){
+        render_messages: function(){
             this.render();
         },
-        top_level_tweets: function(){
+        top_level_messages: function(){
             var top_level = [];
             var i;
             var m;
             for(i=0; i<this.collection.models.length;i++){
                 m = this.collection.models[i];
                 var reply_to = m.get('reply_to');
-                var retweet_of = m.get('retweet_of');
-                if(reply_to == null && retweet_of == null){
+                if(reply_to == null){
                     top_level.push(m);
                 }
             }
@@ -611,18 +549,22 @@ $(document).ready(function() {
         handle_reply_collapse: function(event){
           event.preventDefault();
         },
-        post_reply_to_tweet: function(event){
+        post_reply_to_message: function(event){
             event.preventDefault();
             var button = $(event.target);
-            var primary_key = button.data('primary-key');
-            var reply = $('#reply-to-tweet-input-' + primary_key).val();
-            console.log({in_reply_to_id : primary_key, tweet_text: reply, tag: this.tag});
-            var tweet_reply = new TweetReply({in_reply_to_id : primary_key, tweet_text: reply, tag: this.tag});
-            var tweet_div = $('#reply-to-tweet-' + primary_key);
-            var reply_form = tweet_div.find('.reply-to-tweet-form');
-            var message_block = tweet_div.find('.help-block');
+            var message_div = button.closest("div.message-reply");
+            var reply = message_div.find("input").val();
+            if(message_div.data('start_discussion') == true){
+                var message_reply = new Message({text: reply, classgroup: this.classgroup})
+            } else {
+                var primary_key = button.data('primary-key');
+                var message_reply = new Message({in_reply_to_id : primary_key, text: reply, classgroup: this.classgroup, source: 'website'});
+            }
+
+            var reply_form = message_div.find('.reply-to-message-form');
+            var message_block = message_div.find('.help-block');
             $(button).attr('disabled', true);
-            tweet_reply.save(null,{
+            message_reply.save(null,{
                 success : function(){
                     $(reply_form).removeClass("has-error").addClass("has-success");
                     $(message_block).html("Reply sent!  It may take some time to show up here.");
@@ -630,27 +572,27 @@ $(document).ready(function() {
                 },
                 error: function(){
                     $(reply_form).removeClass("has-success").addClass("has-error");
-                    $(message_block).html("There was a problem sending your tweet.  Please try again later.");
+                    $(message_block).html("There was a problem sending your message.  Please try again later.");
                     $(button).attr('disabled', false);
                 }
             });
 
             return false;
         },
-        render_tweet_replies: function(event){
+        render_message_replies: function(event){
             event.preventDefault();
-            var tweet_id = $(event.target).parent().data('tweet-id');
-            var comment_container = $(event.target).parent().find('#tweet-replies-container-' + tweet_id);
+            var message_id = $(event.target).parent().data('message-id');
+            var comment_container = $(event.target).parent().find('#message-replies-container-' + message_id);
             if(!comment_container.data('contains-replies')){
-                var tweet_replies = this.child_tweets(tweet_id);
-                if(tweet_replies.length > 0){
+                var message_replies = this.child_messages(message_id);
+                if(message_replies.length > 0){
                     var that = this;
                     var model_html = "";
-                    _.each(tweet_replies, function (item) {
-                        model_html = model_html + $(that.renderTweet(item)).html();
+                    _.each(message_replies, function (item) {
+                        model_html = model_html + $(that.renderMessage(item)).html();
                     }, this);
                     var tmpl = _.template($(this.template_name).html());
-                    var content_html = tmpl({tweets: model_html, tag: this.tag, display_tag: this.display_tag});
+                    var content_html = tmpl({messages: model_html, classgroup: this.classgroup, display_tag: this.display_tag});
                     $(comment_container).html(content_html);
                     comment_container.data('contains-replies', true);
                     this.rebind_events();
@@ -665,23 +607,24 @@ $(document).ready(function() {
             return false;
         },
         rebind_events: function() {
-            $(this.view_tweet_replies_tag).unbind();
-            $(this.view_tweet_replies_tag).click(this.render_tweet_replies);
-            $(this.reply_to_tweet).unbind();
-            $(this.reply_to_tweet).click(this.post_reply_to_tweet);
+            $(this.view_message_replies_tag).unbind();
+            $(this.view_message_replies_tag).click(this.render_message_replies);
+            $(this.reply_to_message).unbind();
+            $(this.reply_to_message).click(this.post_reply_to_message);
+            $(this.start_a_discussion).unbind();
+            $(this.start_a_discussion).click(this.post_reply_to_message);
             $(this.open_reply_panel).unbind();
             $(this.open_reply_panel).click(this.handle_reply_collapse);
         },
-        child_tweets: function(tweet_id){
-            tweet_id = parseInt(tweet_id);
+        child_messages: function(message_id){
+            message_id = parseInt(message_id);
             var children = [];
             var i;
             var m;
             for(i=0; i<this.collection.models.length;i++){
                 m = this.collection.models[i];
                 var reply_to = parseInt(m.get('reply_to'));
-                var retweet_of = parseInt(m.get('retweet_of'));
-                if(reply_to == tweet_id || retweet_of == tweet_id){
+                if(reply_to == message_id){
                     children.push(m);
                 }
             }
@@ -690,42 +633,43 @@ $(document).ready(function() {
         render: function () {
             var model_html = "";
             var that = this;
-            var top_level_tweets = this.top_level_tweets();
+            var top_level_messages = this.top_level_messages();
             if(this.collection.length > 0){
-                _.each(top_level_tweets, function (item) {
-                    model_html = model_html + $(that.renderTweet(item)).html();
+                _.each(top_level_messages, function (item) {
+                    model_html = model_html + $(that.renderMessage(item)).html();
                 }, this);
             } else {
-                var no_tmpl = _.template($("#noTweetsTemplate").html());
-                model_html = no_tmpl({tag: this.tag, display_tag: this.display_tag});
+                var no_tmpl = _.template($("#noMessagesTemplate").html());
+                model_html = no_tmpl({classgroup: this.classgroup, display_tag: this.display_tag});
             }
             var tmpl = _.template($(this.template_name).html());
-            var content_html = tmpl({tweets: model_html, tag: this.tag, display_tag: this.display_tag});
+            var content_html = tmpl({messages: model_html, classgroup: this.classgroup, display_tag: this.display_tag});
             $(this.el).html(content_html);
             this.rebind_events();
         },
-        renderTweet: function (item) {
+        renderMessage: function (item) {
             var userView = new this.view_class({
                 model: item
             });
             return userView.render().el;
         },
         refresh: function(options){
-            this.tag = options.tag;
+            this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
-            this.collection.fetch({async:false, data: {tag: this.tag}});
+            this.collection.fetch({async:false, data: {classgroup: this.classgroup}});
             this.setElement(this.el_name);
             $(this.el).empty();
-            this.render_tweets();
+            this.render_messages();
         }
     });
 
-    window.TweetsView = TweetsView;
-    window.TweetView = TweetView;
-    window.TagView = TagView;
-    window.TagsView = TagsView;
-    window.Tag = Tag;
-    window.TagSidebarView = TagSidebarView;
-    window.TagsSidebarView = TagsSidebarView;
+    window.MessagesView = MessagesView;
+    window.MessageView = MessageView;
+    window.ClassView = ClassView;
+    window.ClassesView = ClassesView;
+    window.Class = Class;
+    window.ClassSidebarView = ClassSidebarView;
+    window.ClassesSidebarView = ClassesSidebarView;
     window.EmailSubscription = EmailSubscription;
+    window.ClassDetailView = ClassDetailView;
 });

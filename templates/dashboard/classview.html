@@ -1,0 +1,16 @@
+{% extends "dashboard.html" %}
+{% load staticfiles %}
+
+{% block dashboard_js %}
+    <script type="text/javascript" src="{% static 'js/classview.js' %}"></script>
+{% endblock %}
+
+{% block title %}
+{% endblock %}
+
+{% block meta_description %}
+{% endblock %}
+
+{% block dashboard_content %}
+    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name={{ display_name }}>
+{% endblock %}

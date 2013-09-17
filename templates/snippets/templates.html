@@ -1,48 +1,33 @@
-<script id="tagTemplate" type="text/template">
+<script id="classTemplate" type="text/template">
     <td>
-        #<%= display_name %>
-    </td>
-    <td>
-        <%= tweet_count_today %>
-    </td>
-    <td>
-        <%= user_count_today %>
-    </td>
-    <td>
-        <%= tweet_count %>
-    </td>
-    <td>
-        <%= user_count %>
+        <%= display_name %>
     </td>
     <td>
         <%= modified %>
     </td>
 </script>
 
-<script id="addTagPromptTemplate" type="text/template">
-    <p>Looks like you don't have any tags yet.  Why not add one?</p>
+<script id="addClassPromptTemplate" type="text/template">
+    <p>Looks like you don't have any classes yet.  Why not add one?</p>
 </script>
 
 <script id="noNetworkChartTemplate" type="text/template">
-    <p>Unfortunately, not enough students have tweeted to allow this chart to be shown.</p>
+    <p>Unfortunately, not enough messages have been sent to allow this chart to be shown.</p>
 </script>
 
-<script id="tagDetailTemplate" type="text/template">
-    <div class="row">
-        <h1 class="tag-heading">#<%= display_tag %></h1>
-    </div>
+<script id="classDetailTemplate" type="text/template">
     <div class="row">
         <ul class="nav nav-tabs" id="myTab">
-            <li class="active"><a href="#tweets-container" data-toggle="tab">Tweets</a></li>
+            <li class="active"><a href="#messages-container" data-toggle="tab">Messages</a></li>
             <li><a href="#stats-container" data-toggle="tab">Stats</a></li>
             <li><a href="#users-container" data-toggle="tab">Users</a></li>
         </ul>
     </div>
     <div class="tab-content">
-        <div class="tab-pane active" id="tweets-container">
+        <div class="tab-pane active" id="messages-container">
             <div class="row">
-                <h3>Tweets</h3>
-                <div id="tweets">
+                <h3>Messages</h3>
+                <div id="messages">
 
                 </div>
             </div>
@@ -50,18 +35,6 @@
         <div class="tab-pane" id="stats-container">
             <div class="row">
                 <h3>Stats</h3>
-                <% if (tweets_by_day.length > 1) { %>
-                    <h4>Tweet Activity</h4>
-                    <div id="tweet-chart" style="height:250px;"></div>
-                    <h4>Student Network</h4>
-                    <p>Each point represents a student in the group, and each line between points represents replies and retweets between the students.  A larger point means that the student has tweeted more, and a larger line means that the two students have interacted more.</p>
-                    <p>Click and drag to move around, and use the mousewheel to zoom in and out.  Hovering over a point shows you only the connections with which that student has has conversations.</p>
-                    <div id="student-network-chart-container">
-                        <div id="student-network-chart"></div>
-                    </div>
-                <% } else { %>
-                <p>Oh no! We can't show you the daily activity chart until you have some tweets for this tag.</p>
-                <% } %>
             </div>
         </div>
         <div class="tab-pane" id="users-container">
@@ -80,10 +53,9 @@
         <thead>
             <tr>
                 <th></th>
-                <th>Twitter Name</th>
                 <th>Name</th>
-                <th>Daily Tweets</th>
-                <th>All Tweets</th>
+                <th>Daily Messages</th>
+                <th>All Messages</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -91,63 +63,41 @@
             <%= content %>
         </tbody>
     </table>
-    <form class="form-inline" role="form">
-        <div class="form-group create-user-form">
-            <label class="sr-only" for="inputTag1">Twitter name</label>
-            <input type="text" class="form-control input-lg" id="inputTag1" placeholder="@studenttwittername">
-            <span class="help-block" id="create-user-message"></span>
-        </div>
-        <div class="form-group">
-            <button type="submit" class="btn btn-large" id="create-user">Add user</button>
-        </div>
-    </form>
 </script>
 
 <script id="noUserTemplate" type="text/template">
     <p>You don't have any students for this tag yet.  Why not add some?</p>
 </script>
 
-<script id="noTweetsTemplate" type="text/template">
-    <p>There aren't any tweets for this tag yet.</p>
-    <p>To get started:</p>
-    <ol>
-        <li>Add users by clicking on the "users" tab above.</li>
-        <li>Tweet and include the hashtags #movide and #<%= display_tag %>.  For example, <strong>Why does ice float? #movide #<%= display_tag %>.</strong></li>
-        <li>Any user listed in the "users" tab can tweet to this tag and show up here. <strong>You must add users for their tweets to show up here.</strong></li>
-    </ol>
-    <p>There may be a bit of a delay, which is normal.  If a tweet doesn't show up here for a while, try tweeting again with #movide #<%= display_tag %>.  Tweets sometimes get "stuck" and tweeting again unsticks everything.</p>
+<script id="noMessagesTemplate" type="text/template">
+    <p>There aren't any discussions in this class yet.</p>
+    <p>Why not start a discussion now?</p>
     <p><strong>Questions? Please contact info@movide.com .</strong></p>
 </script>
 
 <script id="userTemplate" type="text/template">
     <tr>
         <td>
-            <% if (typeof(twitter_profile_image) != "undefined") { %>
-                <img src="<%= twitter_profile_image %>">
+            <% if (typeof(image) != "undefined") { %>
+                <img src="<%= image %>">
             <% } %>
         </td>
-        <td class="screen-name" data-screen-name="<%= twitter_screen_name %>">@<%= twitter_screen_name %></td>
-        <td><%= twitter_name %></td>
-        <td><%= tweet_count_today %></td>
-        <td><%= tweet_count %></td>
+        <td><%= username %></td>
+        <td><%= message_count_today %></td>
+        <td><%= message_count %></td>
         <td><a type="button" class="btn btn-xs user-tag-delete"><span class="glyphicon glyphicon-remove"></span></a></td>
     </tr>
 </script>
 
-<script id="tweetTemplate" type="text/template">
-    <div class="comment" data-tweet-id="<%= pk %>" data-reply-username="@<%= user_screen_name %>">
+<script id="messageTemplate" type="text/template">
+    <div class="comment" data-message-id="<%= pk %>" data-reply-username="<%= user %>">
         <div class="header clearfix">
-            <% if (typeof(user_twitter_profile_image) != "undefined") { %>
-                <img src="<%= user_twitter_profile_image %>" alt="<%= user_name %>">
+            <% if (typeof(image) != "undefined") { %>
+                <img src="<%= image %>" alt="<%= user %>">
             <% } %>
             <div>
-                <h4><%= user_name %></h4>
-                <span class="time"><%= created_at %></span>
-            </div>
-            <div class="pull-right">
-                <span class="label label-info">
-                    <span class="glyphicon glyphicon-retweet"> <%= retweet_count %></span>
-                </span>
+                <h4><%= user %></h4>
+                <span class="time"><%= created %></span>
             </div>
             <div class="pull-right">
                 <span class="label label-info">
@@ -158,41 +108,53 @@
         <div class="comment-content clearfix">
             <%= text %>
         </div>
-        <a type="button" class="reply-to-tweet" data-toggle="collapse" data-target="#reply-to-tweet-<%= pk %>" href="#">
+        <a type="button" class="reply-to-message" data-toggle="collapse" data-target="#reply-to-message-<%= pk %>" href="#">
             Reply
         </a>
-        <div id="reply-to-tweet-<%= pk %>" class="collapse">
+        <div id="reply-to-message-<%= pk %>" class="collapse message-reply" data-start-discussion="false">
             <form role="form">
-                <div class="form-group reply-to-tweet-form">
-                    <label class="sr-only" for="reply-to-tweet-input-<%= pk %>">Tag</label>
-                    <input type="text" class="form-control input-lg" id="reply-to-tweet-input-<%= pk %>" placeholder="Enter reply here...">
-                    <span class="help-block" id="reply-to-tweet-message-<%= pk %>"></span>
+                <div class="form-group reply-to-message-form">
+                    <label class="sr-only" for="reply-to-message-input-<%= pk %>">Tag</label>
+                    <input type="text" class="form-control input-lg" id="reply-to-message-input-<%= pk %>" placeholder="Enter reply here...">
+                    <span class="help-block" id="reply-to-message-message-<%= pk %>"></span>
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-small reply-to-tweet-button" id="reply-to-tweet-button-<%= pk %>" data-primary-key="<%= pk %>">Send Tweet</button>
+                    <button type="submit" class="btn btn-small reply-to-message-button" id="reply-to-message-button-<%= pk %>" data-primary-key="<%= pk %>">Send Message</button>
                 </div>
             </form>
         </div>
-        <% if (reply_count > 0 || retweet_count > 0) { %>
-            <a type="button" href="#" class="view-tweet-replies">  View replies</a>
+        <% if (reply_count > 0) { %>
+            <a type="button" href="#" class="view-message-replies">  View replies</a>
         <% } %>
-        <div class="tweet-replies-container" data-contains-replies="false" id="tweet-replies-container-<%= pk %>">
+        <div class="message-replies-container" data-contains-replies="false" id="message-replies-container-<%= pk %>">
         </div>
     </div>
 </script>
 
 <script id="noRepliesTemplate" type="text/template">
     <div class="comment">
-        <p>Aw, shucks!  We are unable to pull up the replies for this tweet.  The actual replies, if any, can be found on twitter.</p>
+        <p>Aw, shucks!  We are unable to pull up the replies for this message.</p>
     </div>
 </script>
 
-<script id="tweetsTemplate" type="text/template">
-    <div class="comments" data-tag-name="<%= tag %>" id="comments">
-         <%= tweets %>
+<script id="messagesTemplate" type="text/template">
+    <div id="start-a-discussion" data-start-discussion="true" class="message-reply">
+        <form role="form">
+            <div class="form-group reply-to-message-form">
+                <label class="sr-only" for="start-a-discussion-input">Tag</label>
+                <input type="text" class="form-control input-lg" id="start-a-discussion-input" placeholder="Enter message here...">
+                <span class="help-block"></span>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-small start-a-discussion-button">Start a new discussion</button>
+            </div>
+        </form>
+    </div>
+    <div class="comments" data-tag-name="<%= classgroup %>" id="comments">
+        <%= messages %>
     </div>
 </script>
 
 <script id="sidebarItemTemplate" type="text/template">
-    <a href="#" class="tag-name" data-tag-name="<%= name %>" data-display-tag-name="<%= display_name %>">#<%= display_name %></a>
+    <a href="<%= link %>" class="class-name" data-display-class-name="<%= display_name %>"><%= display_name %></a>
 </script>

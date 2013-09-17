@@ -3,21 +3,17 @@ from django.views.decorators.cache import cache_page
 from django.conf import settings
 
 from rest_framework import viewsets, routers
-from views import (TagView, TagDetailView, TweetView, TweetDetailView,
-                   UserView, UserDetail, UserRegistration, EmailSubscription, TweetReply,
-                   TagInformation)
+from views import (MessageView, MessageDetailView, ClassgroupView, ClassgroupDetailView,
+                   UserView, UserDetail, EmailSubscription,)
 
 
 urlpatterns = patterns('',
                        url(r'^users/$', UserView.as_view()),
                        url(r'^users/(?P<pk>[0-9]+)/$', UserDetail.as_view()),
-                       url(r'^users/register/$', UserRegistration.as_view()),
-                       url(r'^tags/$', TagView.as_view()),
-                       url(r'^tags/(?P<tag>[0-9A-Za-z]+)/$', TagDetailView.as_view()),
-                       url(r'^tweets/$', TweetView.as_view()),
-                       url(r'^tweets/(?P<pk>[0-9]+)/$', TweetDetailView.as_view()),
+                       url(r'^classes/$', ClassgroupView.as_view()),
+                       url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/$', ClassgroupDetailView.as_view()),
+                       url(r'^messages/$', MessageView.as_view()),
+                       url(r'^messages/(?P<pk>[0-9]+)/$', MessageDetailView.as_view()),
                        url(r'^subscribe/$', EmailSubscription.as_view()),
-                       url(r'^tweet_reply/$', TweetReply.as_view()),
-                       url(r'^tag_information/(?P<tag>[0-9A-Za-z]+)/$', TagInformation.as_view()),
                        )
 

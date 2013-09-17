@@ -18,4 +18,5 @@ urlpatterns = patterns('',
     url(r'^api/', include('api.urls')),
     url(r'', include('frontend.urls')),
     url(r'^favicon\.ico$', RedirectView.as_view(url='/static/img/favicon.ico')),
+    (r'^accounts/', include('allauth.urls')),
 )

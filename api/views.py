@@ -1,8 +1,10 @@
 from __future__ import division
 from django.contrib.auth.models import User
-from models import Tag, Tweet, UserProfile
+from models import Tag, Message, UserProfile, Classgroup
 from rest_framework.views import APIView
-from serializers import TagSerializer, TweetSerializer, UserSerializer, EmailSubscriptionSerializer, TweetReplySerializer, TagInformationSerializer
+from serializers import (TagSerializer, MessageSerializer, UserSerializer,
+                         EmailSubscriptionSerializer, ResourceSerializer,
+                         ClassgroupSerializer, RatingSerializer)
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from django.db.models import Q, Count
@@ -12,44 +14,73 @@ from django.conf import settings
 from django.utils.timezone import now
 from datetime import timedelta
 log = logging.getLogger(__name__)
+import re
 
-class TagView(APIView):
+class QueryView(APIView):
+    query_attributes = []
+    required_attributes = []
+
+    def get_query_params(self):
+        self.query_dict = {}
+        for attrib in self.query_attributes:
+            self.query_dict[attrib] = self.request.QUERY_PARAMS.get(attrib, None)
+            if isinstance(self.query_dict[attrib], list):
+                self.query_dict[attrib] = self.query_dict[attrib][0]
+        for attrib_set in self.required_attributes:
+            has_value = 0
+            for attrib in attrib_set:
+                if self.query_dict[attrib] is not None:
+                    has_value += 1
+            if has_value == 0:
+                error_msg = "Need to specify {0}.".format(attrib_set)
+                log.error(error_msg)
+                return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+    def filter_query_params(self, queryset):
+        for attrib in self.query_attributes:
+            val = self.query_dict[attrib]
+            if val is not None:
+                queryset = getattr(self, "filter_" + attrib)(queryset, val)
+        return queryset
+
+class ClassgroupView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, format=None):
-        tags= Tag.objects.filter(owner=request.user).order_by('-modified')
-        serializer = TagSerializer(tags, many=True)
+        classgroups = Classgroup.objects.filter(owner=request.user).order_by('-modified')
+        serializer = ClassgroupSerializer(classgroups, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        data = request.DATA
-        serializer = TagSerializer(data=data, context={'request' : request})
+        serializer = ClassgroupSerializer(data=request.DATA, context={'request' : request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class TagDetailView(APIView):
+class ClassgroupDetailView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
-    def get_object(self, tag):
+    def get_object(self, classgroup):
         try:
-            return Tag.objects.get(name=tag)
+            return Classgroup.objects.get(name=classgroup)
         except Tag.DoesNotExist:
             raise Http404
 
-    def get(self, request, tag, format=None):
-        tag = self.get_object(tag)
-        if tag.owner != request.user:
-            error_msg = "Tag owner is not the user making the request."
+    def get(self, request, classgroup, format=None):
+        classgroup = self.get_object(classgroup)
+        if classgroup.owner != request.user:
+            error_msg = "Class owner is not the user making the request."
             log.error(error_msg)
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = TagSerializer(tag)
+        serializer = ClassgroupSerializer(classgroup)
         return Response(serializer.data)
 
-class TweetView(APIView):
+class MessageView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
+    query_attributes = ["tag", "classgroup", "user"]
+    required_attributes = [("classgroup", "user"),]
 
     def filter_tag(self, queryset, tag):
         return queryset.filter(tags__name=tag)
@@ -57,72 +88,60 @@ class TweetView(APIView):
     def filter_user(self, queryset, user):
         return queryset.filter(user=user)
 
-    def get(self, request, format=None):
-        tag = self.request.QUERY_PARAMS.get('tag', None)
-        user = self.request.QUERY_PARAMS.get('user', None)
-        if tag is None and user is None:
-            error_msg = "Need to specify a username or a tag."
-            log.error(error_msg)
-            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
-        if isinstance(tag, list):
-            tag = tag[0]
-        if isinstance(user, list):
-            user = user[0]
-        if user is not None and user.startswith("@"):
-            user = user[1:]
-        if tag is not None and tag.startswith("#"):
-            tag = tag[1:]
+    def filter_classgroup(self, queryset, classgroup):
+        return queryset.filter(classgroup__name=classgroup)
 
-        queryset = Tweet.objects.all()
-        if tag is not None:
-            queryset = self.filter_tag(queryset, tag)
-        if user is not None:
-            queryset = self.filter_user(queryset, user)
-        serializer = TweetSerializer(queryset.order_by("-modified"), many=True)
+    def get(self, request, format=None):
+        self.get_query_params()
+
+        queryset = Message.objects.all()
+        queryset = self.filter_query_params(queryset)
+        serializer = MessageSerializer(queryset.order_by("-modified"), many=True)
         return Response(serializer.data)
 
-class TweetDetailView(APIView):
+    def post(self, request, format=None):
+        serializer = MessageSerializer(data=request.DATA, context={'request' : request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
+
+class MessageDetailView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_object(self, pk):
         try:
-            return Tweet.objects.get(pk=pk)
-        except Tweet.DoesNotExist:
+            return Message.objects.get(pk=pk)
+        except Message.DoesNotExist:
             raise Http404
 
     def get(self, request, pk, format=None):
-        tag = self.get_object(pk)
-        serializer = TweetSerializer(tag)
+        message = self.get_object(pk)
+        serializer = MessageSerializer(message)
         return Response(serializer.data)
 
-class UserView(APIView):
+class UserView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
+    query_attributes = ["classgroup",]
+    required_attributes = [("classgroup",),]
 
-    def filter_tag(self, queryset, tag):
-        return queryset.filter(tags__name=tag)
+    def filter_classgroup(self, queryset, classgroup):
+        return queryset.filter(classgroups__name=classgroup)
 
     def get(self, request, format=None):
-        tag = self.request.QUERY_PARAMS.get('tag', None)
-        if tag is None:
-            error_msg = "Need to specify a tag."
-            log.error(error_msg)
-            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
-        if isinstance(tag, list):
-            tag = tag[0]
-        if tag.startswith("#"):
-            tag = tag[1:]
+        self.get_query_params()
 
         queryset = User.objects.all()
-        if tag is not None:
-            queryset = self.filter_tag(queryset, tag)
+        queryset = self.filter_query_params(queryset)
         serializer = UserSerializer(queryset.order_by("date_joined"), many=True)
-        serializer = self.add_user_data(serializer, tag)
+        serializer = self.add_user_data(serializer)
         return Response(serializer.data)
 
-    def add_user_data(self, serializer, tag):
+    def add_user_data(self, serializer):
         for user in serializer.data:
-            user['tweet_count_today'] = Tag.objects.get(name=tag).tweets.filter(user=user['pk'], modified__gt=now() - timedelta(days=1)).count()
-            user['tweet_count'] = Tag.objects.get(name=tag).tweets.filter(user=user['pk']).count()
+            user['message_count_today'] = Classgroup.objects.get(name=self.query_dict['classgroup']).messages.filter(user=user['pk'], modified__gt=now() - timedelta(days=1)).count()
+            user['message_count'] = Classgroup.objects.get(name=self.query_dict['classgroup']).messages.filter(user=user['pk']).count()
         return serializer
 
     def post(self, request, format=None):
@@ -144,80 +163,40 @@ class UserDetail(APIView):
     def get_object(self, pk):
         try:
             return User.objects.get(pk=pk)
-        except Tweet.DoesNotExist:
+        except User.DoesNotExist:
             raise Http404
 
     def get(self, request, pk, format=None):
-        tag = request.DATA.get('tag', None)
         user = self.get_object(pk)
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
     def delete(self, request, pk, format=None):
-        tag = request.DATA.get('tag', None)
-        if tag is None:
-            error_msg = "Need a tag in order to delete a model."
+        classgroup = request.DATA.get('classgroup', None)
+        if classgroup is None:
+            error_msg = "Need a classgroup in order to delete a user."
             log.error(error_msg)
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
-        if tag.startswith("#"):
-            tag = tag[1:]
+        if classgroup.startswith("#"):
+            classgroup = classgroup[1:]
 
         try:
-            tag_model = Tag.objects.get(name=tag)
-        except tag.DoesNotExist:
+            classgroup_model = Classgroup.objects.get(name=classgroup)
+        except Classgroup.DoesNotExist:
             error_msg = "Cannot find the specified tag."
             log.error(error_msg)
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
 
         user = self.get_object(pk)
-        user.tags.remove(tag_model)
+        user.classgroups.remove(classgroup_model)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class UserRegistration(APIView):
+class EmailSubscription(APIView):
     def post(self, request, format=None):
-        serializer = UserSerializer(data=request.DATA)
+        serializer = EmailSubscriptionSerializer(data=request.DATA, context={'request' : request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
-
-class EmailSubscription(APIView):
-    def post(self, request, format=None):
-        serializer = EmailSubscriptionSerializer(data=request.DATA)
-        if serializer.is_valid():
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
-
-class TweetReply(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def post(self, request, format=None):
-        if 'in_reply_to_id' not in request.DATA:
-            request.DATA['in_reply_to_id'] = None
-        serializer = TweetReplySerializer(data=request.DATA, context={'request' : request})
-        if serializer.is_valid():
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
-
-class TagInformation(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
-    def get_object(self, tag):
-        try:
-            return Tag.objects.get(name=tag)
-        except Tag.DoesNotExist:
-            raise Http404
-
-    def get(self, request, tag, format=None):
-        tag = self.get_object(tag)
-        if tag.owner != request.user:
-            error_msg = "Tag owner is not the user making the request."
-            log.error(error_msg)
-            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
-        serializer = TagInformationSerializer(tag)
-        return Response(serializer.data)
-

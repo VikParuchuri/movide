@@ -6,6 +6,10 @@ from django.db import IntegrityError
 import logging
 from django.conf import settings
 log = logging.getLogger(__name__)
+import re
+
+def alphanumeric_name(string):
+    return re.sub(r'\W+', '', string.lower().encode("ascii", "ignore"))
 
 def create_classgroups(classgroups, instance):
     for c in classgroups:
@@ -37,17 +41,17 @@ class TagSerializer(serializers.Serializer):
     display_name = serializers.CharField()
 
     def restore_object(self, attrs, instance=None):
-        user = self.context['request'].user
         classgroup = attrs.get('classgroup')
         name = attrs.get('name')
-        description = attrs.get('description')
+
+        attributes = ["description"]
 
         if instance is None:
             try:
                 instance = Tag(name=name)
                 instance.save()
             except IntegrityError:
-                instance = Tag.objects.get(name=name.lower(), display_name=name)
+                instance = Tag.objects.get(name=alphanumeric_name(name), display_name=name)
 
             try:
                 instance.classgroup = Classgroup.objects.get(name=classgroup)
@@ -58,7 +62,7 @@ class TagSerializer(serializers.Serializer):
 
             if instance.classgroup != cg:
                 raise serializers.ValidationError("Classgroup given does not match classgroup on tag: {0}".format(classgroup))
-        instance.description = description
+        instance = set_attributes(attributes, attrs, instance)
         return instance
 
 class RatingSerializer(serializers.ModelSerializer):
@@ -66,13 +70,13 @@ class RatingSerializer(serializers.ModelSerializer):
     owner = serializers.SlugRelatedField(slug_field="username")
     class Meta:
         model = Rating
-        fields = ("rating", "message", "owner", "modified", )
+        fields = ("rating", "message", "owner", "modified", "created", )
 
 class ClassSettingsSerializer(serializers.ModelSerializer):
     classgroup = serializers.SlugRelatedField(many=False, slug_field="name")
     class Meta:
         model = ClassSettings
-        fields = ("is_public", "moderate_posts", "classgroup", )
+        fields = ("is_public", "moderate_posts", "classgroup", "modified", )
 
 def make_random_key():
     existing_keys = [t['access_key'] for t in ClassSettings.objects.all().values('access_key')]
@@ -81,63 +85,88 @@ def make_random_key():
         access_key = User.objects.make_random_password(6)
     return access_key
 
+def set_attributes(attributes, values, instance):
+    for attrib in attributes:
+        val = values.get(attrib)
+        if val is not None:
+            setattr(instance, attrib, val)
+    return instance
+
 class ClassgroupSerializer(serializers.Serializer):
     name = serializers.CharField()
-    description = serializers.CharField()
+    display_name = serializers.Field()
+    description = serializers.CharField(required=False)
     class_settings = serializers.RelatedField(many=False, blank=True, null=True)
-    owner = serializers.SlugRelatedField(many=False, slug_field="username", blank=True, null=True)
+    owner = serializers.SlugRelatedField(many=False, slug_field="username", blank=True, null=True, queryset=User.objects.all())
     users = serializers.SlugRelatedField(many=True, slug_field="username", blank=True, null=True, queryset=User.objects.all())
     pk = serializers.Field()
+    modified = serializers.Field()
+    created = serializers.Field()
+    link = serializers.Field(source="link")
 
     def restore_object(self, attrs, instance=None):
         user = self.context['request'].user
         name = attrs.get('name')
-        description = attrs.get('description')
         class_settings_values = attrs.get('class_settings')
 
+        attributes = ["description"]
         settings_attributes = ['moderate_posts', 'is_public', 'allow_signups']
 
         if instance is None:
             try:
-                instance = Classgroup(owner=user, name=name.lower(), display_name=name)
+                instance = Classgroup(owner=user, name=alphanumeric_name(name), display_name=name)
                 instance.save()
                 user.classgroups.add(instance)
                 user.save()
                 class_settings = ClassSettings(classgroup=instance, access_key=make_random_key())
                 class_settings.save()
             except IntegrityError:
-                raise serializers.ValidationError("Class name is already taken.")
+                error_msg = "Class name is already taken."
+                log.exception(error_msg)
+                raise serializers.ValidationError(error_msg)
         else:
             if instance.owner != user:
                 raise serializers.ValidationError("Class name is already taken.")
             class_settings = instance.class_settings
 
-        instance.description = description
-        for attrib in settings_attributes:
-            val = class_settings_values.get(attrib)
-            if val is not None:
-                setattr(class_settings, attrib, val)
+        instance = set_attributes(attributes, attrs, instance)
+        if class_settings_values is not None:
+            class_settings = set_attributes(settings_attributes, class_settings_values, class_settings)
         class_settings.save()
         return instance
 
-class MessageSerializer(serializers.ModelSerializer):
+class MessageSerializer(serializers.Serializer):
     pk = serializers.Field()
     reply_count = serializers.Field(source="reply_count")
-    tags = serializers.SlugRelatedField(many=True, slug_field="name", blank=True, null=True)
-    user = serializers.SlugRelatedField(many=True, slug_field="username", blank=True, null=True)
+    tags = serializers.SlugRelatedField(many=True, slug_field="name", blank=True, null=True, queryset=Tag.objects.all())
+    user = serializers.SlugRelatedField(many=False, slug_field="username", blank=True, null=True, queryset=User.objects.all())
     user_image = serializers.Field(source="profile_image")
     reply_to = serializers.PrimaryKeyRelatedField(read_only=True)
     ratings = serializers.SlugRelatedField(many=True, slug_field="rating", read_only=True, blank=True, null=True, queryset=Rating.objects.all())
-    classgroup = serializers.SlugRelatedField(slug_field="name", blank=True, null=True)
+    classgroup = serializers.SlugRelatedField(slug_field="name", blank=True, null=True, queryset=Classgroup.objects.all())
     resources = serializers.PrimaryKeyRelatedField(many=True, blank=True, null=True, queryset=Resource.objects.all())
+    text = serializers.CharField()
+    source = serializers.CharField()
+    created = serializers.Field()
+    reply_count = serializers.Field()
+    approved = serializers.BooleanField()
+    modified = serializers.Field()
 
-    class Meta:
-        model = Message
-        fields = (
-                'text', 'source', 'created', 'reply_to',
-                'tags', 'reply_count', 'resources', 'user_name',
-                'user_image', 'pk', 'classgroup', 'ratings', 'approved'
-        )
+    def restore_object(self, attrs, instance=None):
+        user = self.context['request'].user
+        classgroup = attrs.get('classgroup')
+
+        attributes = ["text", "source"]
+
+        if instance is None:
+            instance = Message(user=user, classgroup=classgroup)
+        else:
+            if instance.user != user:
+                raise serializers.ValidationError("Attempting to edit a message that is not yours.")
+
+        instance = set_attributes(attributes, attrs, instance)
+        instance.save()
+        return instance
 
 class ResourceSerializer(serializers.Serializer):
     pk = serializers.Field()
@@ -145,14 +174,39 @@ class ResourceSerializer(serializers.Serializer):
     classgroup = serializers.SlugRelatedField(many=False, slug_field="name", read_only=True)
     data = serializers.CharField()
     approved = serializers.BooleanField()
+    name = serializers.CharField()
+    display_name = serializers.CharField()
 
+    modified = serializers.Field()
+    created = serializers.Field()
+
+    def restore_object(self, attrs, instance=None):
+        user = self.context['request'].user
+        classgroup = attrs.get('classgroup')
+        name = attrs.get('name')
+
+        attributes = ['data', 'approved']
+
+        if instance is None:
+            instance = Resource(owner=user, classgroup=classgroup, name=alphanumeric_name(name), display_name=name)
+            instance.save()
+        else:
+            if instance.owner != user:
+                raise serializers.ValidationError("Class name is already taken.")
+
+        instance = set_attributes(attributes, attrs, instance)
+        return instance
+
+def create_user_profile(user):
+    profile = UserProfile(user=user)
+    profile.save()
 
 class UserSerializer(serializers.Serializer):
     image = serializers.Field(source="profile.image")
     username = serializers.CharField()
     messages = serializers.SlugRelatedField(many=True, slug_field="text", read_only=True, blank=True, null=True)
     resources = serializers.SlugRelatedField(many=True, slug_field="resources", read_only=True, blank=True, null=True)
-    classgroups = serializers.SlugRelatedField(many=True, slug_field="name", blank=True, null=True)
+    classgroups = serializers.SlugRelatedField(many=True, slug_field="name", blank=True, null=True, queryset=Classgroup.objects.all())
     pk = serializers.Field()
 
     def restore_object(self, attrs, instance=None):
@@ -169,7 +223,7 @@ class UserSerializer(serializers.Serializer):
                 instance = User.objects.get(username=username)
 
             try:
-                user_data.create_profile(instance)
+                create_user_profile(instance)
             except Exception:
                 error_msg = "Could not create a user profile."
                 log.exception(error_msg)

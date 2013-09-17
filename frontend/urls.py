@@ -8,8 +8,6 @@ from django.conf import settings
 
 urlpatterns =patterns('frontend.views',
                       url(r'^$', 'index'),
-                      url(r'^login/?$', "begin_auth", name="twitter_login"),
-                      url(r'^logout/?$', "logout", name="twitter_logout"),  # Calling logout and what not
-                      url(r'^thanks/?$', "thanks", name="twitter_callback"),
-                      url(r'^dashboard/$', 'dashboard')
+                      url(r'^dashboard/$', 'dashboard'),
+                      url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/$', 'classview'),
                       )

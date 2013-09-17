@@ -7,52 +7,28 @@ from django.db.models import Count
 from datetime import date
 from dateutil.rrule import rrule, DAILY
 from collections import Counter
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.core.validators import RegexValidator
+import re
+alphanumeric = re.compile(r'[^a-zA-Z0-9]+')
+
 
 MAX_CHARFIELD_LENGTH = 255
+MAX_NAME_LENGTH = 50
 
-class Message(models.Model):
-    text = models.TextField()
-    source = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
-    reply_to = models.ForeignKey('self', related_name="replies", blank=True, null=True, on_delete=models.SET_NULL)
-    user = models.ForeignKey(User, related_name="messages")
-    classgroup = models.ForeignKey(Classgroup, related_name="messages")
-    approved = models.BooleanField(default=False)
-    resources = models.ManyToManyField(Resource, related_name="messages", blank=True, null=True)
+class Classgroup(models.Model):
+    name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
+    display_name = models.CharField(max_length=MAX_NAME_LENGTH)
+    owner = models.ForeignKey(User, related_name="created_classgroups", blank=True, null=True, on_delete=models.SET_NULL)
+    users = models.ManyToManyField(User, related_name="classgroups", blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
 
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
-    def reply_count(self):
-        return self.replies.count()
-
-    def profile_image(self):
-        try:
-            return self.user.profile.image
-        except UserProfile.DoesNotExist:
-            return None
-
-class Rating(models.Model):
-    rating = models.IntegerField(default=0)
-    message = models.ForeignKey(Message, related_name="ratings")
-    owner = models.ForeignKey(User, related_name="ratings", blank=True, null=True, on_delete=models.SET_NULL)
-
-    modified = models.DateTimeField(auto_now=True)
-
-class ClassSettings(models.Model):
-    classgroup = models.OneToOneField(Classgroup, related_name="class_settings", blank=True, null=True)
-    is_public = models.BooleanField(default=False)
-    moderate_posts = models.BooleanField(default=True)
-    access_key = models.CharField(max_length=MAX_CHARFIELD_LENGTH, unique=True)
-    allow_signups = models.BooleanField(default=True)
-
-    modified = models.DateTimeField(auto_now=True)
-
-class Classgroup(models.Model):
-    name = models.CharField(max_length=MAX_CHARFIELD_LENGTH, unique=True, db_index=True)
-    display_name = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
-    owner = models.ForeignKey(User, related_name="created_classgroups", blank=True, null=True, on_delete=models.SET_NULL)
-    users = models.ManyToManyField(User, related_name="classgroups", blank=True, null=True, on_delete=models.SET_NULL)
-    description = models.TextField()
+    def link(self):
+        return "/classes/" + self.name + "/"
 
     def queryset(self, tag=None):
         queryset = self.messages.all()
@@ -116,31 +92,82 @@ class Classgroup(models.Model):
                     edges.append({'start' : u, 'end' : k, 'strength' : user_relations[u][k]})
         return {'nodes' : nodes, 'edges' : edges}
 
+class Resource(models.Model):
+    owner = models.ForeignKey(User, related_name="resources")
+    classgroup = models.ForeignKey(Classgroup, related_name="resources")
+    name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
+    display_name = models.CharField(max_length=MAX_NAME_LENGTH)
+    resource_type = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
+    data = models.TextField(blank=True, null=True)
+    approved = models.BooleanField(default=False)
+
+    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+class Message(models.Model):
+    text = models.TextField()
+    source = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
+    reply_to = models.ForeignKey('self', related_name="replies", blank=True, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, related_name="messages")
+    classgroup = models.ForeignKey(Classgroup, related_name="messages")
+    approved = models.BooleanField(default=False)
+    resources = models.ManyToManyField(Resource, related_name="messages", blank=True, null=True)
+
+    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def reply_count(self):
+        return self.replies.count()
+
+    def profile_image(self):
+        try:
+            return self.user.profile.image
+        except UserProfile.DoesNotExist:
+            return None
+
+class Rating(models.Model):
+    rating = models.IntegerField(default=0)
+    message = models.ForeignKey(Message, related_name="ratings")
+    owner = models.ForeignKey(User, related_name="ratings", blank=True, null=True, on_delete=models.SET_NULL)
+
+    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+class ClassSettings(models.Model):
+    classgroup = models.OneToOneField(Classgroup, related_name="class_settings", blank=True, null=True)
+    is_public = models.BooleanField(default=False)
+    moderate_posts = models.BooleanField(default=True)
+    access_key = models.CharField(max_length=MAX_CHARFIELD_LENGTH, unique=True)
+    allow_signups = models.BooleanField(default=True)
+
+    modified = models.DateTimeField(auto_now=True)
+
 class Tag(models.Model):
-    name = models.CharField(max_length=MAX_CHARFIELD_LENGTH, unique=True, db_index=True)
-    display_name = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
+    name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
+    display_name = models.CharField(max_length=MAX_NAME_LENGTH)
     messages = models.ManyToManyField(Message, related_name="tags", blank=True, null=True)
     classgroup = models.ForeignKey(Classgroup, related_name="tags")
     description = models.TextField()
 
     modified = models.DateTimeField(auto_now=True)
 
-class Resource(models.Model):
-    owner = models.ForeignKey(User, related_name="resources")
-    classgroup = models.ForeignKey(Classgroup, related_name="resources")
-
-    data = models.TextField(blank=True, null=True)
-    approved = models.BooleanField(default=False)
-    modified = models.DateTimeField(auto_now=True)
-
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile", unique=True, blank=True, null=True)
     image = models.CharField(max_length=MAX_CHARFIELD_LENGTH, blank=True, null=True, unique=True)
-    modified = models.DateTimeField(auto_now=True, blank=True, null=True)
+    modified = models.DateTimeField(auto_now=True)
 
 class EmailSubscription(models.Model):
     email_address = models.EmailField(max_length=MAX_CHARFIELD_LENGTH, unique=True, db_index=True)
     modified = models.DateTimeField(auto_now=True)
+
+
+@receiver(post_save, sender=User)
+def create_profile(sender, instance, **kwargs):
+    try:
+        profile = instance.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile(user=instance)
+        profile.save()
 
 User.profile = property(lambda u: u.get_profile())
 

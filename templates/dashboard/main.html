@@ -12,35 +12,30 @@
 {% endblock %}
 
 {% block dashboard_content %}
-    <h1>Add a Tag</h1>
-    <p class="hidden-xs">After you have created a tag, you can add students to it by clicking on the tag on the left.</p>
-    <p class="visible-xs">After you have created a tag, you can add students to it by using the "show tag menu" button above to see all your tags, and then clicking the tag.</p>
-    <p>Once students have been added to a tag, they can tweet to it using #movide #tag. For example, <strong>Why are some elements heavier than others? #movide #scienceclass</strong></p>
+    <h1>Add a Class</h1>
+    <p class="hidden-xs">After you have created a class, you can get started with it by clicking on it to the left.</p>
+    <p class="visible-xs">After you have created a class, you can get started with it by using the "show class menu" button above to see all your classes, and then clicking the class.</p>
     <form class="form-inline" role="form">
-        <div class="form-group create-tag-form">
-            <label class="sr-only" for="inputTag1">Tag</label>
-            <input type="text" class="form-control input-lg" id="inputTag1" placeholder="#myhashtag">
-            <span class="help-block" id="create-tag-message"></span>
+        <div class="form-group create-class-form">
+            <label class="sr-only" for="inputClass1">Class Name</label>
+            <input type="text" class="form-control input-lg" id="inputClass1" placeholder="My Class Name">
+            <span class="help-block" id="create-class-message"></span>
         </div>
         <div class="form-group">
-            <button type="submit" class="btn btn-large" id="create-tag">Create your Tag</button>
+            <button type="submit" class="btn btn-large" id="create-class">Create your Class</button>
         </div>
     </form>
-    <div class="tag-list">
-        <h1>Your Tags</h1>
-        <div id="tags">
+    <div class="class-list">
+        <h1>Your Classes</h1>
+        <div id="classes">
             <table class="table table-hover table-condensed">
                 <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Daily Tweets</th>
-                    <th>Daily Users</th>
-                    <th>All Tweets</th>
-                    <th>All Users</th>
-                    <th>Created</th>
+                    <th>Modified</th>
                 </tr>
                 </thead>
-                <tbody id="tag-content">
+                <tbody id="class-content">
 
                 </tbody>
             </table>
