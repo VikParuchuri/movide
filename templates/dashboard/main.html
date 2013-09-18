@@ -24,13 +24,14 @@
             <button type="submit" class="btn btn-large" id="create-class">Create your Class</button>
         </div>
     </form>
-    <div class="class-list">
+    <div class="class-list" data-username="{{ user.username }}">
         <h1>Your Classes</h1>
         <div id="classes">
             <table class="table table-hover table-condensed">
                 <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Role</th>
                     <th>Modified</th>
                 </tr>
                 </thead>

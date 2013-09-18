@@ -9,5 +9,6 @@ from django.conf import settings
 urlpatterns =patterns('frontend.views',
                       url(r'^$', 'index'),
                       url(r'^dashboard/$', 'dashboard'),
+                      url(r'^verify_code/$', 'verify_code'),
                       url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/$', 'classview'),
                       )

@@ -5,8 +5,11 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 import logging
 from django.conf import settings
-log = logging.getLogger(__name__)
 import re
+from rest_framework.pagination import PaginationSerializer
+
+
+log = logging.getLogger(__name__)
 
 def alphanumeric_name(string):
     return re.sub(r'\W+', '', string.lower().encode("ascii", "ignore"))
@@ -167,6 +170,10 @@ class MessageSerializer(serializers.Serializer):
         instance = set_attributes(attributes, attrs, instance)
         instance.save()
         return instance
+
+class PaginatedMessageSerializer(PaginationSerializer):
+    class Meta:
+        object_serializer_class = MessageSerializer
 
 class ResourceSerializer(serializers.Serializer):
     pk = serializers.Field()

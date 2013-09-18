@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block additional_js %}
+    <script type="text/javascript" src="{% static 'js/verify_code.js' %}"></script>
+{% endblock %}
+
+{% block title %}
+    Enter your class access code.
+{% endblock %}
+
+{% block meta_description %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <h1>Enter access code</h1>
+            <p>We need to verify that you can join class {{ display_name }}.  Please enter your access code.  If you do not have an access code, please contact the course owner.</p>
+            <form class="access-code" role="form" action="/verify_code/" method="post">
+                {% csrf_token %}
+                <div class="form-group verify-code-form">
+                    <label class="sr-only" for="inputClass1">Access code for class</label>
+                    <input type="text" class="form-control input-lg" id="inputClass1" placeholder="Enter access key here..." name="access_key">
+                    <input type="hidden" id="class-name" data-class-name={{ name }}>
+                    <span class="help-block" id="verify-code-message"></span>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-large" id="verify-code">Access your class</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+

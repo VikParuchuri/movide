@@ -314,7 +314,7 @@ TWITTER_AUTH_SECRET_APP_KEY = ""
 LOGOUT_REDIRECT_URL = "/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 
-LOGIN_URL = "/"
+LOGIN_URL = "/accounts/login/"
 
 try:
     from .private import *

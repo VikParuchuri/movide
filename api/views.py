@@ -4,7 +4,7 @@ from models import Tag, Message, UserProfile, Classgroup
 from rest_framework.views import APIView
 from serializers import (TagSerializer, MessageSerializer, UserSerializer,
                          EmailSubscriptionSerializer, ResourceSerializer,
-                         ClassgroupSerializer, RatingSerializer)
+                         ClassgroupSerializer, RatingSerializer, PaginatedMessageSerializer)
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from django.db.models import Q, Count
@@ -13,8 +13,9 @@ import logging
 from django.conf import settings
 from django.utils.timezone import now
 from datetime import timedelta
-log = logging.getLogger(__name__)
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import re
+log = logging.getLogger(__name__)
 
 class QueryView(APIView):
     query_attributes = []
@@ -43,12 +44,26 @@ class QueryView(APIView):
                 queryset = getattr(self, "filter_" + attrib)(queryset, val)
         return queryset
 
+    def verify_user(self):
+        if "user" in self.query_dict and "classgroup" not in self.query_dict:
+            if self.request.user.username != self.query_dict['user']:
+                error_msg = "User {0} for query does not match queried user {1}.".format(self.request.user.username, self.query_dict['user'])
+                return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+    def verify_classgroup(self):
+        if "classgroup" in self.query_dict:
+            cg = Classgroup.objects.get(name=self.query_dict['classgroup'])
+            if cg.owner != self.request.user and self.request.user.classgroups.filter(name=self.query_dict['classgroup']).count()==0:
+                error_msg = "Attempting to query a class that you are not part of."
+                return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
 class ClassgroupView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, format=None):
-        classgroups = Classgroup.objects.filter(owner=request.user).order_by('-modified')
-        serializer = ClassgroupSerializer(classgroups, many=True)
+        owned_classgroups = list(Classgroup.objects.filter(owner=request.user).order_by('-modified'))
+        participating_classgroups = [l for l in list(request.user.classgroups.all()) if l not in owned_classgroups]
+        serializer = ClassgroupSerializer(owned_classgroups + participating_classgroups, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
@@ -64,13 +79,13 @@ class ClassgroupDetailView(APIView):
     def get_object(self, classgroup):
         try:
             return Classgroup.objects.get(name=classgroup)
-        except Tag.DoesNotExist:
+        except Classgroup.DoesNotExist:
             raise Http404
 
     def get(self, request, classgroup, format=None):
         classgroup = self.get_object(classgroup)
-        if classgroup.owner != request.user:
-            error_msg = "Class owner is not the user making the request."
+        if classgroup.owner != request.user and request.user.classgroups.filter(id=classgroup.id).count()==0:
+            error_msg = "You are not authorized to see this class."
             log.error(error_msg)
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
 
@@ -86,17 +101,29 @@ class MessageView(QueryView):
         return queryset.filter(tags__name=tag)
 
     def filter_user(self, queryset, user):
-        return queryset.filter(user=user)
+        return queryset.filter(user__username=user)
 
     def filter_classgroup(self, queryset, classgroup):
         return queryset.filter(classgroup__name=classgroup)
 
     def get(self, request, format=None):
         self.get_query_params()
+        self.verify_user()
+        self.verify_classgroup()
 
         queryset = Message.objects.all()
-        queryset = self.filter_query_params(queryset)
-        serializer = MessageSerializer(queryset.order_by("-modified"), many=True)
+        queryset = self.filter_query_params(queryset).order_by("-modified")
+        paginator = Paginator(queryset, 10)
+
+        page = request.QUERY_PARAMS.get("page")
+        try:
+            messages = paginator.page(page)
+        except PageNotAnInteger:
+            messages = paginator.page(1)
+        except EmptyPage:
+            messages = paginator.page(paginator.num_pages)
+
+        serializer = PaginatedMessageSerializer(messages, context={'request' : request})
         return Response(serializer.data)
 
     def post(self, request, format=None):
@@ -184,6 +211,11 @@ class UserDetail(APIView):
             classgroup_model = Classgroup.objects.get(name=classgroup)
         except Classgroup.DoesNotExist:
             error_msg = "Cannot find the specified tag."
+            log.error(error_msg)
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+        if request.user != classgroup_model.owner:
+            error_msg = "User not authorized to delete others."
             log.error(error_msg)
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
 

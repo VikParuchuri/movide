@@ -8,6 +8,36 @@ $(document).ready(function() {
         return oldSync(method, model, options);
     };
 
+    function csrfSafeMethod(method) {
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    function sameOrigin(url) {
+        var host = document.location.host; // host + port
+        var protocol = document.location.protocol;
+        var sr_origin = '//' + host;
+        var origin = protocol + sr_origin;
+        return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+            (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+            !(/^(\/\/|http:|https:).*/.test(url));
+    }
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && sameOrigin(settings.url)) {
+                xhr.setRequestHeader("X-CSRFToken", CSRF_TOKEN);
+            }
+        }
+    });
+
+    function post_code(data, success, error){
+        $.ajax({
+            type: "POST",
+            url: "/verify_code/",
+            data: data,
+            success: success,
+            error: error
+        });
+    }
+
     function capitalize(string)
     {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -29,6 +59,44 @@ $(document).ready(function() {
             }
             Backbone.sync(method, model, options);
         }
+    });
+
+    var PaginatedCollection = Backbone.Collection.extend({
+        initialize: function() {
+            _.bindAll(this, 'parse', 'nextPage', 'previousPage');
+            typeof(options) != 'undefined' || (options = {});
+        },
+        fetch: function(options) {
+            typeof(options) != 'undefined' || (options = {});
+            this.trigger("fetching");
+            var self = this;
+            var success = options.success;
+            options.success = function(resp) {
+                self.trigger("fetched");
+                if(success) { success(self, resp); }
+            };
+            return Backbone.Collection.prototype.fetch.call(this, options);
+        },
+        parse: function(resp) {
+            this.next = resp.next;
+            this.prev = resp.previous;
+            return resp.results;
+        },
+        nextPage: function(options) {
+            if (this.next == undefined) {
+                return false;
+            }
+            this.url = this.next;
+            return this.fetch(options);
+        },
+        previousPage: function(options) {
+            if (this.previous == undefined) {
+                return false;
+            }
+            this.url = this.next;
+            return this.fetch(options);
+        }
+
     });
 
     var Message = methodModel.extend({
@@ -62,7 +130,7 @@ $(document).ready(function() {
         }
     });
 
-    var Messages = Backbone.Collection.extend({
+    var Messages = PaginatedCollection.extend({
         idAttribute: 'pk',
         model: Message,
         url: '/api/messages/'
@@ -401,16 +469,19 @@ $(document).ready(function() {
         tagName: "tr",
         className: "classes",
         template_name: "#classTemplate",
+        role: undefined,
         events: {
         },
-        initialize: function(){
+        initialize: function(options){
             _.bindAll(this, 'render'); // every function that uses 'this' as the current object should be in here
+            this.role = options.role;
             this.model.bind('change', this.render);
             this.model.bind('remove', this.unrender);
         },
         get_model_json: function(){
             var model_json = this.model.toJSON();
             model_json.modified = model_json.modified.split("T")[0];
+            model_json.role = this.role;
             return model_json;
         },
         render: function () {
@@ -460,8 +531,16 @@ $(document).ready(function() {
             $(this.el).html(add_tag_prompt);
         },
         renderClass: function (item) {
+            var username = $('.class-list').data('username');
+            var role;
+            if(item.get('owner') == username){
+                role = "Creator"
+            } else {
+                role = "Participant"
+            }
             var tagView = new this.view_class({
-                model: item
+                model: item,
+                role: role
             });
             $(this.class_item_el).append(tagView.render().el);
         },
@@ -484,8 +563,8 @@ $(document).ready(function() {
         },
         get_model_json: function(){
             var model_json = this.model.toJSON();
-            model_json.created = model_json.created.replace("Z","");
-            model_json.created = moment.utc(model_json.created).local().calendar();
+            model_json.created_formatted = model_json.created.replace("Z","");
+            model_json.created_formatted = moment.utc(model_json.created_formatted).local().calendar();
             return model_json;
         },
         render: function () {
@@ -515,13 +594,14 @@ $(document).ready(function() {
         reply_to_message: '.reply-to-message-button',
         start_a_discussion: '.start-a-discussion-button',
         open_reply_panel: '.reply-to-message',
+        isLoading: false,
         events: {
             'click .view-message-replies': this.render_message_replies,
             'click .reply-to-message-button': this.post_reply_to_message,
             'click .start-a-discussion-button': this.post_reply_to_message
         },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'renderMessage', 'refresh', 'render_messages', 'destroy_view', 'render_message_replies', 'post_reply_to_message');
+            _.bindAll(this, 'render', 'renderMessage', 'refresh', 'render_messages', 'destroy_view', 'render_message_replies', 'post_reply_to_message', 'checkScroll');
             this.collection = new this.collection_class();
             this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
@@ -615,6 +695,8 @@ $(document).ready(function() {
             $(this.start_a_discussion).click(this.post_reply_to_message);
             $(this.open_reply_panel).unbind();
             $(this.open_reply_panel).click(this.handle_reply_collapse);
+            $(window).unbind();
+            $(window).scroll(this.checkScroll);
         },
         child_messages: function(message_id){
             message_id = parseInt(message_id);
@@ -649,12 +731,23 @@ $(document).ready(function() {
         },
         renderNewMessage: function(item){
             var reply_to = item.get('reply_to');
+            var comment_insert;
+            var first_comment = $(this.el).find(".comments").find(".comment:first");
+            var first_date = new Date(first_comment.data('created'));
+            var item_date = new Date(item.get('created'));
             if(reply_to == null){
-                $(this.el).find(".comments").prepend(this.renderMessage(item));
+                comment_insert = $(this.el).find(".comments")
             } else {
                 var comment_container = $(".comment[data-message-id='" + reply_to +"']");
                 if(comment_container.length > 0){
-                    comment_container.children(".message-replies-container").prepend(this.renderMessage(item));
+                    comment_insert = comment_container.children(".message-replies-container")
+                }
+            }
+            if(comment_insert != undefined){
+                if(item_date > first_date){
+                    comment_insert.prepend(this.renderMessage(item));
+                } else {
+                    comment_insert.append(this.renderMessage(item));
                 }
             }
         },
@@ -679,6 +772,18 @@ $(document).ready(function() {
             this.setElement(this.el_name);
             $(this.el).empty();
             this.render_messages();
+        },
+        checkScroll: function () {
+            var triggerPoint = 400;
+            if( !this.isLoading && $(window).scrollTop() + $(window).height() + triggerPoint > $('html').height() ) {
+                this.isLoading = true;
+                var that = this;
+                this.collection.nextPage({
+                    success: function(){
+                        that.isLoading = false;
+                    }
+                });
+            }
         }
     });
 
@@ -689,4 +794,5 @@ $(document).ready(function() {
     window.Class = Class;
     window.EmailSubscription = EmailSubscription;
     window.ClassDetailView = ClassDetailView;
+    window.post_code = post_code;
 });
