@@ -13,7 +13,7 @@ $(document).ready(function() {
     };
     var success_display = function(model, response, options){
         $(create_class_form).removeClass("has-error").addClass("has-success");
-        $(message_class).html("Class created!  Click the class on the left to get started.");
+        $(message_class).html("Class created!  Click on the class name below to get started.");
         $("#refresh-sidebar").click();
         classview.refresh();
         $(create_class_button).attr('disabled', false);

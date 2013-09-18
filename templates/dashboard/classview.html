@@ -2,13 +2,29 @@
 {% load staticfiles %}
 
 {% block dashboard_js %}
-    <script type="text/javascript" src="{% static 'js/classview.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/classview.js' %}" xmlns="http://www.w3.org/1999/html"></script>
 {% endblock %}
 
 {% block title %}
 {% endblock %}
 
 {% block meta_description %}
+{% endblock %}
+
+{% block sidebar %}
+    <ul class="nav nav-tabs" id="tag-sidebar">
+        <li class="active current"><a href="#" class="sidebar-item" data-name="messages">Messages</a></li>
+        <li><a href="#" class="sidebar-item" data-name="stats">Stats</a></li>
+        <li><a href="#" class="sidebar-item" data-name="users">Users</a></li>
+    </ul>
+{% endblock %}
+
+{% block additional_nav %}
+    <li class="active">
+        <a href="{{ link }}" data-name="{{ name }}" data-display-class-name="{{ display_name }}">
+            {{ display_name }}
+        </a>
+    </li>
 {% endblock %}
 
 {% block dashboard_content %}

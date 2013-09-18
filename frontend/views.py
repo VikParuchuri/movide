@@ -36,6 +36,7 @@ def classview(request, classgroup):
     return render_to_response("dashboard/classview.html", {
                 'name' : cg.name,
                 'display_name': cg.display_name,
+                'link': cg.link(),
             },
            context_instance=RequestContext(request)
     )

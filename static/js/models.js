@@ -132,44 +132,19 @@ $(document).ready(function() {
         }
     });
 
-    var ClassDetailView = BaseView.extend({
-        el: "#dashboard-content",
-        template_name: "#classDetailTemplate",
-        classgroup: null,
-        options: null,
-        user_view: null,
-        message_view: null,
-        tag_model: null,
+    var StatsView = BaseView.extend({
+        el: "#stats-container",
+        el_name: "#stats-container",
         chart_tag: "message-chart",
         network_chart_tag: "student-network-chart",
-        events: {
-
-        },
-        initialize: function (options) {
-            _.bindAll(this, 'render', 'refresh');
-            this.classgroup = options.classgroup;
-            this.display_tag = options.display_tag;
-            this.options = {
-                classgroup: this.classgroup,
-                display_tag: this.display_tag
-            };
-        },
-        base_render: function() {
-            this.class_model = new Class({name : this.classgroup});
-            this.class_model.fetch({async: false});
-            var tmpl = _.template($(this.template_name).html());
-            var content_html = tmpl({
-                classgroup: this.classgroup,
-                display_tag: this.display_tag
-            });
-            $(this.el).html(content_html);
-            /*var tag_information = new TagInformation({name : this.classgroup});
-            tag_information.fetch({success: this.render_additional_charts, error: this.render_additional_charts_error});
-            if(messages_by_day.length > 1){
-                var chart_width = $("#messages").width();
-                $('#' + this.chart_tag).css('width', chart_width);
+        render: function(){
+            var tag_information = new TagInformation({name : this.classgroup});
+             tag_information.fetch({success: this.render_additional_charts, error: this.render_additional_charts_error});
+             if(messages_by_day.length > 1){
+             var chart_width = $("#messages").width();
+             $('#' + this.chart_tag).css('width', chart_width);
                 this.create_chart(messages_by_day);
-            }*/
+             }
         },
         create_chart: function(data){
             new Morris.Line({
@@ -180,31 +155,8 @@ $(document).ready(function() {
                 labels: ['# of messages']
             });
         },
-        render: function () {
-            this.base_render();
-            this.user_view = new UsersView(this.options);
-            this.user_view.render();
-            this.message_view = new MessagesView(this.options);
-            this.message_view.render();
-        },
-        base_refresh: function() {
-            this.base_render();
-        },
-        refresh: function(options){
-            this.classgroup = options.classgroup;
-            this.display_tag = options.display_tag;
-            this.options = {
-                classgroup: this.classgroup,
-                display_tag: this.display_tag
-            };
-            $(this.el).empty();
-            this.base_refresh();
-            this.setElement($(this.el));
-            this.user_view.refresh(this.options);
-            this.message_view.refresh(this.options);
-        },
         render_additional_charts_error: function(){
-          console.log("error");
+            console.log("error");
         },
         render_additional_charts: function(model, success, options){
             $("#student-network-chart").empty();
@@ -226,12 +178,12 @@ $(document).ready(function() {
 
                 var i;
                 var clusters = [{
-                        'id': 1,
-                        'nodes': [],
-                        'color': 'rgb('+0+','+
-                            0+','+
-                            0+')'
-                    }];
+                    'id': 1,
+                    'nodes': [],
+                    'color': 'rgb('+0+','+
+                        0+','+
+                        0+')'
+                }];
 
                 var cluster = clusters[0];
                 var nodes = model.get('network_info').nodes;
@@ -251,8 +203,8 @@ $(document).ready(function() {
                 }
 
                 for(i = 0; i < edges.length; i++){
-                     var edge = edges[i];
-                     sigInst.addEdge(i,edge.start, edge.end, {'size' : 'strength'});
+                    var edge = edges[i];
+                    sigInst.addEdge(i,edge.start, edge.end, {'size' : 'strength'});
                 }
 
                 var greyColor = '#FFFFFF';
@@ -302,9 +254,88 @@ $(document).ready(function() {
         }
     });
 
+    var ClassDetailView = BaseView.extend({
+        el: "#dashboard-content",
+        classgroup: null,
+        options: null,
+        user_view: null,
+        message_view: null,
+        tag_model: null,
+        chart_tag: "message-chart",
+        network_chart_tag: "student-network-chart",
+        template_name: "#classDetailTemplate",
+        sidebar_item_tag: ".sidebar-item",
+        events: {
+            'click.sidebar-item': this.sidebar_click
+        },
+        initialize: function (options) {
+            _.bindAll(this, 'render', 'refresh', 'make_active', 'sidebar_click');
+            this.classgroup = options.classgroup;
+            this.display_tag = options.display_tag;
+            this.options = {
+                classgroup: this.classgroup,
+                display_tag: this.display_tag
+            };
+        },
+        make_active: function(elem){
+            $("#tag-sidebar").find('li').removeClass("current active");
+            $(elem).addClass("current active");
+        },
+        base_render: function() {
+            this.class_model = new Class({name : this.classgroup});
+            this.class_model.fetch({async: false});
+            $(this.el).html("");
+            this.rebind_events();
+        },
+        sidebar_click: function(event){
+            var target = $(event.target);
+            var name = target.data('name');
+
+            if(name === "stats"){
+                this.render_stats();
+            } else if(name === "messages"){
+                this.render_messages();
+            } else if(name=== "users"){
+                this.render_users();
+            }
+            this.make_active(target.closest('li'));
+        },
+        render_users: function() {
+            this.refresh();
+            $(this.el).html($("#usersDetailTemplate").html());
+            this.user_view = new UsersView(this.options);
+            this.user_view.render();
+        },
+        render_messages: function() {
+            this.refresh();
+            $(this.el).html($("#messageDetailTemplate").html());
+            this.message_view = new MessagesView(this.options);
+            this.message_view.render();
+        },
+        render_stats: function() {
+            this.refresh();
+            $(this.el).html($("#statsDetailTemplate").html());
+            this.stats_view = new StatsView(this.options);
+            this.stats_view.render();
+        },
+        render: function () {
+            this.base_render();
+            this.render_messages();
+        },
+        refresh: function(){
+            $(this.el).empty();
+            this.base_render();
+            this.setElement($(this.el));
+        },
+        rebind_events: function() {
+            $(this.sidebar_item_tag).unbind();
+            $(this.sidebar_item_tag).click(this.sidebar_click);
+        }
+    });
+
     var UsersView = BaseView.extend({
-        el: "#user-table",
-        el_name: "#user-table",
+        el: "#users-container",
+        el_name: "#users-container",
         collection_class : Users,
         view_class: UserView,
         template_name: "#userTableTemplate",
@@ -441,40 +472,6 @@ $(document).ready(function() {
         }
     });
 
-    var ClassSidebarView = ClassView.extend({
-        tagName: "li",
-        className: "tag-list-item",
-        template_name: "#sidebarItemTemplate"
-    });
-
-    var ClassesSidebarView = ClassesView.extend({
-        el: "#tag-sidebar",
-        view_class: ClassSidebarView,
-        detail_view: undefined,
-        events: {
-            'click #refresh-sidebar': 'refresh'
-        },
-        render_sidebar: function(){
-            $('.class-name', this.el).remove();
-            var that = this;
-            _.each(this.collection.models, function (item) {
-                that.renderClass(item);
-            }, this);
-        },
-        refresh: function(event){
-            event.preventDefault();
-            this.collection.fetch({async:false});
-            this.render_sidebar();
-            return false;
-        },
-        renderClass: function (item) {
-            var classView = new this.view_class({
-                model: item
-            });
-            $(this.el).append(classView.render().el);
-        }
-    });
-
     var MessageView = BaseView.extend({
         tagName: "div",
         className: "messages",
@@ -508,8 +505,8 @@ $(document).ready(function() {
     });
 
     var MessagesView = BaseView.extend({
-        el: "#messages",
-        el_name: "#messages",
+        el: "#messages-container",
+        el_name: "#messages-container",
         collection_class : Messages,
         view_class: MessageView,
         template_name: "#messagesTemplate",
@@ -529,6 +526,7 @@ $(document).ready(function() {
             this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
             this.collection.fetch({async: false, data: {classgroup: this.classgroup}});
+            this.rebind_collection();
         },
         render_messages: function(){
             this.render();
@@ -558,17 +556,19 @@ $(document).ready(function() {
                 var message_reply = new Message({text: reply, classgroup: this.classgroup})
             } else {
                 var primary_key = button.data('primary-key');
-                var message_reply = new Message({in_reply_to_id : primary_key, text: reply, classgroup: this.classgroup, source: 'website'});
+                var message_reply = new Message({reply_to : primary_key, text: reply, classgroup: this.classgroup, source: 'website'});
             }
 
             var reply_form = message_div.find('.reply-to-message-form');
             var message_block = message_div.find('.help-block');
             $(button).attr('disabled', true);
+            var that = this;
             message_reply.save(null,{
                 success : function(){
                     $(reply_form).removeClass("has-error").addClass("has-success");
-                    $(message_block).html("Reply sent!  It may take some time to show up here.");
+                    $(message_block).html("Discussion started!");
                     $(button).attr('disabled', false);
+                    that.collection.fetch({async: false, data: {classgroup: that.classgroup}});
                 },
                 error: function(){
                     $(reply_form).removeClass("has-success").addClass("has-error");
@@ -593,7 +593,7 @@ $(document).ready(function() {
                     }, this);
                     var tmpl = _.template($(this.template_name).html());
                     var content_html = tmpl({messages: model_html, classgroup: this.classgroup, display_tag: this.display_tag});
-                    $(comment_container).html(content_html);
+                    $(comment_container).html(content_html).hide().slideDown(300);
                     comment_container.data('contains-replies', true);
                     this.rebind_events();
                 } else {
@@ -601,7 +601,7 @@ $(document).ready(function() {
                     $(comment_container).html(no_replies);
                 }
             } else {
-                $(comment_container).html('');
+                $(comment_container).slideUp(300).html('');
                 comment_container.data('contains-replies', false);
             }
             return false;
@@ -647,16 +647,35 @@ $(document).ready(function() {
             $(this.el).html(content_html);
             this.rebind_events();
         },
+        renderNewMessage: function(item){
+            var reply_to = item.get('reply_to');
+            if(reply_to == null){
+                $(this.el).find(".comments").prepend(this.renderMessage(item));
+            } else {
+                var comment_container = $(".comment[data-message-id='" + reply_to +"']");
+                if(comment_container.length > 0){
+                    comment_container.children(".message-replies-container").prepend(this.renderMessage(item));
+                }
+            }
+        },
         renderMessage: function (item) {
             var userView = new this.view_class({
                 model: item
             });
             return userView.render().el;
         },
+        rebind_collection: function(){
+            this.collection.bind('add', this.renderNewMessage, this);
+        },
+        unbind_collection: function(){
+            this.collection.unbind();
+        },
         refresh: function(options){
             this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
+            this.unbind_collection();
             this.collection.fetch({async:false, data: {classgroup: this.classgroup}});
+            this.rebind_collection();
             this.setElement(this.el_name);
             $(this.el).empty();
             this.render_messages();
@@ -668,8 +687,6 @@ $(document).ready(function() {
     window.ClassView = ClassView;
     window.ClassesView = ClassesView;
     window.Class = Class;
-    window.ClassSidebarView = ClassSidebarView;
-    window.ClassesSidebarView = ClassesSidebarView;
     window.EmailSubscription = EmailSubscription;
     window.ClassDetailView = ClassDetailView;
 });

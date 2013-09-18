@@ -141,7 +141,7 @@ class MessageSerializer(serializers.Serializer):
     tags = serializers.SlugRelatedField(many=True, slug_field="name", blank=True, null=True, queryset=Tag.objects.all())
     user = serializers.SlugRelatedField(many=False, slug_field="username", blank=True, null=True, queryset=User.objects.all())
     user_image = serializers.Field(source="profile_image")
-    reply_to = serializers.PrimaryKeyRelatedField(read_only=True)
+    reply_to = serializers.PrimaryKeyRelatedField(required=False, blank=True, null=True, queryset=Message.objects.all())
     ratings = serializers.SlugRelatedField(many=True, slug_field="rating", read_only=True, blank=True, null=True, queryset=Rating.objects.all())
     classgroup = serializers.SlugRelatedField(slug_field="name", blank=True, null=True, queryset=Classgroup.objects.all())
     resources = serializers.PrimaryKeyRelatedField(many=True, blank=True, null=True, queryset=Resource.objects.all())
@@ -156,7 +156,7 @@ class MessageSerializer(serializers.Serializer):
         user = self.context['request'].user
         classgroup = attrs.get('classgroup')
 
-        attributes = ["text", "source"]
+        attributes = ["text", "source", "reply_to"]
 
         if instance is None:
             instance = Message(user=user, classgroup=classgroup)

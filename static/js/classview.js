@@ -6,4 +6,7 @@ $(document).ready(function() {
     };
     var detail_view = new ClassDetailView(options);
     detail_view.render();
+    $('[data-toggle=offcanvas]').click(function() {
+        $('.row-offcanvas').toggleClass('active');
+    });
 });

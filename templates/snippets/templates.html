@@ -1,6 +1,6 @@
 <script id="classTemplate" type="text/template">
     <td>
-        <%= display_name %>
+        <a href="<%= link %>"> <%= display_name %></a>
     </td>
     <td>
         <%= modified %>
@@ -15,35 +15,36 @@
     <p>Unfortunately, not enough messages have been sent to allow this chart to be shown.</p>
 </script>
 
-<script id="classDetailTemplate" type="text/template">
+<script id="messageDetailTemplate" type="text/template">
     <div class="row">
-        <ul class="nav nav-tabs" id="myTab">
-            <li class="active"><a href="#messages-container" data-toggle="tab">Messages</a></li>
-            <li><a href="#stats-container" data-toggle="tab">Stats</a></li>
-            <li><a href="#users-container" data-toggle="tab">Users</a></li>
-        </ul>
+        <div id="start-a-discussion" data-start-discussion="true" class="message-reply">
+            <form role="form">
+                <div class="form-group reply-to-message-form">
+                    <label class="sr-only" for="start-a-discussion-input">Tag</label>
+                    <input type="text" class="form-control input-lg" id="start-a-discussion-input" placeholder="Enter message here...">
+                    <span class="help-block"></span>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-small start-a-discussion-button">Start a new discussion</button>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="tab-content">
-        <div class="tab-pane active" id="messages-container">
-            <div class="row">
-                <h3>Messages</h3>
-                <div id="messages">
-
-                </div>
-            </div>
+    <div class="row">
+        <div id="messages-container">
         </div>
-        <div class="tab-pane" id="stats-container">
-            <div class="row">
-                <h3>Stats</h3>
-            </div>
-        </div>
-        <div class="tab-pane" id="users-container">
-            <div class="row">
-                <h3>Users</h3>
-                <div id="user-table">
+    </div>
+</script>
 
-                </div>
-            </div>
+<script id="statsDetailTemplate" type="text/template">
+    <div class="row">
+        <div id="stats-container"></div>
+    </div>
+</script>
+
+<script id="usersDetailTemplate" type="text/template">
+    <div class="row">
+        <div id="users-container">
         </div>
     </div>
 </script>
@@ -119,7 +120,7 @@
                     <span class="help-block" id="reply-to-message-message-<%= pk %>"></span>
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-small reply-to-message-button" id="reply-to-message-button-<%= pk %>" data-primary-key="<%= pk %>">Send Message</button>
+                    <button type="submit" class="btn btn-small reply-to-message-button" id="reply-to-message-button-<%= pk %>" data-primary-key="<%= pk %>">Send Reply</button>
                 </div>
             </form>
         </div>
@@ -138,23 +139,7 @@
 </script>
 
 <script id="messagesTemplate" type="text/template">
-    <div id="start-a-discussion" data-start-discussion="true" class="message-reply">
-        <form role="form">
-            <div class="form-group reply-to-message-form">
-                <label class="sr-only" for="start-a-discussion-input">Tag</label>
-                <input type="text" class="form-control input-lg" id="start-a-discussion-input" placeholder="Enter message here...">
-                <span class="help-block"></span>
-            </div>
-            <div class="form-group">
-                <button type="submit" class="btn btn-small start-a-discussion-button">Start a new discussion</button>
-            </div>
-        </form>
-    </div>
     <div class="comments" data-tag-name="<%= classgroup %>" id="comments">
         <%= messages %>
     </div>
-</script>
-
-<script id="sidebarItemTemplate" type="text/template">
-    <a href="<%= link %>" class="class-name" data-display-class-name="<%= display_name %>"><%= display_name %></a>
 </script>

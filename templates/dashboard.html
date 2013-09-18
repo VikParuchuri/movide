@@ -3,7 +3,6 @@
 
 {% block additional_js %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/dashboard.css' %}"/>
-    <script type="text/javascript" src="{% static 'js/sidebar.js' %}"></script>
     {% block dashboard_js %}
     {% endblock %}
 {% endblock %}
@@ -18,9 +17,14 @@
 
 {% block content %}
     <div class="container content">
-        <div class="row-offcanvas-left row-offcanvas">
-            {% include "snippets/sidebar.html" %}
-            <div class="col-xs-10" id="dashboard-content">
+        <div class="row">
+            <div class="col-xs-12">
+                {% block sidebar %}
+                {% endblock %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12" id="dashboard-content">
                 {% block dashboard_content %}
                 {% endblock %}
              </div>

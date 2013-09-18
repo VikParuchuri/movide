@@ -80,6 +80,8 @@
                 <li {% if request.path == "/" %}class="current active"{% endif %}><a href="/">Home</a></li>
                 {% if user.is_authenticated %}
                     <li {% if request.path == "/dashboard/" %}class="active"{% endif %}><a href="/dashboard/">Dashboard</a></li>
+                    {% block additional_nav %}
+                    {% endblock %}
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                             <span class="glyphicon glyphicon-user"></span>
