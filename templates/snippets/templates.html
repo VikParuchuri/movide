@@ -59,6 +59,12 @@
     <% } %>
 </script>
 
+<script id="showMoreMessagesTemplate" type="text/template">
+    <div class="alert alert-warning">
+        <p><%= message_count %> new messages.  <a href="#" id="show-more-messages-button">Click here</a> to show.</p>
+    </div>
+</script>
+
 <script id="userTableTemplate" type="text/template">
     <table class="table table-hover table-condensed">
         <thead>
@@ -156,6 +162,7 @@
 </script>
 
 <script id="messagesTemplate" type="text/template">
+    <div id="show-more-messages-container"></div>
     <div class="comments" data-tag-name="<%= classgroup %>" id="comments">
         <%= messages %>
     </div>

@@ -15,6 +15,8 @@ from django.utils.timezone import now
 from datetime import timedelta
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import re
+from django.views.generic.base import View
+from dateutil import parser
 log = logging.getLogger(__name__)
 
 class QueryView(APIView):
@@ -236,3 +238,27 @@ class EmailSubscription(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
+
+class MessageNotification(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+    query_attributes = ["classgroup", "start_time",]
+    required_attributes = [("classgroup",),("start_time",)]
+
+    def get(self, request):
+        self.get_query_params()
+        try:
+            cg = Classgroup.objects.get(name=self.query_dict['classgroup'])
+        except Classgroup.DoesNotExist:
+            error_msg = "Invalid class name given."
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+        if request.user.classgroups.filter(id=cg.id).count()==0 and cg.owner != request.user:
+            error_msg = "User not authorized to see given class."
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+        start_time = parser.parse(self.query_dict['start_time'])
+
+        messages = Message.objects.filter(classgroup=cg, created__gt=start_time)
+
+        return Response({'message_count': max(0,messages.count()-1)})
+

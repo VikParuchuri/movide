@@ -51,6 +51,15 @@ $(document).ready(function() {
         return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
     }
 
+    function get_message_notifications(data, success, error){
+        $.ajax({
+            url: "/api/messages/notifications/",
+            data: data,
+            success: success,
+            error: error
+        });
+    }
+
     var methodModel = Backbone.Model.extend({
         sync: function(method, model, options) {
             if (model.methodUrl && model.methodUrl[method.toLowerCase()]) {
@@ -133,7 +142,11 @@ $(document).ready(function() {
     var Messages = PaginatedCollection.extend({
         idAttribute: 'pk',
         model: Message,
-        url: '/api/messages/?page=1'
+        baseUrl: '/api/messages/?page=1',
+        url: '/api/messages/?page=1',
+        comparator: function(m) {
+            return -new Date(m.get('created')).getTime();
+        }
     });
 
     var ChildMessages = Backbone.Collection.extend({
@@ -633,16 +646,20 @@ $(document).ready(function() {
         user_join_template_name: "#userJoinTemplate",
         isLoading: false,
         interval_id: undefined,
+        show_more_messages_container: "#show-more-messages-container",
+        show_more_messages_template: "#showMoreMessagesTemplate",
+        show_more_messages_button: "#show-more-messages-button",
         events: {
             'click .view-message-replies': this.render_message_replies,
             'click .reply-to-message-button': this.post_reply_to_message,
             'click .start-a-discussion-button': this.post_reply_to_message,
-            'click .reply-to-message': this.handle_reply_collapse
+            'click .reply-to-message': this.handle_reply_collapse,
+            'click #show-more-messages-button': this.self_refresh
         },
         initialize: function (options) {
             _.bindAll(this, 'render', 'renderMessage', 'refresh', 'render_messages',
                 'destroy_view', 'render_message_replies', 'post_reply_to_message', 'checkScroll',
-                'handle_reply_collapse'
+                'handle_reply_collapse', 'show_message_notification', 'self_refresh'
             );
             this.collection = new this.collection_class();
             this.classgroup = options.classgroup;
@@ -755,13 +772,27 @@ $(document).ready(function() {
             $(this.open_reply_panel).click(this.handle_reply_collapse);
             $(window).unbind();
             $(window).scroll(this.checkScroll);
+            $(this.show_more_messages_button).unbind();
+            $(this.show_more_messages_button).click(this.self_refresh);
             if(this.interval_id != undefined){
                 clearInterval(this.interval_id);
             }
             var that = this;
             this.interval_id = setInterval(function() {
-                that.collection.fetch({async: false, data: {classgroup: that.classgroup}});
+                get_message_notifications({classgroup: that.classgroup, start_time: that.start_time()}, that.show_message_notification, undefined);
             }, 10000);
+        },
+        show_message_notification: function(data){
+            var message_html = "";
+
+            if(data.message_count > 0){
+                var tmpl = _.template($(this.show_more_messages_template).html());
+                message_html = tmpl({
+                    message_count: data.message_count
+                });
+                $(this.show_more_messages_container).html(message_html);
+                this.rebind_events();
+            }
         },
         child_messages: function(message_id){
             message_id = parseInt(message_id);
@@ -830,11 +861,18 @@ $(document).ready(function() {
             this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
             this.unbind_collection();
+            this.collection.url = this.collection.baseUrl;
             this.collection.fetch({async:false, data: {classgroup: this.classgroup}});
             this.rebind_collection();
             this.setElement(this.el_name);
             $(this.el).empty();
             this.render_messages();
+        },
+        self_refresh: function(){
+          this.refresh(this.options);
+        },
+        start_time: function(){
+            return this.collection.models[0].get('created');
         },
         checkScroll: function () {
             var triggerPoint = 400;
