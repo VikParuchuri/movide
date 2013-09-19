@@ -185,6 +185,7 @@ $(document).ready(function() {
             this.classgroup = options.classgroup;
             this.model.bind('change', this.render);
             this.model.bind('remove', this.unrender);
+            this.is_owner = $("#classinfo").data("is-owner");
         },
         get_model_json: function(){
             var model_json = this.model.toJSON();
@@ -193,6 +194,7 @@ $(document).ready(function() {
         render: function () {
             var tmpl = _.template($(this.template_name).html());
             var model_json = this.get_model_json();
+            model_json.is_owner = this.is_owner;
             var model_html = tmpl(model_json);
 
             $(this.el).html(model_html);
@@ -211,6 +213,17 @@ $(document).ready(function() {
         el_name: "#stats-container",
         chart_tag: "message-chart",
         network_chart_tag: "student-network-chart",
+        events: {
+        },
+        initialize: function (options) {
+            _.bindAll(this, 'render', 'create_chart', 'render_additional_charts');
+            this.classgroup = options.classgroup;
+            this.display_tag = options.display_tag;
+            this.options = {
+                classgroup: this.classgroup,
+                display_tag: this.display_tag
+            };
+        },
         render: function(){
             var tag_information = new TagInformation({name : this.classgroup});
              tag_information.fetch({success: this.render_additional_charts, error: this.render_additional_charts_error});
@@ -413,6 +426,7 @@ $(document).ready(function() {
         collection_class : Users,
         view_class: UserView,
         template_name: "#userTableTemplate",
+        user_join_template_name: "#userJoinTemplate",
         classgroup: undefined,
         active: undefined,
         events: {
@@ -425,6 +439,9 @@ $(document).ready(function() {
             this.active = options.active;
             this.display_tag = options.display_tag;
             this.collection.fetch({async: false, data: {classgroup: this.classgroup}});
+            this.is_owner = $("#classinfo").data("is-owner");
+            this.access_key = $("#classinfo").data("access-key");
+            this.link = window.location.host + $("#classinfo").data("class-link");
         },
         render_table: function(){
             this.render();
@@ -440,8 +457,20 @@ $(document).ready(function() {
                 model_html = $("#noUserTemplate").html()
             }
             var tmpl = _.template($(this.template_name).html());
-            var content_html = tmpl({content: model_html, classgroup: this.classgroup, display_tag: this.display_tag});
-            $(this.el).html(content_html);
+            var content_html = tmpl({
+                content: model_html,
+                classgroup: this.classgroup,
+                display_tag: this.display_tag
+            });
+
+            tmpl = _.template($(this.user_join_template_name).html());
+            var user_join_html = tmpl({
+                link: this.link,
+                access_key: this.access_key,
+                is_owner: this.is_owner
+            });
+
+            $(this.el).html(user_join_html + content_html);
             $('.user-tag-delete').unbind();
             $('.user-tag-delete').click(this.user_tag_delete);
             return this;
@@ -518,6 +547,7 @@ $(document).ready(function() {
             _.bindAll(this, 'render', 'renderClass', 'renderNone', 'refresh');
             this.collection = new this.collection_class();
             this.collection.fetch({async:false});
+            this.is_owner = $("#classinfo").data("is-owner");
         },
         render_dash: function(){
             if(this.collection.length > 0){
@@ -600,7 +630,9 @@ $(document).ready(function() {
         reply_to_message: '.reply-to-message-button',
         start_a_discussion: '.start-a-discussion-button',
         open_reply_panel: '.reply-to-message',
+        user_join_template_name: "#userJoinTemplate",
         isLoading: false,
+        interval_id: undefined,
         events: {
             'click .view-message-replies': this.render_message_replies,
             'click .reply-to-message-button': this.post_reply_to_message,
@@ -617,6 +649,9 @@ $(document).ready(function() {
             this.display_tag = options.display_tag;
             this.collection.fetch({async: false, data: {classgroup: this.classgroup}});
             this.rebind_collection();
+            this.is_owner = $("#classinfo").data("is-owner");
+            this.access_key = $("#classinfo").data("access-key");
+            this.link = window.location.host + $("#classinfo").data("class-link");
         },
         render_messages: function(){
             this.render();
@@ -720,6 +755,13 @@ $(document).ready(function() {
             $(this.open_reply_panel).click(this.handle_reply_collapse);
             $(window).unbind();
             $(window).scroll(this.checkScroll);
+            if(this.interval_id != undefined){
+                clearInterval(this.interval_id);
+            }
+            var that = this;
+            this.interval_id = setInterval(function() {
+                that.collection.fetch({async: false, data: {classgroup: that.classgroup}});
+            }, 10000);
         },
         child_messages: function(message_id){
             message_id = parseInt(message_id);
@@ -737,7 +779,13 @@ $(document).ready(function() {
                 }, this);
             } else {
                 var no_tmpl = _.template($("#noMessagesTemplate").html());
-                model_html = no_tmpl({classgroup: this.classgroup, display_tag: this.display_tag});
+                tmpl = _.template($(this.user_join_template_name).html());
+                var user_join_html = tmpl({
+                    link: this.link,
+                    access_key: this.access_key,
+                    is_owner: this.is_owner
+                });
+                model_html = no_tmpl({classgroup: this.classgroup, display_tag: this.display_tag}) + user_join_html;
             }
             var tmpl = _.template($(this.template_name).html());
             var content_html = tmpl({messages: model_html, classgroup: this.classgroup, display_tag: this.display_tag});

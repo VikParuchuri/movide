@@ -27,6 +27,9 @@
     </li>
 {% endblock %}
 
+{% block class_info %}
+    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name={{ display_name }} data-is-owner={{ is_owner }} data-class-link={{ link }} data-access-key={{ access_key }}>
+{% endblock %}
+
 {% block dashboard_content %}
-    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name={{ display_name }}>
 {% endblock %}

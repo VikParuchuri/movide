@@ -62,10 +62,13 @@ def classview(request, classgroup):
     except Classgroup.DoesNotExist:
         return Http404
 
+    is_owner = str(cg.owner == request.user).lower()
     template_vars = {
-        'name' : cg.name,
+        'name': cg.name,
         'display_name': cg.display_name,
         'link': cg.link(),
+        'is_owner': is_owner,
+        'access_key': cg.class_settings.access_key,
         }
 
     if request.user.classgroups.filter(name=classgroup).count() == 0:

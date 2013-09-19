@@ -52,6 +52,13 @@
     </div>
 </script>
 
+<script id="userJoinTemplate" type="text/template">
+    <% if(is_owner){ %>
+        <p>In order to have students access this course, please tell them to visit <strong><%= link %></strong> and use the access code <strong><%= access_key %></strong>.</p>
+        <p>If they do not already have an account, they will be asked to sign up, and then enter their code.</p>
+    <% } %>
+</script>
+
 <script id="userTableTemplate" type="text/template">
     <table class="table table-hover table-condensed">
         <thead>
@@ -89,7 +96,11 @@
         <td><%= username %></td>
         <td><%= message_count_today %></td>
         <td><%= message_count %></td>
-        <td><a type="button" class="btn btn-xs user-tag-delete"><span class="glyphicon glyphicon-remove"></span></a></td>
+        <td>
+            <% if (is_owner == true) { %>
+                <a type="button" class="btn btn-xs user-tag-delete"><span class="glyphicon glyphicon-remove"></span></a>
+            <% } %>
+        </td>
     </tr>
 </script>
 
