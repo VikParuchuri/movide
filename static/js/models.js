@@ -133,6 +133,12 @@ $(document).ready(function() {
     var Messages = PaginatedCollection.extend({
         idAttribute: 'pk',
         model: Message,
+        url: '/api/messages/?page=1'
+    });
+
+    var ChildMessages = Backbone.Collection.extend({
+        idAttribute: 'pk',
+        model: Message,
         url: '/api/messages/'
     });
 
@@ -598,10 +604,14 @@ $(document).ready(function() {
         events: {
             'click .view-message-replies': this.render_message_replies,
             'click .reply-to-message-button': this.post_reply_to_message,
-            'click .start-a-discussion-button': this.post_reply_to_message
+            'click .start-a-discussion-button': this.post_reply_to_message,
+            'click .reply-to-message': this.handle_reply_collapse
         },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'renderMessage', 'refresh', 'render_messages', 'destroy_view', 'render_message_replies', 'post_reply_to_message', 'checkScroll');
+            _.bindAll(this, 'render', 'renderMessage', 'refresh', 'render_messages',
+                'destroy_view', 'render_message_replies', 'post_reply_to_message', 'checkScroll',
+                'handle_reply_collapse'
+            );
             this.collection = new this.collection_class();
             this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
@@ -625,15 +635,29 @@ $(document).ready(function() {
             return top_level
         },
         handle_reply_collapse: function(event){
-          event.preventDefault();
+            event.preventDefault();
+            var message_id = $(event.target).parent().data('message-id');
+            var reply_container = $(event.target).parent().find('#reply-to-message-' + message_id);
+            var is_open = reply_container.data('is_open');
+            if(is_open){
+                $(reply_container).slideUp(300).html('');
+                reply_container.data('is_open', false);
+            } else{
+                var tmpl = _.template($("#messageReplyTemplate").html());
+                var content_html = tmpl({pk: message_id});
+                $(reply_container).html(content_html).hide().slideDown(300);
+                reply_container.data('is_open', true);
+                this.rebind_events();
+            }
+            return false;
         },
         post_reply_to_message: function(event){
             event.preventDefault();
             var button = $(event.target);
             var message_div = button.closest("div.message-reply");
             var reply = message_div.find("input").val();
-            if(message_div.data('start_discussion') == true){
-                var message_reply = new Message({text: reply, classgroup: this.classgroup})
+            if(message_div.data('start-discussion') == true){
+                var message_reply = new Message({text: reply, classgroup: this.classgroup,  source: 'website'})
             } else {
                 var primary_key = button.data('primary-key');
                 var message_reply = new Message({reply_to : primary_key, text: reply, classgroup: this.classgroup, source: 'website'});
@@ -661,6 +685,7 @@ $(document).ready(function() {
         },
         render_message_replies: function(event){
             event.preventDefault();
+            console.log("render");
             var message_id = $(event.target).parent().data('message-id');
             var comment_container = $(event.target).parent().find('#message-replies-container-' + message_id);
             if(!comment_container.data('contains-replies')){
@@ -671,9 +696,7 @@ $(document).ready(function() {
                     _.each(message_replies, function (item) {
                         model_html = model_html + $(that.renderMessage(item)).html();
                     }, this);
-                    var tmpl = _.template($(this.template_name).html());
-                    var content_html = tmpl({messages: model_html, classgroup: this.classgroup, display_tag: this.display_tag});
-                    $(comment_container).html(content_html).hide().slideDown(300);
+                    $(comment_container).html(model_html).hide().slideDown(300);
                     comment_container.data('contains-replies', true);
                     this.rebind_events();
                 } else {
@@ -700,17 +723,9 @@ $(document).ready(function() {
         },
         child_messages: function(message_id){
             message_id = parseInt(message_id);
-            var children = [];
-            var i;
-            var m;
-            for(i=0; i<this.collection.models.length;i++){
-                m = this.collection.models[i];
-                var reply_to = parseInt(m.get('reply_to'));
-                if(reply_to == message_id){
-                    children.push(m);
-                }
-            }
-            return children
+            var child_messages = new ChildMessages();
+            child_messages.fetch({async: false, data: {classgroup: this.classgroup, in_reply_to_id: message_id}});
+            return child_messages.models
         },
         render: function () {
             var model_html = "";
@@ -738,7 +753,7 @@ $(document).ready(function() {
             if(reply_to == null){
                 comment_insert = $(this.el).find(".comments")
             } else {
-                var comment_container = $(".comment[data-message-id='" + reply_to +"']");
+                var comment_container = $(".comment[data-message-id='" + reply_to +"'][data-contains-replies='true']");
                 if(comment_container.length > 0){
                     comment_insert = comment_container.children(".message-replies-container")
                 }
@@ -781,6 +796,7 @@ $(document).ready(function() {
                 this.collection.nextPage({
                     success: function(){
                         that.isLoading = false;
+                        that.rebind_events();
                     }
                 });
             }

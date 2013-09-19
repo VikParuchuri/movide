@@ -94,7 +94,7 @@ class ClassgroupDetailView(APIView):
 
 class MessageView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
-    query_attributes = ["tag", "classgroup", "user"]
+    query_attributes = ["tag", "classgroup", "user", "in_reply_to_id"]
     required_attributes = [("classgroup", "user"),]
 
     def filter_tag(self, queryset, tag):
@@ -106,24 +106,28 @@ class MessageView(QueryView):
     def filter_classgroup(self, queryset, classgroup):
         return queryset.filter(classgroup__name=classgroup)
 
+    def filter_in_reply_to_id(self, queryset, in_reply_to_id):
+        return queryset.filter(reply_to=in_reply_to_id)
+
     def get(self, request, format=None):
         self.get_query_params()
         self.verify_user()
         self.verify_classgroup()
 
         queryset = Message.objects.all()
+        if "in_reply_to_id" not in self.query_dict:
+            queryset = queryset.filter(reply_to__isnull=True)
         queryset = self.filter_query_params(queryset).order_by("-modified")
-        paginator = Paginator(queryset, 10)
+        paginator = Paginator(queryset, 20)
 
         page = request.QUERY_PARAMS.get("page")
         try:
-            messages = paginator.page(page)
+            serializer = PaginatedMessageSerializer(paginator.page(page), context={'request' : request})
         except PageNotAnInteger:
-            messages = paginator.page(1)
+            serializer = MessageSerializer(queryset, context={'request' : request}, many=True)
         except EmptyPage:
-            messages = paginator.page(paginator.num_pages)
+            serializer = PaginatedMessageSerializer(paginator.page(paginator.num_pages), context={'request' : request})
 
-        serializer = PaginatedMessageSerializer(messages, context={'request' : request})
         return Response(serializer.data)
 
     def post(self, request, format=None):

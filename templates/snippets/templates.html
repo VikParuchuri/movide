@@ -93,6 +93,19 @@
     </tr>
 </script>
 
+<script id="messageReplyTemplate" type="text/template">
+    <form role="form">
+        <div class="form-group reply-to-message-form">
+            <label class="sr-only" for="reply-to-message-input-<%= pk %>">Tag</label>
+            <input type="text" class="form-control input-lg" id="reply-to-message-input-<%= pk %>" placeholder="Enter reply here...">
+            <span class="help-block" id="reply-to-message-message-<%= pk %>"></span>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-small reply-to-message-button" id="reply-to-message-button-<%= pk %>" data-primary-key="<%= pk %>">Send Reply</button>
+        </div>
+    </form>
+</script>
+
 <script id="messageTemplate" type="text/template">
     <div class="comment" data-message-id="<%= pk %>" data-reply-username="<%= user %>" data-created="<%= created %>">
         <div class="header clearfix">
@@ -112,20 +125,10 @@
         <div class="comment-content clearfix">
             <%= text %>
         </div>
-        <a type="button" class="reply-to-message" data-toggle="collapse" data-target="#reply-to-message-<%= pk %>" href="#">
+        <a type="button" class="reply-to-message" href="#">
             Reply
         </a>
-        <div id="reply-to-message-<%= pk %>" class="collapse message-reply" data-start-discussion="false">
-            <form role="form">
-                <div class="form-group reply-to-message-form">
-                    <label class="sr-only" for="reply-to-message-input-<%= pk %>">Tag</label>
-                    <input type="text" class="form-control input-lg" id="reply-to-message-input-<%= pk %>" placeholder="Enter reply here...">
-                    <span class="help-block" id="reply-to-message-message-<%= pk %>"></span>
-                </div>
-                <div class="form-group">
-                    <button type="submit" class="btn btn-small reply-to-message-button" id="reply-to-message-button-<%= pk %>" data-primary-key="<%= pk %>">Send Reply</button>
-                </div>
-            </form>
+        <div id="reply-to-message-<%= pk %>" class="message-reply" data-start-discussion="false" data-is-open="false">
         </div>
         <% if (reply_count > 0) { %>
             <a type="button" href="#" class="view-message-replies">  View replies</a>
