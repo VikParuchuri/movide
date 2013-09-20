@@ -17,6 +17,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import re
 from django.views.generic.base import View
 from dateutil import parser
+import datetime
 log = logging.getLogger(__name__)
 
 class QueryView(APIView):
@@ -26,13 +27,15 @@ class QueryView(APIView):
     def get_query_params(self):
         self.query_dict = {}
         for attrib in self.query_attributes:
-            self.query_dict[attrib] = self.request.QUERY_PARAMS.get(attrib, None)
-            if isinstance(self.query_dict[attrib], list):
-                self.query_dict[attrib] = self.query_dict[attrib][0]
+            val = self.request.QUERY_PARAMS.get(attrib, None)
+            if val is not None:
+                self.query_dict[attrib] = val
+                if isinstance(self.query_dict[attrib], list):
+                    self.query_dict[attrib] = self.query_dict[attrib][0]
         for attrib_set in self.required_attributes:
             has_value = 0
             for attrib in attrib_set:
-                if self.query_dict[attrib] is not None:
+                if attrib in self.query_dict and self.query_dict[attrib] is not None:
                     has_value += 1
             if has_value == 0:
                 error_msg = "Need to specify {0}.".format(attrib_set)
@@ -41,9 +44,10 @@ class QueryView(APIView):
 
     def filter_query_params(self, queryset):
         for attrib in self.query_attributes:
-            val = self.query_dict[attrib]
-            if val is not None:
-                queryset = getattr(self, "filter_" + attrib)(queryset, val)
+            if attrib in self.query_dict:
+                val = self.query_dict[attrib]
+                if val is not None:
+                    queryset = getattr(self, "filter_" + attrib)(queryset, val)
         return queryset
 
     def verify_user(self):
@@ -117,7 +121,7 @@ class MessageView(QueryView):
         self.verify_classgroup()
 
         queryset = Message.objects.all()
-        if "in_reply_to_id" not in self.query_dict:
+        if "in_reply_to_id" not in self.query_dict :
             queryset = queryset.filter(reply_to__isnull=True)
         queryset = self.filter_query_params(queryset).order_by("-modified")
         paginator = Paginator(queryset, 20)
@@ -256,9 +260,10 @@ class MessageNotification(QueryView):
             error_msg = "User not authorized to see given class."
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
 
-        start_time = parser.parse(self.query_dict['start_time'])
+        start_time = datetime.datetime.fromtimestamp(int(self.query_dict['start_time']))
 
-        messages = Message.objects.filter(classgroup=cg, created__gt=start_time)
+        messages = Message.objects.filter(classgroup=cg, created__gt=start_time, reply_to__isnull=True)
 
+        log.info("Start: {0} Count: {1}".format(start_time, messages.count()))
         return Response({'message_count': max(0,messages.count()-1)})
 

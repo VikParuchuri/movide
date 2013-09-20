@@ -148,6 +148,7 @@ class MessageSerializer(serializers.Serializer):
     ratings = serializers.SlugRelatedField(many=True, slug_field="rating", read_only=True, blank=True, null=True, queryset=Rating.objects.all())
     classgroup = serializers.SlugRelatedField(slug_field="name", blank=True, null=True, queryset=Classgroup.objects.all())
     resources = serializers.PrimaryKeyRelatedField(many=True, blank=True, null=True, queryset=Resource.objects.all())
+    created_timestamp = serializers.Field(source="created_timestamp")
     text = serializers.CharField()
     source = serializers.CharField()
     created = serializers.Field()

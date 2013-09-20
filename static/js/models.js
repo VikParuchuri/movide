@@ -71,6 +71,7 @@ $(document).ready(function() {
     });
 
     var PaginatedCollection = Backbone.Collection.extend({
+        max_time: undefined,
         initialize: function() {
             _.bindAll(this, 'parse', 'nextPage', 'previousPage');
             typeof(options) != 'undefined' || (options = {});
@@ -89,20 +90,24 @@ $(document).ready(function() {
         parse: function(resp) {
             this.next = resp.next;
             this.prev = resp.previous;
+            var max_timestamp = _.max(resp.results, function(r){return parseInt(r.created_timestamp);});
+            if(this.max_time == undefined || max_timestamp.created_timestamp > this.max_time){
+                this.max_time = max_timestamp.created_timestamp;
+            }
             return resp.results;
         },
         nextPage: function(options) {
-            if (this.next == undefined) {
+            if (this.next == undefined || this.next == null) {
                 return false;
             }
             this.url = this.next;
             return this.fetch(options);
         },
         previousPage: function(options) {
-            if (this.previous == undefined) {
+            if (this.prev == undefined || this.prev == null) {
                 return false;
             }
-            this.url = this.next;
+            this.url = this.prev;
             return this.fetch(options);
         }
 
@@ -145,7 +150,7 @@ $(document).ready(function() {
         baseUrl: '/api/messages/?page=1',
         url: '/api/messages/?page=1',
         comparator: function(m) {
-            return -new Date(m.get('created')).getTime();
+            return -parseInt(m.get('created_timestamp'));
         }
     });
 
@@ -648,6 +653,7 @@ $(document).ready(function() {
         show_more_messages_container: "#show-more-messages-container",
         show_more_messages_template: "#showMoreMessagesTemplate",
         show_more_messages_button: "#show-more-messages-button",
+        stop_polling: false,
         message_count: 0,
         events: {
             'click .view-reply-panel': this.render_reply_panel,
@@ -711,11 +717,9 @@ $(document).ready(function() {
                     $(reply_form).removeClass("has-error").addClass("has-success");
                     $(message_block).html("Discussion started!");
                     $(button).attr('disabled', false);
-                    console.log(that.start_discussion);
                     if(start_discussion == true){
                         that.collection.fetch({async: false, data: {classgroup: that.classgroup}});
                     } else {
-                        console.log(primary_key);
                         that.render_message_replies(primary_key);
                     }
                     that.rebind_events();
@@ -781,11 +785,11 @@ $(document).ready(function() {
             $(this.show_more_messages_button).unbind();
             $(this.show_more_messages_button).click(this.self_refresh);
             if(this.interval_id != undefined){
-                clearInterval(this.interval_id);
+                clearTimeout(this.interval_id);
             }
             var that = this;
-            if(this.message_count<10){
-                this.interval_id = setInterval(function() {
+            if(this.stop_polling == false){
+                this.interval_id = setTimeout(function() {
                     get_message_notifications({classgroup: that.classgroup, start_time: that.start_time()}, that.show_message_notification, undefined);
                 }, 10000);
             } else{
@@ -795,14 +799,17 @@ $(document).ready(function() {
         show_message_notification: function(data){
             var message_html = "";
             this.message_count = data.message_count;
-            if(data.message_count > 0){
+            if(this.message_count > 0){
                 var tmpl = _.template($(this.show_more_messages_template).html());
                 message_html = tmpl({
                     message_count: data.message_count
                 });
                 $(this.show_more_messages_container).html(message_html);
-                this.rebind_events();
+                if(this.message_count >= 10){
+                    this.stop_polling = true;
+                }
             }
+            this.rebind_events();
         },
         child_messages: function(message_id){
             message_id = parseInt(message_id);
@@ -880,21 +887,30 @@ $(document).ready(function() {
         },
         self_refresh: function(){
           this.refresh(this.options);
+          this.rebind_events();
+          this.message_count = 0;
+          this.stop_polling= false;
         },
         start_time: function(){
-            return this.collection.models[0].get('created');
+            return this.collection.max_time;
         },
         checkScroll: function () {
             var triggerPoint = 400;
             if( !this.isLoading && $(window).scrollTop() + $(window).height() + triggerPoint > $('html').height() ) {
                 this.isLoading = true;
                 var that = this;
-                this.collection.nextPage({
+                var status = this.collection.nextPage({
                     success: function(){
                         that.isLoading = false;
                         that.rebind_events();
+                    },
+                    error: function(){
+                        that.isLoading = false;
                     }
                 });
+                if(status==false){
+                    that.isLoading = false;
+                }
             }
         }
     });

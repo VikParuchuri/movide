@@ -11,6 +11,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.validators import RegexValidator
 import re
+import calendar
 alphanumeric = re.compile(r'[^a-zA-Z0-9]+')
 
 
@@ -124,6 +125,9 @@ class Message(models.Model):
             return self.user.profile.image
         except UserProfile.DoesNotExist:
             return None
+
+    def created_timestamp(self):
+        return calendar.timegm(self.created.utctimetuple())
 
 class Rating(models.Model):
     rating = models.IntegerField(default=0)
