@@ -142,22 +142,21 @@
         <div class="comment-content clearfix">
             <%= text %>
         </div>
-        <a type="button" class="reply-to-message" href="#">
-            Reply
+        <a type="button" class="view-reply-panel" href="#">
+            Reply<% if (reply_count > 0) { %> and view replies<% } %>
         </a>
-        <div id="reply-to-message-<%= pk %>" class="message-reply" data-start-discussion="false" data-is-open="false">
-        </div>
-        <% if (reply_count > 0) { %>
-            <a type="button" href="#" class="view-message-replies">  View replies</a>
-        <% } %>
-        <div class="message-replies-container" data-contains-replies="false" id="message-replies-container-<%= pk %>">
+        <div class="reply-panel" id="reply-panel-<%= pk %>" data-is-open="false" data-message-id="<%= pk %>">
+            <div id="reply-to-message-<%= pk %>" class="message-reply" data-start-discussion="false">
+            </div>
+            <div class="message-replies-container" id="message-replies-container-<%= pk %>">
+            </div>
         </div>
     </div>
 </script>
 
 <script id="noRepliesTemplate" type="text/template">
     <div class="comment">
-        <p>Aw, shucks!  We are unable to pull up the replies for this message.</p>
+        <p>Nobody has responded to this message yet.</p>
     </div>
 </script>
 
