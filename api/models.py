@@ -126,6 +126,14 @@ class Message(models.Model):
         except UserProfile.DoesNotExist:
             return None
 
+    def depth(self):
+        depth = 0
+        reply_to = self.reply_to
+        while depth < 3 and reply_to is not None:
+            depth+=1
+            reply_to = reply_to.reply_to
+        return depth
+
     def created_timestamp(self):
         return calendar.timegm(self.created.utctimetuple())
 

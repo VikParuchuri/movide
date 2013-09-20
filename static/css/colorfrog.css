@@ -342,6 +342,13 @@ blockquote.big-quote {
     padding: 10px;
     box-shadow: 0 1px 3px 0 rgba(56,61,72,0.21);
     }
+    .comments .comment h4{
+        display: inline-block;
+    }
+    .comments .comment .time{
+        display: inline-block;
+        margin-left: 5px;
+    }
     .comments .comment .message-replies-container .comment{
         border: none;
         border-top: 1px solid #D6D6D6;
@@ -361,8 +368,6 @@ blockquote.big-quote {
     width: 54px;
     height: 54px;
     border: none; }
-  .comments .comment .header {
-    margin-bottom: 10px; }
     .comments .comment .header img {
       background-color: #ececec;
       float: left;
@@ -378,6 +383,9 @@ blockquote.big-quote {
     .comments .comment .header .time {
       font-weight: 300;
       color: #919191; }
+    .comments .comment .comment-content{
+        padding: 5px 0px 5px 20px;
+    }
 
 iframe {
   border: 0; }

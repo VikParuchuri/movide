@@ -618,7 +618,7 @@ $(document).ready(function() {
         get_model_json: function(){
             var model_json = this.model.toJSON();
             model_json.created_formatted = model_json.created.replace("Z","");
-            model_json.created_formatted = moment.utc(model_json.created_formatted).local().calendar();
+            model_json.created_formatted = moment.utc(model_json.created_formatted).local().fromNow();
             return model_json;
         },
         render: function () {
@@ -655,6 +655,7 @@ $(document).ready(function() {
         show_more_messages_button: "#show-more-messages-button",
         stop_polling: false,
         message_count: 0,
+        document_title: document.title,
         events: {
             'click .view-reply-panel': this.render_reply_panel,
             'click .reply-to-message-button': this.post_reply_to_message,
@@ -728,7 +729,8 @@ $(document).ready(function() {
                     $(reply_form).removeClass("has-success").addClass("has-error");
                     $(message_block).html("There was a problem sending your message.  Please try again later.");
                     $(button).attr('disabled', false);
-                }
+                },
+                async: false
             });
 
             return false;
@@ -804,6 +806,7 @@ $(document).ready(function() {
                 message_html = tmpl({
                     message_count: data.message_count
                 });
+                document.title = "(" + this.message_count + ") " + this.document_title;
                 $(this.show_more_messages_container).html(message_html);
                 if(this.message_count >= 10){
                     this.stop_polling = true;
@@ -906,7 +909,8 @@ $(document).ready(function() {
                     },
                     error: function(){
                         that.isLoading = false;
-                    }
+                    },
+                    async: false
                 });
                 if(status==false){
                     that.isLoading = false;

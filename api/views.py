@@ -264,6 +264,5 @@ class MessageNotification(QueryView):
 
         messages = Message.objects.filter(classgroup=cg, created__gt=start_time, reply_to__isnull=True)
 
-        log.info("Start: {0} Count: {1}".format(start_time, messages.count()))
         return Response({'message_count': max(0,messages.count()-1)})
 
