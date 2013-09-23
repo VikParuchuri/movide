@@ -5,7 +5,7 @@ from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from api.tasks import UserTwitterData
 from django.http import Http404, HttpResponse
-from api.models import Classgroup
+from api.models import Classgroup, RatingNotification, MessageNotification
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -45,6 +45,9 @@ def verify_code(request):
     except Classgroup.DoesNotExist:
         return Http404
 
+    if not cg.class_settings.allow_signups:
+        return HttpResponse(status=400)
+
     if cg.class_settings.access_key == code:
         user.classgroups.add(cg)
         user.save()
@@ -52,8 +55,12 @@ def verify_code(request):
     else:
         return HttpResponse(status=400)
 
+def uncleared_notification_count(user, classgroup):
+    rating_count = RatingNotification.objects.filter(receiving_user=user, receiving_message__classgroup=classgroup, cleared=False).count()
+    message_count = MessageNotification.objects.filter(receiving_user=user, receiving_message__classgroup=classgroup, cleared=False).count()
+    return rating_count + message_count
 
-VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications']
+VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications', 'settings']
 @login_required()
 def classview(request, classgroup, **kwargs):
     active_page = kwargs.get('active_page', 'messages')
@@ -73,10 +80,16 @@ def classview(request, classgroup, **kwargs):
         'is_owner': is_owner,
         'access_key': cg.class_settings.access_key,
         'active_page': active_page,
+        'notification_count': uncleared_notification_count(request.user, cg),
+        'class_owner': cg.owner.username,
+        'class_api_link': cg.api_link(),
         }
 
     if request.user.classgroups.filter(name=classgroup).count() == 0:
-        return render_to_response("enter_class_code.html", template_vars, context_instance=RequestContext(request))
+        if cg.class_settings.allow_signups:
+            return render_to_response("enter_class_code.html", template_vars, context_instance=RequestContext(request))
+        else:
+            return render_to_response("class_signup_closed.html", template_vars, context_instance=RequestContext(request))
 
     return render_to_response("dashboard/classview.html", template_vars,
            context_instance=RequestContext(request)

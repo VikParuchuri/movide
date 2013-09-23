@@ -20,6 +20,23 @@ $(document).ready(function() {
             (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
             !(/^(\/\/|http:|https:).*/.test(url));
     }
+
+    jQuery.extend({
+        getValues: function(url, data) {
+            var result = null;
+            $.ajax({
+                url: url,
+                type: 'get',
+                async: false,
+                data: data,
+                success: function(data) {
+                    result = data;
+                }
+            });
+            return result;
+        }
+    });
+
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
             if (!csrfSafeMethod(settings.type) && sameOrigin(settings.url)) {
@@ -423,6 +440,12 @@ $(document).ready(function() {
             this.notifications_view = new NotificationsView(this.options);
             this.notifications_view.render();
         },
+        render_settings: function(){
+            this.refresh();
+            $(this.el).html($("#settingsDetailTemplate").html());
+            this.settings_view = new SettingsView(this.options);
+            this.settings_view.render();
+        },
         render: function () {
             this.base_render();
             this.active_page = $("#classinfo").data("active-page");
@@ -434,6 +457,8 @@ $(document).ready(function() {
                 this.render_users();
             } else if(this.active_page == "notifications"){
                 this.render_notifications();
+            } else if(this.active_page == "settings"){
+                this.render_settings();
             }
         },
         refresh: function(){
@@ -944,6 +969,43 @@ $(document).ready(function() {
         view_class: NotificationView,
         enable_refresh: false,
         no_message_template_name: "#noNotificationsTemplate"
+    });
+
+    var SettingsView = BaseView.extend({
+        tagName: "div",
+        className: "settings",
+        template_name: "#settingsTemplate",
+        events: {
+        },
+        initialize: function(options){
+            _.bindAll(this, 'render', 'fetch');
+            this.is_owner = $("#classinfo").data("is-owner");
+            this.class_link = $("#classinfo").data("class-api-link");
+            this.class_settings_link = this.class_link + "settings/";
+            this.student_class_settings_link = this.class_link + "student_settings/";
+            this.classgroup = options.classgroup;
+            this.fetch();
+        },
+        fetch: function(){
+            var student_settings = $.getValues(this.student_class_settings_link, this.class_name);
+            var class_settings=undefined;
+            if(this.is_owner == true){
+                class_settings = $.getValues(this.class_settings_link, this.class_name);
+            }
+            console.log(student_settings);
+            console.log(class_settings);
+        },
+        render: function () {
+            var tmpl = _.template($(this.template_name).html());
+            var model_json = this.get_model_json();
+            var model_html = tmpl(model_json);
+
+            $(this.el).html(model_html);
+            return this;
+        },
+        remove_el: function(){
+            $(this.el).remove();
+        }
     });
 
     window.MessagesView = MessagesView;

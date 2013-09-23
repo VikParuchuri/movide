@@ -1,6 +1,6 @@
 from django.forms import widgets
 from rest_framework import serializers
-from models import Tag, Message, UserProfile, EmailSubscription, Classgroup, Rating, ClassSettings, Resource
+from models import Tag, Message, UserProfile, EmailSubscription, Classgroup, Rating, ClassSettings, Resource, StudentClassSettings
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 import logging
@@ -95,6 +95,13 @@ class ClassSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassSettings
         fields = ("is_public", "moderate_posts", "classgroup", "modified", )
+
+class StudentClassSettingsSerializer(serializers.ModelSerializer):
+    classgroup = serializers.SlugRelatedField(many=False, slug_field="name")
+    user = serializers.Field(source="user__username")
+    class Meta:
+        model = StudentClassSettings
+        fields = ("classgroup", "user", "email_frequency" )
 
 def make_random_key():
     existing_keys = [t['access_key'] for t in ClassSettings.objects.all().values('access_key')]

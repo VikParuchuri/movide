@@ -28,3 +28,4 @@ fs
 facebook-sdk
 praw
 twython
+django-avatar

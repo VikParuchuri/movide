@@ -1,11 +1,12 @@
 from __future__ import division
 from django.contrib.auth.models import User
-from models import Tag, Message, UserProfile, Classgroup, MessageNotification, RatingNotification
+from models import Tag, Message, UserProfile, Classgroup, MessageNotification, RatingNotification, StudentClassSettings
 from rest_framework.views import APIView
 from serializers import (TagSerializer, MessageSerializer, UserSerializer,
                          EmailSubscriptionSerializer, ResourceSerializer,
                          ClassgroupSerializer, RatingSerializer, PaginatedMessageSerializer,
-                         NotificationSerializer, PaginatedNotificationSerializer)
+                         NotificationSerializer, PaginatedNotificationSerializer, StudentClassSettingsSerializer,
+                         ClassSettingsSerializer)
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from django.db.models import Q, Count
@@ -67,6 +68,17 @@ class QueryView(APIView):
             if cg.owner != self.request.user and self.request.user.classgroups.filter(name=self.query_dict['classgroup']).count()==0:
                 error_msg = "Attempting to query a class that you are not part of."
                 return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+    def verify_membership(self):
+        try:
+            self.cg = Classgroup.objects.get(name=self.query_dict['classgroup'])
+        except Classgroup.DoesNotExist:
+            error_msg = "Invalid class name given."
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+        if self.request.user.classgroups.filter(id=self.cg.id).count()==0 and self.cg.owner != self.request.user:
+            error_msg = "User not authorized to see given class."
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
 
 class ClassgroupView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -172,7 +184,10 @@ class NotificationView(QueryView):
         rating_notifications = self.filter_query_params(rating_notifications).filter(receiving_user=request.user).order_by("-modified")
 
         notifications = list(message_notifications) + list(rating_notifications)
-
+        for n in notifications:
+            if not n.cleared:
+                n.cleared = True
+                n.save()
         notification_text = NotificationText(notifications)
         notification_text.generate_text()
         messages = notification_text.get_messages()
@@ -304,19 +319,37 @@ class MessageNotificationView(QueryView):
 
     def get(self, request):
         self.get_query_params()
-        try:
-            cg = Classgroup.objects.get(name=self.query_dict['classgroup'])
-        except Classgroup.DoesNotExist:
-            error_msg = "Invalid class name given."
-            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
-
-        if request.user.classgroups.filter(id=cg.id).count()==0 and cg.owner != request.user:
-            error_msg = "User not authorized to see given class."
-            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+        self.verify_membership()
 
         start_time = datetime.datetime.fromtimestamp(int(self.query_dict['start_time']))
 
-        messages = Message.objects.filter(classgroup=cg, created__gt=start_time, reply_to__isnull=True)
+        messages = Message.objects.filter(classgroup=self.cg, created__gt=start_time, reply_to__isnull=True)
 
         return Response({'message_count': max(0,messages.count()-1)})
 
+class StudentClassSettingsView(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, classgroup):
+        self.query_dict = {'classgroup': classgroup}
+        self.verify_membership()
+        settings, created = StudentClassSettings.objects.get_or_create(user=request.user, classgroup=self.cg)
+
+        serializer = StudentClassSettingsSerializer(settings, context={'request' : request})
+        return Response(serializer.data)
+
+class ClassSettingsView(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, classgroup):
+        self.query_dict = {'classgroup': classgroup}
+        self.verify_membership()
+
+        if self.cg.owner != request.user:
+            error_msg = "You are not the owner of this class, and cannot edit class settings."
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+        settings = self.cg.class_settings
+
+        serializer = ClassSettingsSerializer(settings, context={'request': request})
+        return Response(serializer.data)

@@ -33,6 +33,9 @@ class Classgroup(models.Model):
     def link(self):
         return "/classes/" + self.name + "/"
 
+    def api_link(self):
+        return "/api/classes/" + self.name + "/"
+
     def queryset(self, tag=None):
         queryset = self.messages.all()
         if tag is not None and self.tags.filter(id=tag.id) > 0:
@@ -155,6 +158,19 @@ class ClassSettings(models.Model):
     allow_signups = models.BooleanField(default=True)
 
     modified = models.DateTimeField(auto_now=True)
+
+class StudentClassSettings(models.Model):
+    EMAIL_FREQUENCY_CHOICES = (
+        ('N', "Don't receive email."),
+        ('D', "Receive a daily digest email."),
+        ('A', "Receive emails as notifications happen."),
+    )
+    classgroup = models.ForeignKey(Classgroup, related_name="student_class_settings")
+    user = models.ForeignKey(User, related_name="student_class_settings")
+    email_frequency = models.CharField(max_length=3, choices=EMAIL_FREQUENCY_CHOICES, default="A")
+
+    class Meta:
+        unique_together = (("classgroup", "user"),)
 
 class Tag(models.Model):
     name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True, db_index=True, validators=[RegexValidator(regex=alphanumeric)])

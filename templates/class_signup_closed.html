@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block additional_js %}
+{% endblock %}
+
+{% block title %}
+    Class signup is closed.
+{% endblock %}
+
+{% block meta_description %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <p>Unfortunately, the option of using an access code to enroll in {{ display_name }} has been turned off.  You will need to contact {{ class_owner }} for help with this.</p>
+        </div>
+    </div>
+{% endblock %}
+

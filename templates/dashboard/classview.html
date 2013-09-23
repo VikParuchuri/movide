@@ -13,10 +13,18 @@
 
 {% block sidebar %}
     <ul class="nav nav-tabs" id="tag-sidebar">
-        <li {% if active_page == "messages" %}class="active current"{% endif %}><a href="{{ link }}" class="sidebar-item" data-name="messages">Messages</a></li>
-        <li {% if active_page == "stats" %}class="active current"{% endif %}><a href="{{ link }}stats/" class="sidebar-item" data-name="stats">Stats</a></li>
-        <li {% if active_page == "users" %}class="active current"{% endif %}><a href="{{ link }}users/" class="sidebar-item" data-name="users">Users</a></li>
-        <li {% if active_page == "notifications" %}class="active current"{% endif %}><a href="{{ link }}notifications/" class="sidebar-item" data-name="notifications">Notifications</a></li>
+        <li {% if active_page == "messages" %}class="active current"{% endif %}><a href="{{ link }}" class="sidebar-item" data-name="messages" data-toggle="tooltip" title="Discussions"><span class="glyphicon glyphicon-envelope"></span></a></li>
+        <li {% if active_page == "users" %}class="active current"{% endif %}><a href="{{ link }}users/" class="sidebar-item" data-name="users" data-toggle="tooltip" title="Users"><span class="glyphicon glyphicon-user"></span></a></li>
+        <li {% if active_page == "stats" %}class="active current"{% endif %}><a href="{{ link }}stats/" class="sidebar-item" data-name="stats" data-toggle="tooltip" title="Stats"><span class="glyphicon glyphicon-stats"></span></a></li>
+        <li {% if active_page == "notifications" %}class="active current"{% endif %}>
+            <a href="{{ link }}notifications/" class="sidebar-item" data-name="notifications" data-toggle="tooltip" title="Notifications">
+                <span class="glyphicon glyphicon-bell"></span>
+                {% if notification_count > 0 %}
+                <span class="label label-default">{{ notification_count }}</span>
+                {% endif %}
+            </a>
+        </li>
+        <li {% if active_page == "settings" %}class="active current"{% endif %}><a href="{{ link }}settings/" class="sidebar-item" data-name="settings" data-toggle="tooltip" title="Settings"><span class="glyphicon glyphicon-wrench"></span></a></li>
     </ul>
 {% endblock %}
 
@@ -29,7 +37,7 @@
 {% endblock %}
 
 {% block class_info %}
-    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name={{ display_name }} data-is-owner={{ is_owner }} data-class-link={{ link }} data-access-key={{ access_key }} data-active-page="{{ active_page }}">
+    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name="{{ display_name }}" data-is-owner="{{ is_owner }}" data-class-link="{{ link }}" data-access-key="{{ access_key }}" data-active-page="{{ active_page }}" data-class-api-link="{{ class_api_link }}">
 {% endblock %}
 
 {% block dashboard_content %}
