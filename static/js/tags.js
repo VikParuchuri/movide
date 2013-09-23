@@ -23,7 +23,7 @@ $(document).ready(function() {
         $(event.target).attr('disabled', true);
         var class_name = $("#inputClass1").val();
         var classgroup = new Class({'name' : class_name});
-        classgroup.save(null,{success : success_display, error: error_display});
+        classgroup.save(null,{success : success_display, error: error_display, async: false});
         return false;
     });
 });

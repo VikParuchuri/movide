@@ -1,0 +1,31 @@
+<div class="comment" data-message-id="<%= pk %>" data-reply-username="<%= user %>" data-created="<%= created %>" data-depth="<%= depth %>">
+    <div class="header clearfix">
+        <% if (typeof(image) != "undefined") { %>
+        <img src="<%= image %>" alt="<%= user %>">
+        <% } %>
+        <div>
+            <div><h4><%= user %></h4><span class="time"> said <%= created_formatted %></span></div>
+        </div>
+        <div class="pull-right">
+            <% if(depth<1) { %>
+                        <span class="label label-info">
+                            <span class="glyphicon glyphicon-comment"> <%= reply_count %></span>
+                        </span>
+            <% } %>
+        </div>
+    </div>
+    <div class="comment-content clearfix">
+        <%= text %>
+    </div>
+    <% if(depth<1) { %>
+    <a type="button" class="view-reply-panel" href="#">
+        Reply<% if (reply_count > 0) { %> and view replies<% } %>
+    </a>
+    <div class="reply-panel" id="reply-panel-<%= pk %>" data-is-open="false" data-message-id="<%= pk %>">
+        <div id="reply-to-message-<%= pk %>" class="message-reply" data-start-discussion="false">
+        </div>
+        <div class="message-replies-container" id="message-replies-container-<%= pk %>">
+        </div>
+    </div>
+    <% } %>
+</div>

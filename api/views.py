@@ -1,10 +1,11 @@
 from __future__ import division
 from django.contrib.auth.models import User
-from models import Tag, Message, UserProfile, Classgroup
+from models import Tag, Message, UserProfile, Classgroup, MessageNotification, RatingNotification
 from rest_framework.views import APIView
 from serializers import (TagSerializer, MessageSerializer, UserSerializer,
                          EmailSubscriptionSerializer, ResourceSerializer,
-                         ClassgroupSerializer, RatingSerializer, PaginatedMessageSerializer)
+                         ClassgroupSerializer, RatingSerializer, PaginatedMessageSerializer,
+                         NotificationSerializer, PaginatedNotificationSerializer)
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from django.db.models import Q, Count
@@ -17,8 +18,12 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import re
 from django.views.generic.base import View
 from dateutil import parser
+from notifications import NotificationText
 import datetime
+from django.forms.models import model_to_dict
 log = logging.getLogger(__name__)
+
+RESULTS_PER_PAGE = 20
 
 class QueryView(APIView):
     query_attributes = []
@@ -124,9 +129,10 @@ class MessageView(QueryView):
         if "in_reply_to_id" not in self.query_dict :
             queryset = queryset.filter(reply_to__isnull=True)
         queryset = self.filter_query_params(queryset).order_by("-modified")
-        paginator = Paginator(queryset, 20)
+        paginator = Paginator(queryset, RESULTS_PER_PAGE)
 
         page = request.QUERY_PARAMS.get("page")
+
         try:
             serializer = PaginatedMessageSerializer(paginator.page(page), context={'request' : request})
         except PageNotAnInteger:
@@ -142,7 +148,55 @@ class MessageView(QueryView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class NotificationView(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+    query_attributes = ["classgroup"]
+    required_attributes = [("classgroup",),]
+
+    def filter_user(self, queryset, user):
+        return queryset.filter(receiving_user__username=user)
+
+    def filter_classgroup(self, queryset, classgroup):
+        return queryset.filter(receiving_message__classgroup__name=classgroup)
+
+    def get(self, request, format=None):
+        self.get_query_params()
+        self.verify_classgroup()
+
+        message_notifications = MessageNotification.objects.all()
+        message_notifications = self.filter_query_params(message_notifications).filter(receiving_user=request.user).order_by("-modified")
+
+        rating_notifications = RatingNotification.objects.all()
+        rating_notifications = self.filter_query_params(rating_notifications).filter(receiving_user=request.user).order_by("-modified")
+
+        notifications = list(message_notifications) + list(rating_notifications)
+
+        notification_text = NotificationText(notifications)
+        notification_text.generate_text()
+        messages = notification_text.get_messages()
+        messages.sort(key=lambda x: x['message'].created, reverse=True)
+        message_objects = []
+        for i,m in enumerate(messages):
+            m['message'].notification_text = m['notification_text']
+            message_objects.append(m['message'])
+        paginator = Paginator(message_objects, RESULTS_PER_PAGE)
+
+        page = request.QUERY_PARAMS.get("page")
+        if page is None:
+            page = 1
+
+        try:
+            paginator_page = paginator.page(page)
+        except PageNotAnInteger:
+            paginator_page = paginator.page(1)
+        except EmptyPage:
+            paginator_page = paginator.page(paginator.num_pages)
+
+        serializer = PaginatedNotificationSerializer(paginator_page, context={'request' : request})
+
+        return Response(serializer.data)
 
 class MessageDetailView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -243,7 +297,7 @@ class EmailSubscription(APIView):
         else:
             return Response(serializer._errors, status=status.HTTP_400_BAD_REQUEST)
 
-class MessageNotification(QueryView):
+class MessageNotificationView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
     query_attributes = ["classgroup", "start_time",]
     required_attributes = [("classgroup",),("start_time",)]

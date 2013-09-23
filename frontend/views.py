@@ -53,9 +53,12 @@ def verify_code(request):
         return HttpResponse(status=400)
 
 
-
+VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications']
 @login_required()
-def classview(request, classgroup):
+def classview(request, classgroup, **kwargs):
+    active_page = kwargs.get('active_page', 'messages')
+    if active_page not in VALID_ACTIVE_PAGES:
+        return Http404
 
     try:
         cg = Classgroup.objects.get(name=classgroup)
@@ -69,6 +72,7 @@ def classview(request, classgroup):
         'link': cg.link(),
         'is_owner': is_owner,
         'access_key': cg.class_settings.access_key,
+        'active_page': active_page,
         }
 
     if request.user.classgroups.filter(name=classgroup).count() == 0:

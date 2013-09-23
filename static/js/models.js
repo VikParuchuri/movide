@@ -120,6 +120,9 @@ $(document).ready(function() {
         },
         methodUrl: {
             'create': '/api/messages/'
+        },
+        defaults: {
+            notification_text: ""
         }
     });
 
@@ -152,6 +155,11 @@ $(document).ready(function() {
         comparator: function(m) {
             return -parseInt(m.get('created_timestamp'));
         }
+    });
+
+    var Notifications = Messages.extend({
+        baseUrl: '/api/notifications/?page=1',
+        url: '/api/notifications/?page=1'
     });
 
     var ChildMessages = Backbone.Collection.extend({
@@ -371,10 +379,9 @@ $(document).ready(function() {
         template_name: "#classDetailTemplate",
         sidebar_item_tag: ".sidebar-item",
         events: {
-            'click.sidebar-item': this.sidebar_click
         },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'refresh', 'make_active', 'sidebar_click');
+            _.bindAll(this, 'render', 'refresh', 'make_active');
             this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
             this.options = {
@@ -391,19 +398,6 @@ $(document).ready(function() {
             this.class_model.fetch({async: false});
             $(this.el).html("");
             this.rebind_events();
-        },
-        sidebar_click: function(event){
-            var target = $(event.target);
-            var name = target.data('name');
-
-            if(name === "stats"){
-                this.render_stats();
-            } else if(name === "messages"){
-                this.render_messages();
-            } else if(name=== "users"){
-                this.render_users();
-            }
-            this.make_active(target.closest('li'));
         },
         render_users: function() {
             this.refresh();
@@ -423,9 +417,24 @@ $(document).ready(function() {
             this.stats_view = new StatsView(this.options);
             this.stats_view.render();
         },
+        render_notifications: function(){
+            this.refresh();
+            $(this.el).html($("#notificationDetailTemplate").html());
+            this.notifications_view = new NotificationsView(this.options);
+            this.notifications_view.render();
+        },
         render: function () {
             this.base_render();
-            this.render_messages();
+            this.active_page = $("#classinfo").data("active-page");
+            if(this.active_page == "messages"){
+                this.render_messages();
+            } else if(this.active_page == "stats"){
+                this.render_stats();
+            } else if(this.active_page == "users"){
+                this.render_users();
+            } else if(this.active_page == "notifications"){
+                this.render_notifications();
+            }
         },
         refresh: function(){
             $(this.el).empty();
@@ -608,6 +617,7 @@ $(document).ready(function() {
     var MessageView = BaseView.extend({
         tagName: "div",
         className: "messages",
+        template_name: "#messageTemplate",
         events: {
         },
         initialize: function(){
@@ -622,7 +632,7 @@ $(document).ready(function() {
             return model_json;
         },
         render: function () {
-            var tmpl = _.template($("#messageTemplate").html());
+            var tmpl = _.template($(this.template_name).html());
             var model_json = this.get_model_json();
             var model_html = tmpl(model_json);
 
@@ -656,6 +666,8 @@ $(document).ready(function() {
         stop_polling: false,
         message_count: 0,
         document_title: document.title,
+        enable_refresh: true,
+        no_message_template_name: "#noMessagesTemplate",
         events: {
             'click .view-reply-panel': this.render_reply_panel,
             'click .reply-to-message-button': this.post_reply_to_message,
@@ -697,7 +709,7 @@ $(document).ready(function() {
             event.preventDefault();
             var button = $(event.target);
             var message_div = button.closest("div.message-reply");
-            var reply = message_div.find("input").val();
+            var reply = message_div.find("textarea").val();
             var message_reply;
             var start_discussion;
             if(message_div.data('start-discussion') == true){
@@ -786,16 +798,18 @@ $(document).ready(function() {
             $(window).scroll(this.checkScroll);
             $(this.show_more_messages_button).unbind();
             $(this.show_more_messages_button).click(this.self_refresh);
-            if(this.interval_id != undefined){
-                clearTimeout(this.interval_id);
-            }
-            var that = this;
-            if(this.stop_polling == false){
-                this.interval_id = setTimeout(function() {
-                    get_message_notifications({classgroup: that.classgroup, start_time: that.start_time()}, that.show_message_notification, undefined);
-                }, 10000);
-            } else{
-                this.interval_id = undefined;
+            if(this.enable_refresh == true){
+                if(this.interval_id != undefined){
+                    clearTimeout(this.interval_id);
+                }
+                var that = this;
+                if(this.stop_polling == false){
+                    this.interval_id = setTimeout(function() {
+                        get_message_notifications({classgroup: that.classgroup, start_time: that.start_time()}, that.show_message_notification, undefined);
+                    }, 10000);
+                } else{
+                    this.interval_id = undefined;
+                }
             }
         },
         show_message_notification: function(data){
@@ -811,6 +825,8 @@ $(document).ready(function() {
                 if(this.message_count >= 10){
                     this.stop_polling = true;
                 }
+            } else {
+                document.title = this.document_title;
             }
             this.rebind_events();
         },
@@ -829,7 +845,7 @@ $(document).ready(function() {
                     model_html = model_html + $(that.renderMessage(item)).html();
                 }, this);
             } else {
-                var no_tmpl = _.template($("#noMessagesTemplate").html());
+                var no_tmpl = _.template($(this.no_message_template_name).html());
                 tmpl = _.template($(this.user_join_template_name).html());
                 var user_join_html = tmpl({
                     link: this.link,
@@ -917,6 +933,17 @@ $(document).ready(function() {
                 }
             }
         }
+    });
+
+    var NotificationView = MessageView.extend({
+        template_name: "#notificationTemplate"
+    });
+
+    var NotificationsView = MessagesView.extend({
+        collection_class: Notifications,
+        view_class: NotificationView,
+        enable_refresh: false,
+        no_message_template_name: "#noNotificationsTemplate"
     });
 
     window.MessagesView = MessagesView;

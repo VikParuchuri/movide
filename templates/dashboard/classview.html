@@ -13,9 +13,10 @@
 
 {% block sidebar %}
     <ul class="nav nav-tabs" id="tag-sidebar">
-        <li class="active current"><a href="#" class="sidebar-item" data-name="messages">Messages</a></li>
-        <li><a href="#" class="sidebar-item" data-name="stats">Stats</a></li>
-        <li><a href="#" class="sidebar-item" data-name="users">Users</a></li>
+        <li {% if active_page == "messages" %}class="active current"{% endif %}><a href="{{ link }}" class="sidebar-item" data-name="messages">Messages</a></li>
+        <li {% if active_page == "stats" %}class="active current"{% endif %}><a href="{{ link }}stats/" class="sidebar-item" data-name="stats">Stats</a></li>
+        <li {% if active_page == "users" %}class="active current"{% endif %}><a href="{{ link }}users/" class="sidebar-item" data-name="users">Users</a></li>
+        <li {% if active_page == "notifications" %}class="active current"{% endif %}><a href="{{ link }}notifications/" class="sidebar-item" data-name="notifications">Notifications</a></li>
     </ul>
 {% endblock %}
 
@@ -28,7 +29,7 @@
 {% endblock %}
 
 {% block class_info %}
-    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name={{ display_name }} data-is-owner={{ is_owner }} data-class-link={{ link }} data-access-key={{ access_key }}>
+    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name={{ display_name }} data-is-owner={{ is_owner }} data-class-link={{ link }} data-access-key={{ access_key }} data-active-page="{{ active_page }}">
 {% endblock %}
 
 {% block dashboard_content %}

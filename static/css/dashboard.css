@@ -11,13 +11,22 @@
     margin-bottom: 20px;
 }
 
-.create-user-form{
+.create-class-form{
     margin-top: 10px;
 }
-    .create-user-form.has-success{
+    .create-class-form.has-success{
         margin-top:30px;
     }
-    .create-user-form.has-error{
+    .create-class-form.has-error{
+        margin-top:30px;
+    }
+.reply-to-message-form{
+
+}
+    .reply-to-message-form.has-success{
+        margin-top:30px;
+    }
+    .reply-to-message-form.has-error{
         margin-top:30px;
     }
 

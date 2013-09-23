@@ -1,5 +1,5 @@
 from __future__ import division
-from django.db import models
+from django.db import models, IntegrityError
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 from datetime import timedelta
@@ -12,6 +12,8 @@ from django.dispatch import receiver
 from django.core.validators import RegexValidator
 import re
 import calendar
+import logging
+log = logging.getLogger(__name__)
 alphanumeric = re.compile(r'[^a-zA-Z0-9]+')
 
 
@@ -172,6 +174,31 @@ class EmailSubscription(models.Model):
     email_address = models.EmailField(max_length=MAX_CHARFIELD_LENGTH, unique=True, db_index=True)
     modified = models.DateTimeField(auto_now=True)
 
+class Notification(models.Model):
+    cleared = models.BooleanField(default=False)
+    notification_type = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
+    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+class MessageNotification(Notification):
+    receiving_message = models.ForeignKey(Message, related_name="received_message_notifications")
+    receiving_user = models.ForeignKey(User, related_name="message_notifications")
+    origin_message = models.ForeignKey(Message)
+
+    class Meta:
+        unique_together = (("receiving_message", "origin_message"),)
+
+class RatingNotification(Notification):
+    receiving_message = models.ForeignKey(Message, related_name="received_rating_notifications")
+    receiving_user = models.ForeignKey(User, related_name="rating_notifications")
+    origin_rating = models.ForeignKey(Rating)
+
+    class Meta:
+        unique_together = (("receiving_message", "origin_rating"),)
+
 
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, **kwargs):
@@ -180,6 +207,54 @@ def create_profile(sender, instance, **kwargs):
     except UserProfile.DoesNotExist:
         profile = UserProfile(user=instance)
         profile.save()
+
+@receiver(post_save, sender=Message)
+def create_message_notification(sender, instance, **kwargs):
+    if instance.reply_to is not None:
+        try:
+            MessageNotification.objects.get_or_create(
+                receiving_message=instance.reply_to,
+                receiving_user=instance.reply_to.user,
+                origin_message=instance,
+                notification_type="reply_to_discussion",
+            )
+        except IntegrityError:
+            log.warn("MessageNotification already exists with receiver message {0} and origin message {1}".format(instance.reply_to.id, instance.id))
+        for m in instance.reply_to.replies.all():
+            if m.user != instance.reply_to.user and m.user != instance.user:
+                try:
+                    MessageNotification.objects.get_or_create(
+                        receiving_message=instance.reply_to,
+                        receiving_user=m.user,
+                        origin_message=instance,
+                        notification_type="reply_to_watched_thread",
+                        )
+                except IntegrityError:
+                    log.warn("MessageNotification already exists with receiver message {0} and origin message {1}".format(m.id, instance.id))
+    elif instance.reply_to is None and instance.user == instance.classgroup.owner:
+        for user in instance.classgroup.users.all():
+            if user != instance.classgroup.owner:
+                try:
+                    MessageNotification.objects.get_or_create(
+                        receiving_message=instance,
+                        receiving_user=user,
+                        origin_message=instance,
+                        notification_type="instructor_discussion_started",
+                            )
+                except IntegrityError:
+                    log.warn("MessageNotification already exists for instructor post with receiver message {0} and origin message {1}".format(instance.id, instance.id))
+
+@receiver(post_save, sender=Rating)
+def create_rating_notification(sender, instance, **kwargs):
+    try:
+        RatingNotification.objects.get_or_create(
+            receiving_message=instance.message,
+            receiving_user=instance.message.user,
+            origin_rating=instance,
+            notification_type="rating_for_discussion",
+        )
+    except IntegrityError:
+        log.warn("RatingNotification already exists with receiver message {0} and origin rating {1}".format(instance.message.id, instance.id))
 
 User.profile = property(lambda u: u.get_profile())
 

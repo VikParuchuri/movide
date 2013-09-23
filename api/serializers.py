@@ -68,12 +68,27 @@ class TagSerializer(serializers.Serializer):
         instance = set_attributes(attributes, attrs, instance)
         return instance
 
-class RatingSerializer(serializers.ModelSerializer):
+class RatingSerializer(serializers.Serializer):
     message = serializers.PrimaryKeyRelatedField(many=False)
     owner = serializers.SlugRelatedField(slug_field="username")
-    class Meta:
-        model = Rating
-        fields = ("rating", "message", "owner", "modified", "created", )
+    rating = serializers.IntegerField()
+    modified = serializers.Field()
+
+    def restore_object(self, attrs, instance=None):
+        user = self.context['request'].user
+        message = attrs.get('message')
+
+        attributes = ["rating"]
+
+        if instance is None:
+            instance = Rating(owner=user, message=message)
+        else:
+            if instance.owner != user:
+                raise serializers.ValidationError("Attempting to edit a rating that is not yours.")
+
+        instance = set_attributes(attributes, attrs, instance)
+        instance.save()
+        return instance
 
 class ClassSettingsSerializer(serializers.ModelSerializer):
     classgroup = serializers.SlugRelatedField(many=False, slug_field="name")
@@ -138,6 +153,13 @@ class ClassgroupSerializer(serializers.Serializer):
         class_settings.save()
         return instance
 
+class RatingField(serializers.RelatedField):
+    def to_native(self, value):
+        return {
+            'rating': value.rating,
+            'owner': value.owner.username,
+        }
+
 class MessageSerializer(serializers.Serializer):
     pk = serializers.Field()
     reply_count = serializers.Field(source="reply_count")
@@ -145,7 +167,7 @@ class MessageSerializer(serializers.Serializer):
     user = serializers.SlugRelatedField(many=False, slug_field="username", blank=True, null=True, queryset=User.objects.all())
     user_image = serializers.Field(source="profile_image")
     reply_to = serializers.PrimaryKeyRelatedField(required=False, blank=True, null=True, queryset=Message.objects.all())
-    ratings = serializers.SlugRelatedField(many=True, slug_field="rating", read_only=True, blank=True, null=True, queryset=Rating.objects.all())
+    ratings = RatingField(many=True, read_only=True, blank=True, null=True)
     classgroup = serializers.SlugRelatedField(slug_field="name", blank=True, null=True, queryset=Classgroup.objects.all())
     resources = serializers.PrimaryKeyRelatedField(many=True, blank=True, null=True, queryset=Resource.objects.all())
     created_timestamp = serializers.Field(source="created_timestamp")
@@ -176,6 +198,13 @@ class MessageSerializer(serializers.Serializer):
 class PaginatedMessageSerializer(PaginationSerializer):
     class Meta:
         object_serializer_class = MessageSerializer
+
+class NotificationSerializer(MessageSerializer):
+    notification_text = serializers.Field()
+
+class PaginatedNotificationSerializer(PaginationSerializer):
+    class Meta:
+        object_serializer_class = NotificationSerializer
 
 class ResourceSerializer(serializers.Serializer):
     pk = serializers.Field()
@@ -245,3 +274,5 @@ class UserSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid classgroups specified: {0}".format(classgroups))
 
         return instance
+
+

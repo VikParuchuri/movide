@@ -18,13 +18,20 @@
     <p>Unfortunately, not enough messages have been sent to allow this chart to be shown.</p>
 </script>
 
+<script id="notificationDetailTemplate" type="text/template">
+    <div class="row">
+        <div id="messages-container">
+        </div>
+    </div>
+</script>
+
 <script id="messageDetailTemplate" type="text/template">
     <div class="row">
         <div id="start-a-discussion" data-start-discussion="true" class="message-reply">
             <form role="form">
                 <div class="form-group reply-to-message-form">
                     <label class="sr-only" for="start-a-discussion-input">Tag</label>
-                    <input type="text" class="form-control input-lg" id="start-a-discussion-input" placeholder="Enter message here...">
+                    <textarea type="text" class="form-control input-lg" id="start-a-discussion-input" placeholder="Enter message here..."></textarea>
                     <span class="help-block"></span>
                 </div>
                 <div class="form-group">
@@ -92,6 +99,10 @@
     <p><strong>Questions? Please contact info@movide.com .</strong></p>
 </script>
 
+<script id="noNotificationsTemplate" type="text/template">
+    <p>You don't have any notifications yet.</p>
+</script>
+
 <script id="userTemplate" type="text/template">
     <tr>
         <td>
@@ -111,50 +122,27 @@
 </script>
 
 <script id="messageReplyTemplate" type="text/template">
-    <form role="form">
+    <form role="form" class="form-inline">
         <div class="form-group reply-to-message-form">
             <label class="sr-only" for="reply-to-message-input-<%= pk %>">Tag</label>
-            <input type="text" class="form-control input-lg" id="reply-to-message-input-<%= pk %>" placeholder="Enter reply here...">
+            <textarea type="text" class="form-control input-lg" id="reply-to-message-input-<%= pk %>" placeholder="Enter reply here..." rows="1" cols="60"></textarea>
             <span class="help-block" id="reply-to-message-message-<%= pk %>"></span>
         </div>
-        <div class="form-group">
-            <button type="submit" class="btn btn-small reply-to-message-button" id="reply-to-message-button-<%= pk %>" data-primary-key="<%= pk %>">Send Reply</button>
-        </div>
+        <button type="submit" class="btn btn-small reply-to-message-button" id="reply-to-message-button-<%= pk %>" data-primary-key="<%= pk %>">Send Reply</button>
     </form>
 </script>
 
-<script id="messageTemplate" type="text/template">
-    <div class="comment" data-message-id="<%= pk %>" data-reply-username="<%= user %>" data-created="<%= created %>" data-depth="<%= depth %>">
-        <div class="header clearfix">
-            <% if (typeof(image) != "undefined") { %>
-                <img src="<%= image %>" alt="<%= user %>">
-            <% } %>
-            <div>
-                <div><h4><%= user %></h4><span class="time"> said <%= created_formatted %></span></div>
-            </div>
-            <div class="pull-right">
-                <% if(depth<1) { %>
-                    <span class="label label-info">
-                        <span class="glyphicon glyphicon-comment"> <%= reply_count %></span>
-                    </span>
-                <% } %>
-            </div>
-        </div>
-        <div class="comment-content clearfix">
-            <%= text %>
-        </div>
-        <% if(depth<1) { %>
-            <a type="button" class="view-reply-panel" href="#">
-                Reply<% if (reply_count > 0) { %> and view replies<% } %>
-            </a>
-            <div class="reply-panel" id="reply-panel-<%= pk %>" data-is-open="false" data-message-id="<%= pk %>">
-                <div id="reply-to-message-<%= pk %>" class="message-reply" data-start-discussion="false">
-                </div>
-                <div class="message-replies-container" id="message-replies-container-<%= pk %>">
-                </div>
-            </div>
-       <% } %>
+<script id="notificationTemplate" type="text/template">
+    <% if(typeof notification_text !== undefined){ %>
+        <p><%= notification_text %></p>
+    <% } %>
+    <div class="notification-message">
+        {% include "snippets/message_template.html" %}
     </div>
+</script>
+
+<script id="messageTemplate" type="text/template">
+    {% include "snippets/message_template.html" %}
 </script>
 
 <script id="noRepliesTemplate" type="text/template">

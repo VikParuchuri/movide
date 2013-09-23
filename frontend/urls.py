@@ -11,4 +11,5 @@ urlpatterns =patterns('frontend.views',
                       url(r'^dashboard/$', 'dashboard'),
                       url(r'^verify_code/$', 'verify_code'),
                       url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/$', 'classview'),
+                      url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/(?P<active_page>\w+)/$', 'classview'),
                       )
