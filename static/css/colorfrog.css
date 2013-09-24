@@ -342,6 +342,9 @@ blockquote.big-quote {
     padding: 10px;
     box-shadow: 0 1px 3px 0 rgba(56,61,72,0.21);
     }
+    .comments .comment.announcement{
+        box-shadow: 0 1px 3px 0 #FF4D4D;
+    }
     .comments .comment h4{
         display: inline-block;
     }
@@ -354,6 +357,9 @@ blockquote.big-quote {
         border-top: 1px solid #D6D6D6;
         box-shadow: none;
         padding: 5px 0px 5px 5px;
+    }
+    .comments .comment .message-info-labels .label{
+        margin-left: 10px;
     }
     .comments .message-replies-container{
         margin-left: 10px;

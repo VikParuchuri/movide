@@ -1,13 +1,18 @@
-<div class="comment" data-message-id="<%= pk %>" data-reply-username="<%= user %>" data-created="<%= created %>" data-depth="<%= depth %>">
+<div class="comment <% if(message_type=='A') { %>announcement<% } %>" data-message-id="<%= pk %>" data-reply-username="<%= user %>" data-created="<%= created %>" data-depth="<%= depth %>">
     <div class="header">
         <% if (typeof(avatar_url) != "undefined") { %>
             <img src="<%= avatar_url %>" alt="<%= user %>" class="img-responsive img-rounded">
         <% } %>
-        <div class="pull-right">
+        <div class="pull-right message-info-labels">
             <% if(depth<1) { %>
-                        <span class="label label-info">
-                            <span class="glyphicon glyphicon-comment"> <%= reply_count %></span>
-                        </span>
+                <span class="label label-info">
+                    <span class="glyphicon glyphicon-comment"> <%= reply_count %></span>
+                </span>
+            <% } %>
+            <% if(written_by_owner == true) { %>
+                <span class="label label-warning">
+                    <span class="glyphicon glyphicon-star"> </span>
+                </span>
             <% } %>
         </div>
     </div>

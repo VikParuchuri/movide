@@ -219,6 +219,8 @@ class PaginatedMessageSerializer(PaginationSerializer):
 
 class NotificationSerializer(MessageSerializer):
     notification_text = serializers.Field()
+    notification_created = serializers.Field()
+    notification_created_timestamp = serializers.Field()
 
 class PaginatedNotificationSerializer(PaginationSerializer):
     class Meta:

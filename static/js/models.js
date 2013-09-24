@@ -146,7 +146,8 @@ $(document).ready(function() {
             'create': '/api/messages/'
         },
         defaults: {
-            notification_text: ""
+            notification_text: "",
+            notification_created_formatted: ""
         }
     });
 
@@ -183,7 +184,10 @@ $(document).ready(function() {
 
     var Notifications = Messages.extend({
         baseUrl: '/api/notifications/?page=1',
-        url: '/api/notifications/?page=1'
+        url: '/api/notifications/?page=1',
+        comparator: function(m) {
+            return -parseInt(m.get('notification_created_timestamp'));
+        }
     });
 
     var ChildMessages = Backbone.Collection.extend({
@@ -728,11 +732,17 @@ $(document).ready(function() {
             _.bindAll(this, 'render');
             this.model.bind('change', this.render);
             this.model.bind('remove', this.unrender);
+            this.class_owner = $("#classinfo").data('class-owner');
         },
         get_model_json: function(){
             var model_json = this.model.toJSON();
             model_json.created_formatted = model_json.created.replace("Z","");
             model_json.created_formatted = moment.utc(model_json.created_formatted).local().fromNow();
+            model_json.written_by_owner = (this.class_owner == model_json.user);
+            if(model_json.notification_created != undefined){
+                model_json.notification_created_formatted = model_json.notification_created.replace("Z","");
+                model_json.notification_created_formatted = moment.utc(model_json.notification_created_formatted).local().fromNow();
+            }
             return model_json;
         },
         render: function () {

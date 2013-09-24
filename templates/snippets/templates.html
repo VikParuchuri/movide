@@ -195,9 +195,11 @@
 </script>
 
 <script id="notificationTemplate" type="text/template">
-    <% if(typeof notification_text !== undefined){ %>
-        <p><%= notification_text %></p>
-    <% } %>
+    <div class="notification-header">
+        <% if(typeof notification_text !== undefined && typeof notification_created_formatted !== undefined && notification_text.length > 1){ %>
+            <p><%= notification_text %> <span class="time"><%= notification_created_formatted %></span> </p>
+        <% } %>
+    </div>
     <div class="notification-message">
         {% include "snippets/message_template.html" %}
     </div>

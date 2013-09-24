@@ -52,6 +52,10 @@
     margin-right: 20px;
 }
 
+.notification-header .time{
+    color: #B2B2B2;
+}
+
 #student-network-chart-container{
     height: 350px;
     position: relative;

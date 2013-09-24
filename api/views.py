@@ -21,6 +21,7 @@ from django.views.generic.base import View
 from dateutil import parser
 from notifications import NotificationText
 import datetime
+import calendar
 from django.forms.models import model_to_dict
 log = logging.getLogger(__name__)
 
@@ -117,7 +118,7 @@ class ClassgroupDetailView(APIView):
 
 class MessageView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
-    query_attributes = ["tag", "classgroup", "user", "in_reply_to_id", "message_type"]
+    query_attributes = ["tag", "classgroup", "user", "in_reply_to_id", "message_type",]
     required_attributes = [("classgroup", "user"),]
 
     def filter_tag(self, queryset, tag):
@@ -151,7 +152,7 @@ class MessageView(QueryView):
         try:
             serializer = PaginatedMessageSerializer(paginator.page(page), context={'request' : request})
         except PageNotAnInteger:
-            serializer = MessageSerializer(queryset, context={'request' : request}, many=True)
+            serializer = MessageSerializer(queryset, context={'request': request}, many=True)
         except EmptyPage:
             serializer = PaginatedMessageSerializer(paginator.page(paginator.num_pages), context={'request' : request})
 
@@ -194,10 +195,12 @@ class NotificationView(QueryView):
         notification_text = NotificationText(notifications)
         notification_text.generate_text()
         messages = notification_text.get_messages()
-        messages.sort(key=lambda x: x['message'].created, reverse=True)
+        messages.sort(key=lambda x: x['notification'].created, reverse=True)
         message_objects = []
         for i,m in enumerate(messages):
             m['message'].notification_text = m['notification_text']
+            m['message'].notification_created = m['notification'].created
+            m['message'].notification_created_timestamp = calendar.timegm(m['notification'].created.utctimetuple())
             message_objects.append(m['message'])
         paginator = Paginator(message_objects, RESULTS_PER_PAGE)
 
