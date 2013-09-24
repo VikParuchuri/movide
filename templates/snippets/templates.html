@@ -64,7 +64,16 @@
 
 <script id="statsDetailTemplate" type="text/template">
     <div class="row">
-        <div id="stats-container"></div>
+        <div id="stats-container">
+            <h4>Message Activity</h4>
+            <div id="message-chart" style="height:250px;"></div>
+            <h4>Student Network</h4>
+            <p>Each point represents a student in the class.  A larger point means that the student has participated in more discussions. Each line between students shows how they interact with each other.  A larger line means that the two students have had more discussions with each other.</p>
+            <p>Click and drag to move around, and use the mousewheel to zoom in and out.  Hovering over a point shows you only the classmates with whom that student has has discussions.</p>
+            <div id="student-network-chart-container">
+                <div id="student-network-chart"></div>
+            </div>
+        </div>
     </div>
 </script>
 
@@ -84,8 +93,9 @@
 
 <script id="userJoinTemplate" type="text/template">
     <% if(is_owner){ %>
-        <p>In order to have students access this course, please tell them to visit <strong><%= link %></strong> and use the access code <strong><%= access_key %></strong>.</p>
-        <p>If they do not already have an account, they will be asked to sign up, and then enter their code.</p>
+        <p>In order to have students access this course, please tell them to visit <strong><%= link %></strong> and use the access code <strong><%= access_key %></strong>.  If they do not already have an account, they will be asked to sign up, and then enter their code.</p>
+        <p>You can enable and disable access code signup in the settings panel.</p>
+        <p><strong>Questions? Please contact info@movide.com .</strong></p>
     <% } %>
 </script>
 
@@ -103,13 +113,25 @@
                 <th>Name</th>
                 <th>Daily Messages</th>
                 <th>All Messages</th>
-                <th>Actions</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
             <%= content %>
         </tbody>
     </table>
+    <% if(is_owner == true && false){ %>
+        <form class="form-inline" role="form">
+            <div class="form-group user-add-form">
+                <label class="sr-only" for="inputClass1">Username</label>
+                <input type="text" class="form-control input-lg" id="inputClass1" placeholder="Student username">
+                <span class="help-block" id="user-add-message"></span>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-large" id="user-add">Add a student</button>
+            </div>
+        </form>
+    <% } %>
 </script>
 
 <script id="noUserTemplate" type="text/template">
@@ -117,9 +139,7 @@
 </script>
 
 <script id="noMessagesTemplate" type="text/template">
-    <p>There aren't any discussions in this class yet.</p>
-    <p>Why not start a discussion now?</p>
-    <p><strong>Questions? Please contact info@movide.com .</strong></p>
+    <p>There aren't any discussions in this class yet. Why not start a discussion now?</p>
 </script>
 
 <script id="noNotificationsTemplate" type="text/template">
@@ -133,7 +153,7 @@
                 <img src="<%= image %>">
             <% } %>
         </td>
-        <td><%= username %></td>
+        <td class="username" data-username="<%= username %>"><%= username %></td>
         <td><%= message_count_today %></td>
         <td><%= message_count %></td>
         <td>

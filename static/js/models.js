@@ -130,6 +130,13 @@ $(document).ready(function() {
 
     });
 
+    var ClassgroupStats = methodModel.extend({
+        idAttribute: 'pk',
+        url: function () {
+            return '/api/classes/' + this.get('name') + "/stats/";
+        }
+    });
+
     var Message = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
@@ -259,7 +266,7 @@ $(document).ready(function() {
         events: {
         },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'create_chart', 'render_additional_charts');
+            _.bindAll(this, 'render', 'create_daily_activity_chart', 'create_network_chart', 'render_charts');
             this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
             this.options = {
@@ -268,15 +275,29 @@ $(document).ready(function() {
             };
         },
         render: function(){
-            var tag_information = new TagInformation({name : this.classgroup});
-             tag_information.fetch({success: this.render_additional_charts, error: this.render_additional_charts_error});
-             if(messages_by_day.length > 1){
-             var chart_width = $("#messages").width();
-             $('#' + this.chart_tag).css('width', chart_width);
-                this.create_chart(messages_by_day);
-             }
+             var class_stats = new ClassgroupStats({name : this.classgroup});
+             class_stats.fetch({success: this.render_charts, error: this.render_charts_error});
         },
-        create_chart: function(data){
+        render_charts: function(model, success, options){
+            var messages_by_day = [];
+            var messages_by_day_data = model.get('message_count_by_day');
+            for (var i = 0; i < messages_by_day_data.length; i++) {
+                messages_by_day.push({created: messages_by_day_data[i].created_date, count: messages_by_day_data[i].created_count});
+            }
+            var network_info = model.get('network_info')
+            if(messages_by_day.length > 1){
+                this.create_daily_activity_chart(messages_by_day);
+            } else {
+                $("#" + this.chart_tag).html("We can't display the daily activity chart until you start some discussions.")
+            }
+            if(network_info.nodes.length > 2 && network_info.edges.length > 1){
+                this.create_network_chart(network_info)
+            } else {
+                $("#" + this.network_chart_tag).html($('#noNetworkChartTemplate').html());
+            }
+
+        },
+        create_daily_activity_chart: function(data){
             new Morris.Line({
                 element: this.chart_tag,
                 data: data,
@@ -285,102 +306,94 @@ $(document).ready(function() {
                 labels: ['# of messages']
             });
         },
-        render_additional_charts_error: function(){
+        render_charts_error: function(){
             console.log("error");
         },
-        render_additional_charts: function(model, success, options){
-            $("#student-network-chart").empty();
-            if(model.get('network_info').nodes.length < 2 || model.get('network_info').edges.length < 1){
-                $("#student-network-chart").html($('#noNetworkChartTemplate').html());
-                return
+        create_network_chart: function(network_info){
+            var sigInst = sigma.init(document.getElementById(this.network_chart_tag)).drawingProperties({
+                defaultLabelColor: '#fff'
+            }).graphProperties({
+                    minNodeSize: 1,
+                    maxNodeSize: 5,
+                    minEdgeSize: 1,
+                    maxEdgeSize: 5
+                }).mouseProperties({
+                    maxRatio: 4
+                });
+
+            var i;
+            var clusters = [{
+                'id': 1,
+                'nodes': [],
+                'color': 'rgb('+0+','+
+                    0+','+
+                    0+')'
+            }];
+
+            var cluster = clusters[0];
+            var nodes = network_info.nodes;
+            var edges = network_info.edges;
+            var palette = colorbrewer.Paired[9];
+            for(i=0;i<nodes.length;i++){
+                var node = nodes[i];
+                sigInst.addNode(node.name,{
+                    'x': Math.random(),
+                    'y': Math.random(),
+                    'size': node.size,
+                    'color': palette[(Math.random()*palette.length|0)],
+                    'cluster': cluster['id'],
+                    'label': node.name
+                });
+                cluster.nodes.push(node.name);
             }
-            $('a[href="#stats-container"]').on('shown.bs.tab', function (e) {
-                var sigInst = sigma.init(document.getElementById("student-network-chart")).drawingProperties({
-                    defaultLabelColor: '#fff'
-                }).graphProperties({
-                        minNodeSize: 0.5,
-                        maxNodeSize: 5,
-                        minEdgeSize: 1,
-                        maxEdgeSize: 1
-                    }).mouseProperties({
-                        maxRatio: 4
-                    });
 
-                var i;
-                var clusters = [{
-                    'id': 1,
-                    'nodes': [],
-                    'color': 'rgb('+0+','+
-                        0+','+
-                        0+')'
-                }];
+            for(i = 0; i < edges.length; i++){
+                var edge = edges[i];
+                sigInst.addEdge(i,edge.start, edge.end, {'size' : 'strength'});
+            }
 
-                var cluster = clusters[0];
-                var nodes = model.get('network_info').nodes;
-                var edges = model.get('network_info').edges;
-                var palette = colorbrewer.Paired[9];
-                for(i=0;i<nodes.length;i++){
-                    var node = nodes[i];
-                    sigInst.addNode(node.name,{
-                        'x': Math.random(),
-                        'y': Math.random(),
-                        'size': node.size,
-                        'color': palette[(Math.random()*palette.length|0)],
-                        'cluster': cluster['id'],
-                        'label': node.name
-                    });
-                    cluster.nodes.push(node.name);
-                }
+            var greyColor = '#FFFFFF';
+            sigInst.bind('overnodes',function(event){
+                var nodes = event.content;
+                var neighbors = {};
+                sigInst.iterEdges(function(e){
+                    if(nodes.indexOf(e.source)<0 && nodes.indexOf(e.target)<0){
+                        if(!e.attr['grey']){
+                            e.attr['true_color'] = e.color;
+                            e.color = greyColor;
+                            e.attr['grey'] = 1;
+                        }
+                    }else{
+                        e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+                        e.attr['grey'] = 0;
 
-                for(i = 0; i < edges.length; i++){
-                    var edge = edges[i];
-                    sigInst.addEdge(i,edge.start, edge.end, {'size' : 'strength'});
-                }
-
-                var greyColor = '#FFFFFF';
-                sigInst.bind('overnodes',function(event){
-                    var nodes = event.content;
-                    var neighbors = {};
-                    sigInst.iterEdges(function(e){
-                        if(nodes.indexOf(e.source)<0 && nodes.indexOf(e.target)<0){
-                            if(!e.attr['grey']){
-                                e.attr['true_color'] = e.color;
-                                e.color = greyColor;
-                                e.attr['grey'] = 1;
+                        neighbors[e.source] = 1;
+                        neighbors[e.target] = 1;
+                    }
+                }).iterNodes(function(n){
+                        if(!neighbors[n.id]){
+                            if(!n.attr['grey']){
+                                n.attr['true_color'] = n.color;
+                                n.color = greyColor;
+                                n.attr['grey'] = 1;
                             }
                         }else{
-                            e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
-                            e.attr['grey'] = 0;
-
-                            neighbors[e.source] = 1;
-                            neighbors[e.target] = 1;
+                            n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+                            n.attr['grey'] = 0;
                         }
+                    }).draw(2,2,2);
+            }).bind('outnodes',function(){
+                    sigInst.iterEdges(function(e){
+                        e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
+                        e.attr['grey'] = 0;
                     }).iterNodes(function(n){
-                            if(!neighbors[n.id]){
-                                if(!n.attr['grey']){
-                                    n.attr['true_color'] = n.color;
-                                    n.color = greyColor;
-                                    n.attr['grey'] = 1;
-                                }
-                            }else{
-                                n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
-                                n.attr['grey'] = 0;
-                            }
+                            n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
+                            n.attr['grey'] = 0;
                         }).draw(2,2,2);
-                }).bind('outnodes',function(){
-                        sigInst.iterEdges(function(e){
-                            e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
-                            e.attr['grey'] = 0;
-                        }).iterNodes(function(n){
-                                n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
-                                n.attr['grey'] = 0;
-                            }).draw(2,2,2);
-                    });
+                });
 
-                sigInst.startForceAtlas2();
-                setTimeout(function(){sigInst.stopForceAtlas2();}, 1500);
-                $('a[href="#stats-container"]').unbind();
-            });
+            sigInst.startForceAtlas2();
+            setTimeout(function(){sigInst.stopForceAtlas2();}, 1500);
         }
     });
 
@@ -479,13 +492,16 @@ $(document).ready(function() {
         view_class: UserView,
         template_name: "#userTableTemplate",
         user_join_template_name: "#userJoinTemplate",
+        user_add_message: "#user-add-message",
         classgroup: undefined,
         active: undefined,
         events: {
-            'click .user-tag-delete': 'user_tag_delete'
+            'click .user-tag-delete': 'user_tag_delete',
+            'click #user-add': 'user_add'
         },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table', 'destroy_view', 'user_tag_delete');
+            _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table',
+                'destroy_view', 'user_tag_delete', 'rebind_events', 'user_add', 'display_message');
             this.collection = new this.collection_class();
             this.classgroup = options.classgroup;
             this.active = options.active;
@@ -494,6 +510,12 @@ $(document).ready(function() {
             this.is_owner = $("#classinfo").data("is-owner");
             this.access_key = $("#classinfo").data("access-key");
             this.link = window.location.host + $("#classinfo").data("class-link");
+            this.user_add_link = $("#classinfo").data("class-link") + "add_user/";
+            this.user_remove_link = $("#classinfo").data("class-link") + "remove_user/";
+            this.options={
+                classgroup: this.classgroup,
+                display_tag: this.display_tag
+            }
         },
         render_table: function(){
             this.render();
@@ -512,7 +534,8 @@ $(document).ready(function() {
             var content_html = tmpl({
                 content: model_html,
                 classgroup: this.classgroup,
-                display_tag: this.display_tag
+                display_tag: this.display_tag,
+                is_owner: this.is_owner
             });
 
             tmpl = _.template($(this.user_join_template_name).html());
@@ -523,9 +546,42 @@ $(document).ready(function() {
             });
 
             $(this.el).html(user_join_html + content_html);
+            this.rebind_events();
+            return this;
+        },
+        rebind_events: function(){
             $('.user-tag-delete').unbind();
             $('.user-tag-delete').click(this.user_tag_delete);
-            return this;
+            $('#user-add').unbind();
+            $('#user-add').click(this.user_add);
+        },
+        display_message: function(message, success){
+            this.refresh(this.options);
+            var user_add_message = $(this.user_add_message);
+            user_add_message.html(message);
+            var user_add_form = user_add_message.closest('.form-group');
+            if(success == true){
+                user_add_form.removeClass('has-error').addClass('has-success');
+            } else {
+                user_add_form.removeClass('has-success').addClass('has-error');
+            }
+        },
+        user_add: function(event){
+            event.preventDefault();
+            var user_to_add = $('.user-add-form').find("input").val();
+            var that = this;
+            $.ajax({
+                type: "POST",
+                url: this.user_add_link,
+                data: {username: user_to_add},
+                success: function(){
+                    that.display_message("User added.", true);
+                },
+                error: function(){
+                    that.display_message("Failed to add user.", false);
+                }
+            });
+            return false;
         },
         renderUser: function (item) {
             var userView = new this.view_class({
@@ -544,10 +600,20 @@ $(document).ready(function() {
         },
         user_tag_delete: function(event){
             event.preventDefault();
-            var twitter_name = $(event.target).closest('tr').find('td.screen-name').data('screen-name');
-            var item_to_remove = this.collection.where({twitter_screen_name: twitter_name})[0];
-            item_to_remove.destroy({data: {classgroup: this.classgroup}, processData: true, async: false});
-            this.refresh({classgroup : this.classgroup});
+            event.preventDefault();
+            var username = $(event.target).closest('tr').find('td.username').data('username');
+            var that = this;
+            $.ajax({
+                type: "POST",
+                url: this.user_remove_link,
+                data: {username: username},
+                success: function(){
+                    that.display_message("User removed.", true);
+                },
+                error: function(){
+                    that.display_message("Failed to remove user.", false);
+                }
+            });
             return false;
         }
     });

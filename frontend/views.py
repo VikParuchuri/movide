@@ -9,6 +9,7 @@ from api.models import Classgroup, RatingNotification, MessageNotification, Stud
 from rest_framework.response import Response
 from rest_framework import status
 from api.forms import StudentClassSettingsForm, ClassSettingsForm
+from django.contrib.auth.models import User
 
 log=logging.getLogger(__name__)
 
@@ -75,6 +76,7 @@ def verify_settings(request, classgroup):
 
     return cg
 
+@login_required()
 def student_settings(request, classgroup):
     cg = verify_settings(request, classgroup)
 
@@ -94,6 +96,7 @@ def student_settings(request, classgroup):
         'save_button_value': 'Save Preferences'
         })
 
+@login_required()
 def class_settings(request, classgroup):
     cg = verify_settings(request, classgroup)
 
@@ -152,4 +155,45 @@ def classview(request, classgroup, **kwargs):
     return render_to_response("dashboard/classview.html", template_vars,
            context_instance=RequestContext(request)
     )
+
+@login_required()
+def add_user(request, classgroup):
+    # Disable this functionality for now until privacy issues are sorted out.
+    raise Http404
+    if request.method != 'POST':
+        raise Http404
+
+    cg = verify_settings(request, classgroup)
+
+    if request.user != cg.owner:
+        raise Http404
+
+    username = request.POST.get('username')
+    user = User.objects.get(username=username)
+    user.classgroups.add(cg)
+
+    user.save()
+
+    return HttpResponse(status=200)
+
+@login_required()
+def remove_user(request, classgroup):
+    if request.method != 'POST':
+        raise Http404
+
+    cg = verify_settings(request, classgroup)
+
+    if request.user != cg.owner:
+        raise Http404
+
+    username = request.POST.get('username')
+    user = User.objects.get(username=username)
+    user.classgroups.remove(cg)
+    user.save()
+
+    return HttpResponse(status=200)
+
+
+
+
 

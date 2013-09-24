@@ -57,45 +57,46 @@ class Classgroup(models.Model):
         return self.users.all().count()
 
     def user_count_today(self, tag=None):
-        return self.queryset(tag).filter(created_at__gt=now() - timedelta(days=1)).values('user').distinct().count()
+        return self.queryset(tag).filter(created__gt=now() - timedelta(days=1)).values('user').distinct().count()
 
     def message_count_today(self, tag=None):
-        return self.queryset(tag).filter(created_at__gt=now() - timedelta(days=1)).count()
+        return self.queryset(tag).filter(created__gt=now() - timedelta(days=1)).count()
 
     def message_count_by_day(self, tag=None):
-        message_data = list(self.queryset(tag).extra({'created' : "date(created_at)"}).values('created').annotate(created_count=Count('id')))
+        message_data = list(self.queryset(tag).extra({'created_date': "date(created)"}).values('created_date').annotate(created_count=Count('id')))
         day_counts = self.count_by_day(message_data)
         return day_counts
 
     def first_message_time(self, tag=None):
-        first_message = self.queryset(tag).values('created_at').order_by("-created_at")[0]
-        return min(self.modified.date(), first_message['created_at'].date()) - timedelta(days=2)
+        first_message = self.queryset(tag).values('created').order_by("-created")[0]
+        return min(self.modified.date(), first_message['created'].date()) - timedelta(days=2)
 
     def calculate_days(self, data, start, end):
         for dt in rrule(DAILY, dtstart=start, until=end):
             date_found = False
             dt_str = str(dt).split(" ")[0]
             for rec in data:
-                if str(rec['created']) == dt_str:
+                if str(rec['created_date']) == dt_str:
                     date_found = True
                     break
             if date_found:
                 continue
-            data.append({'created_count' : 0, 'created' : dt_str})
+            data.append({'created_count': 0, 'created_date': dt_str})
         return data
 
     def count_by_day(self, objects):
         if len(objects) == 0:
             return []
         end = now().date()
-        return self.calculate_days(objects, self.first_tweet_time(), end)
+        log.info(objects)
+        return self.calculate_days(objects, self.first_message_time(), end)
 
     def network_info(self, tag=None):
         users = self.users.all()
         user_relations = {}
         nodes = []
         for u in users:
-            nodes.append({'name' : u.username, 'image' : u.profile.image, 'size' : self.queryset(tag).filter(user=u).count()})
+            nodes.append({'name': u.username, 'image': u.profile.image, 'size': self.queryset(tag).filter(user=u).count()})
         for u in users:
             replied_to_names = [i['reply_to__user__username'] for i in self.queryset(tag).filter(user=u, reply_to__isnull=False).values('reply_to__user__username')]
             user_relations[u.username] = Counter(replied_to_names)
@@ -103,8 +104,8 @@ class Classgroup(models.Model):
         for u in user_relations:
             for k in user_relations[u]:
                 if u!=k:
-                    edges.append({'start' : u, 'end' : k, 'strength' : user_relations[u][k]})
-        return {'nodes' : nodes, 'edges' : edges}
+                    edges.append({'start': u, 'end': k, 'strength': user_relations[u][k]})
+        return {'nodes': nodes, 'edges': edges}
 
 class Resource(models.Model):
     owner = models.ForeignKey(User, related_name="resources")

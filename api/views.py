@@ -6,7 +6,7 @@ from serializers import (TagSerializer, MessageSerializer, UserSerializer,
                          EmailSubscriptionSerializer, ResourceSerializer,
                          ClassgroupSerializer, RatingSerializer, PaginatedMessageSerializer,
                          NotificationSerializer, PaginatedNotificationSerializer, StudentClassSettingsSerializer,
-                         ClassSettingsSerializer)
+                         ClassSettingsSerializer, ClassgroupStatsSerializer)
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from django.db.models import Q, Count
@@ -352,4 +352,14 @@ class ClassSettingsView(QueryView):
         settings = self.cg.class_settings
 
         serializer = ClassSettingsSerializer(settings, context={'request': request})
+        return Response(serializer.data)
+
+class ClassgroupStatsView(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, classgroup, format=None):
+        self.query_dict = {'classgroup': classgroup}
+        self.verify_membership()
+
+        serializer = ClassgroupStatsSerializer(self.cg, context={'request': request})
         return Response(serializer.data)

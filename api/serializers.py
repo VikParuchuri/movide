@@ -285,4 +285,16 @@ class UserSerializer(serializers.Serializer):
 
         return instance
 
+class ClassgroupStatsSerializer(serializers.Serializer):
+    pk = serializers.Field()
+    network_info = serializers.Field(source="network_info")
+    message_count_by_day = serializers.Field(source="message_count_by_day")
+    message_count_today = serializers.Field(source="message_count_today")
+    message_count = serializers.Field(source="message_count")
+    user_count = serializers.Field(source="user_count")
+    user_count_today = serializers.Field(source="user_count_today")
+    display_name = serializers.Field()
+    name = serializers.CharField()
+    modified = serializers.Field()
+
 
