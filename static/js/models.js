@@ -284,11 +284,11 @@ $(document).ready(function() {
             for (var i = 0; i < messages_by_day_data.length; i++) {
                 messages_by_day.push({created: messages_by_day_data[i].created_date, count: messages_by_day_data[i].created_count});
             }
-            var network_info = model.get('network_info')
+            var network_info = model.get('network_info');
             if(messages_by_day.length > 1){
                 this.create_daily_activity_chart(messages_by_day);
             } else {
-                $("#" + this.chart_tag).html("We can't display the daily activity chart until you start some discussions.")
+                $("#" + this.chart_tag).html($('#noDailyActivityChartTemplate').html())
             }
             if(network_info.nodes.length > 2 && network_info.edges.length > 1){
                 this.create_network_chart(network_info)
@@ -418,6 +418,7 @@ $(document).ready(function() {
                 classgroup: this.classgroup,
                 display_tag: this.display_tag
             };
+            this.is_owner= $("#classinfo").data('is-owner');
         },
         make_active: function(elem){
             $("#tag-sidebar").find('li').removeClass("current active");
@@ -437,7 +438,10 @@ $(document).ready(function() {
         },
         render_messages: function() {
             this.refresh();
-            $(this.el).html($("#messageDetailTemplate").html());
+            var tmpl = _.template($("#messageDetailTemplate").html());
+            $(this.el).html(tmpl({
+                is_owner: this.is_owner
+            }));
             this.message_view = new MessagesView(this.options);
             this.message_view.render();
         },
@@ -459,6 +463,13 @@ $(document).ready(function() {
             this.settings_view = new SettingsView(this.options);
             this.settings_view.render();
         },
+        render_home: function(){
+            this.refresh();
+            var tmpl = _.template($("#homeDetailTemplate").html());
+            $(this.el).html(tmpl(this.class_model.toJSON()));
+            this.announcements_view = new AnnouncementsView(this.options);
+            this.announcements_view.render();
+        },
         render: function () {
             this.base_render();
             this.active_page = $("#classinfo").data("active-page");
@@ -472,6 +483,8 @@ $(document).ready(function() {
                 this.render_notifications();
             } else if(this.active_page == "settings"){
                 this.render_settings();
+            } else if(this.active_page == "home"){
+                this.render_home();
             }
         },
         refresh: function(){
@@ -759,6 +772,8 @@ $(document).ready(function() {
         document_title: document.title,
         enable_refresh: true,
         no_message_template_name: "#noMessagesTemplate",
+        additional_filter_parameters: undefined,
+        enable_infinite_scroll: true,
         events: {
             'click .view-reply-panel': this.render_reply_panel,
             'click .reply-to-message-button': this.post_reply_to_message,
@@ -774,7 +789,12 @@ $(document).ready(function() {
             this.collection = new this.collection_class();
             this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
-            this.collection.fetch({async: false, data: {classgroup: this.classgroup}});
+            this.fetch_data = {classgroup: this.classgroup};
+            if(this.additional_filter_parameters != undefined){
+                this.fetch_data= $.extend({}, this.additional_filter_parameters, this.fetch_data)
+            }
+
+            this.collection.fetch({async: false, data: this.fetch_data});
             this.rebind_collection();
             this.is_owner = $("#classinfo").data("is-owner");
             this.access_key = $("#classinfo").data("access-key");
@@ -804,8 +824,15 @@ $(document).ready(function() {
             var message_reply;
             var start_discussion;
             if(message_div.data('start-discussion') == true){
+                var message_type = "D";
+                if(this.is_owner==true){
+                    var checked = message_div.find('#make-discussion-announcement-input').is(":checked");
+                    if(checked==true){
+                        message_type = "A";
+                    }
+                }
                 start_discussion = true;
-                message_reply = new Message({text: reply, classgroup: this.classgroup,  source: 'website'})
+                message_reply = new Message({text: reply, classgroup: this.classgroup,  source: 'website', message_type: message_type})
             } else {
                 start_discussion = false;
                 var primary_key = button.closest('.reply-panel').data('message-id');
@@ -819,10 +846,10 @@ $(document).ready(function() {
             message_reply.save(null,{
                 success : function(){
                     $(reply_form).removeClass("has-error").addClass("has-success");
-                    $(message_block).html("Discussion started!");
+                    $(message_block).html("Discussion started! You may need to reload the page to see it.");
                     $(button).attr('disabled', false);
                     if(start_discussion == true){
-                        that.collection.fetch({async: false, data: {classgroup: that.classgroup}});
+                        that.collection.fetch({async: false, data: that.fetch_data});
                     } else {
                         that.render_message_replies(primary_key);
                     }
@@ -989,7 +1016,7 @@ $(document).ready(function() {
             this.display_tag = options.display_tag;
             this.unbind_collection();
             this.collection.url = this.collection.baseUrl;
-            this.collection.fetch({async:false, data: {classgroup: this.classgroup}});
+            this.collection.fetch({async:false, data: this.fetch_data});
             this.rebind_collection();
             this.setElement(this.el_name);
             $(this.el).empty();
@@ -1006,7 +1033,7 @@ $(document).ready(function() {
         },
         checkScroll: function () {
             var triggerPoint = 400;
-            if( !this.isLoading && $(window).scrollTop() + $(window).height() + triggerPoint > $('html').height() ) {
+            if( !this.isLoading && $(window).scrollTop() + $(window).height() + triggerPoint > $('html').height() && this.enable_infinite_scroll == true ) {
                 this.isLoading = true;
                 var that = this;
                 var status = this.collection.nextPage({
@@ -1035,6 +1062,13 @@ $(document).ready(function() {
         view_class: NotificationView,
         enable_refresh: false,
         no_message_template_name: "#noNotificationsTemplate"
+    });
+
+    var AnnouncementsView = MessagesView.extend({
+        enable_refresh: false,
+        no_message_template_name: "#noAnnouncementsTemplate",
+        additional_filter_parameters: {message_type : "A"},
+        enable_infinite_scroll: false
     });
 
     var SettingsView = BaseView.extend({

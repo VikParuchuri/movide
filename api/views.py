@@ -117,7 +117,7 @@ class ClassgroupDetailView(APIView):
 
 class MessageView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
-    query_attributes = ["tag", "classgroup", "user", "in_reply_to_id"]
+    query_attributes = ["tag", "classgroup", "user", "in_reply_to_id", "message_type"]
     required_attributes = [("classgroup", "user"),]
 
     def filter_tag(self, queryset, tag):
@@ -131,6 +131,9 @@ class MessageView(QueryView):
 
     def filter_in_reply_to_id(self, queryset, in_reply_to_id):
         return queryset.filter(reply_to=in_reply_to_id)
+
+    def filter_message_type(self, queryset, message_type):
+        return queryset.filter(message_type=message_type)
 
     def get(self, request, format=None):
         self.get_query_params()

@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="UTF-8"?><testsuite name="nosetests" tests="2" errors="0" failures="0" skip="0"><testcase classname="api.tests.ClassGroupViewTest" name="test_get_classgroup_list" time="0.276"></testcase><testcase classname="frontend.tests.SimpleTest" name="test_basic_addition" time="0.000"></testcase></testsuite>

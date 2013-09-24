@@ -15,11 +15,20 @@ from django.conf import settings
 import re
 import calendar
 import logging
+
 EMAIL_FREQUENCY_CHOICES = (
     ('N', "Don't receive email."),
     ('D', "Receive a daily digest email."),
     ('A', "Receive emails as notifications happen."),
 )
+
+MESSAGE_TYPE_CHOICES = (
+    ('D', "Class discussion."),
+    ('A', "Course announcement.")
+)
+
+DEFAULT_WELCOME_MESSAGE = "Welcome to your course.  Check the discussions view to get started!  The instructor can edit this message in the settings view."
+DEFAULT_CLASS_DESCRIPTION = "One of the finest courses ever made. (the instructor can change this in the settings view)"
 
 log = logging.getLogger(__name__)
 alphanumeric = re.compile(r'[^a-zA-Z0-9]+')
@@ -33,10 +42,32 @@ class Classgroup(models.Model):
     display_name = models.CharField(max_length=MAX_NAME_LENGTH)
     owner = models.ForeignKey(User, related_name="created_classgroups", blank=True, null=True, on_delete=models.SET_NULL)
     users = models.ManyToManyField(User, related_name="classgroups", blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
 
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+
+    def get_class_settings(self):
+        try:
+            settings = self.class_settings
+        except ClassSettings.DoesNotExist:
+            settings = None
+        return settings
+
+    def welcome_message(self):
+        settings = self.get_class_settings()
+        if settings is None:
+            message = DEFAULT_WELCOME_MESSAGE
+        else:
+            message = settings.welcome_message
+        return message
+
+    def description(self):
+        settings = self.get_class_settings()
+        if settings is None:
+            message = DEFAULT_CLASS_DESCRIPTION
+        else:
+            message = settings.description
+        return message
 
     def link(self):
         return "/classes/" + self.name + "/"
@@ -88,7 +119,6 @@ class Classgroup(models.Model):
         if len(objects) == 0:
             return []
         end = now().date()
-        log.info(objects)
         return self.calculate_days(objects, self.first_message_time(), end)
 
     def network_info(self, tag=None):
@@ -127,6 +157,7 @@ class Message(models.Model):
     classgroup = models.ForeignKey(Classgroup, related_name="messages")
     approved = models.BooleanField(default=False)
     resources = models.ManyToManyField(Resource, related_name="messages", blank=True, null=True)
+    message_type = models.CharField(choices=MESSAGE_TYPE_CHOICES, default="D", max_length=3)
 
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -168,6 +199,8 @@ class ClassSettings(models.Model):
     moderate_posts = models.BooleanField(default=True)
     access_key = models.CharField(max_length=MAX_CHARFIELD_LENGTH, unique=True)
     allow_signups = models.BooleanField(default=True)
+    welcome_message = models.TextField(default=DEFAULT_WELCOME_MESSAGE)
+    description = models.TextField(default=DEFAULT_CLASS_DESCRIPTION)
 
     modified = models.DateTimeField(auto_now=True)
 
@@ -263,7 +296,7 @@ def create_message_notification(sender, instance, **kwargs):
                         )
                 except IntegrityError:
                     log.warn("MessageNotification already exists with receiver message {0} and origin message {1}".format(m.id, instance.id))
-    elif instance.reply_to is None and instance.user == instance.classgroup.owner:
+    elif instance.reply_to is None and instance.user == instance.classgroup.owner and instance.message_type == "A":
         for user in instance.classgroup.users.all():
             if user != instance.classgroup.owner:
                 try:
@@ -271,7 +304,7 @@ def create_message_notification(sender, instance, **kwargs):
                         receiving_message=instance,
                         receiving_user=user,
                         origin_message=instance,
-                        notification_type="instructor_discussion_started",
+                        notification_type="instructor_announcement_made",
                             )
                 except IntegrityError:
                     log.warn("MessageNotification already exists for instructor post with receiver message {0} and origin message {1}".format(instance.id, instance.id))

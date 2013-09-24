@@ -14,7 +14,8 @@
 
 {% block sidebar %}
     <ul class="nav nav-tabs" id="tag-sidebar">
-        <li {% if active_page == "messages" %}class="active current"{% endif %}><a href="{{ link }}" class="sidebar-item" data-name="messages" data-toggle="tooltip" title="Discussions"><span class="glyphicon glyphicon-envelope"></span></a></li>
+        <li {% if active_page == "home" %}class="active current"{% endif %}><a href="{{ link }}" class="sidebar-item" data-name="home" data-toggle="tooltip" title="Home"><span class="glyphicon glyphicon-home"></span></a></li>
+        <li {% if active_page == "messages" %}class="active current"{% endif %}><a href="{{ link }}messages/" class="sidebar-item" data-name="messages" data-toggle="tooltip" title="Discussions"><span class="glyphicon glyphicon-envelope"></span></a></li>
         <li {% if active_page == "users" %}class="active current"{% endif %}><a href="{{ link }}users/" class="sidebar-item" data-name="users" data-toggle="tooltip" title="Users"><span class="glyphicon glyphicon-user"></span></a></li>
         <li {% if active_page == "stats" %}class="active current"{% endif %}><a href="{{ link }}stats/" class="sidebar-item" data-name="stats" data-toggle="tooltip" title="Stats"><span class="glyphicon glyphicon-stats"></span></a></li>
         <li {% if active_page == "notifications" %}class="active current"{% endif %}>
@@ -38,7 +39,7 @@
 {% endblock %}
 
 {% block class_info %}
-    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name="{{ display_name }}" data-is-owner="{{ is_owner }}" data-class-link="{{ link }}" data-access-key="{{ access_key }}" data-active-page="{{ active_page }}" data-class-api-link="{{ class_api_link }}" data-avatar-change-link="{% url 'avatar_change' %}">
+    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name="{{ display_name }}" data-is-owner="{{ is_owner }}" data-class-link="{{ link }}" data-access-key="{{ access_key }}" data-active-page="{{ active_page }}" data-class-api-link="{{ class_api_link }}" data-avatar-change-link="{% url 'avatar_change' %}" data-class-owner="{{ class_owner }}">
 {% endblock %}
 
 {% block dashboard_content %}

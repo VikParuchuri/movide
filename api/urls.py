@@ -11,7 +11,7 @@ from views import (MessageView, MessageDetailView, ClassgroupView, ClassgroupDet
 urlpatterns = patterns('',
                        url(r'^users/$', UserView.as_view()),
                        url(r'^users/(?P<pk>[0-9]+)/$', UserDetail.as_view()),
-                       url(r'^classes/$', ClassgroupView.as_view()),
+                       url(r'^classes/$', ClassgroupView.as_view(), name="class_list"),
                        url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/$', ClassgroupDetailView.as_view()),
                        url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/settings/$', ClassSettingsView.as_view()),
                        url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/student_settings/$', StudentClassSettingsView.as_view()),

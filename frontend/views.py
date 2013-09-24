@@ -109,8 +109,6 @@ def class_settings(request, classgroup):
         form = ClassSettingsForm(request.POST, instance=class_settings)
         if form.is_valid():
             form.save()
-        else:
-            log.info(form.errors)
     else:
         form = ClassSettingsForm(instance=class_settings)
 
@@ -121,10 +119,10 @@ def class_settings(request, classgroup):
         'save_button_value': 'Save Class Settings',
     })
 
-VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications', 'settings']
+VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications', 'settings', 'home']
 @login_required()
 def classview(request, classgroup, **kwargs):
-    active_page = kwargs.get('active_page', 'messages')
+    active_page = kwargs.get('active_page', 'home')
     if active_page not in VALID_ACTIVE_PAGES:
         raise Http404
 

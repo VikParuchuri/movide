@@ -4,7 +4,8 @@ NOTIFICATION_TYPES = {
     'reply_to_discussion': "{origin_user} replied to your discussion!",
     'reply_to_watched_thread': "{origin_user} replied to a discussion that you are watching.",
     'rating_for_discussion': "{origin_user} liked your discussion.",
-    'instructor_discussion_started': "Your course instructor started a new discussion."
+    'instructor_discussion_started': "Your course instructor started a new discussion.",
+    'instructor_announcement_made': "Your course instructor made a new announcement.",
 }
 
 class InvalidNotificationType(Exception):

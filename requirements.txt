@@ -29,3 +29,5 @@ facebook-sdk
 praw
 twython
 django-avatar
+factory_boy
+coverage

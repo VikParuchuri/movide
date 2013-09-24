@@ -17,8 +17,13 @@
     </div>
     <% if(depth<1) { %>
         <a type="button" class="view-reply-panel" href="#">
-            Reply<% if (reply_count > 0) { %> or view discussion<% } %>
+            Reply
         </a>
+        <% if (reply_count > 0) { %>
+        <a type="button" class="view-reply-panel" href="#">
+            View Discussion
+        </a>
+        <% } %>
         <div class="reply-panel" id="reply-panel-<%= pk %>" data-is-open="false" data-message-id="<%= pk %>">
             <div id="reply-to-message-<%= pk %>" class="message-reply" data-start-discussion="false">
             </div>

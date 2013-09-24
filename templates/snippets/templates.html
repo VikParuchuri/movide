@@ -15,33 +15,54 @@
 </script>
 
 <script id="noNetworkChartTemplate" type="text/template">
-    <p>Unfortunately, not enough messages have been sent to allow this chart to be shown.</p>
+    <div class="alert alert-info">We can't display the student network chart until you start some discussions.</div>
+</script>
+
+<script id="noDailyActivityChartTemplate" type="text/template">
+    <div class="alert alert-info">We can't display the daily activity chart until you start some discussions.</div>
+</script>
+
+<script id="homeDetailTemplate" type="text/template">
+    <p class="lead"><%= display_name %> -- <%= description %></p>
+    <div class="welcome-message"><%= welcome_message %></div>
+    <h4>Recent Class Announcements</h4>
+    <div id="messages-container">
+    </div>
 </script>
 
 <script id="notificationDetailTemplate" type="text/template">
-    <div class="row">
-        <div id="messages-container">
-        </div>
+    <div id="messages-container">
     </div>
 </script>
 
 <script id="messageDetailTemplate" type="text/template">
     <div class="row">
-        <div id="start-a-discussion" data-start-discussion="true" class="message-reply">
-            <form role="form">
-                <div class="form-group reply-to-message-form">
-                    <label class="sr-only" for="start-a-discussion-input">Tag</label>
-                    <textarea type="text" class="form-control input-lg" id="start-a-discussion-input" placeholder="Enter message here..."></textarea>
-                    <span class="help-block"></span>
-                </div>
-                <div class="form-group">
-                    <button type="submit" class="btn btn-small start-a-discussion-button">Start a new discussion</button>
-                </div>
-            </form>
+        <div class="col-xs-12">
+            <div id="start-a-discussion" data-start-discussion="true" class="message-reply">
+                <form role="form">
+                    <div class="form-group reply-to-message-form">
+                        <label class="sr-only" for="start-a-discussion-input">Tag</label>
+                        <textarea type="text" class="form-control input-lg" id="start-a-discussion-input" placeholder="Enter message here..."></textarea>
+                        <span class="help-block"></span>
+                    </div>
+                    <% if(is_owner==true) { %>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" id="make-discussion-announcement-input"> Make this an announcement
+                            </label>
+                        </div>
+                    <% } %>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-small start-a-discussion-button">Start a new discussion</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
     <div class="row">
-        <div id="messages-container">
+        <div class="col-xs-12">
+            <div id="messages-container">
+            </div>
         </div>
     </div>
 </script>
@@ -63,31 +84,25 @@
 </script>
 
 <script id="statsDetailTemplate" type="text/template">
-    <div class="row">
-        <div id="stats-container">
-            <h4>Message Activity</h4>
-            <div id="message-chart" style="height:250px;"></div>
-            <h4>Student Network</h4>
-            <p>Each point represents a student in the class.  A larger point means that the student has participated in more discussions. Each line between students shows how they interact with each other.  A larger line means that the two students have had more discussions with each other.</p>
-            <p>Click and drag to move around, and use the mousewheel to zoom in and out.  Hovering over a point shows you only the classmates with whom that student has has discussions.</p>
-            <div id="student-network-chart-container">
-                <div id="student-network-chart"></div>
-            </div>
+    <div id="stats-container">
+        <h4>Message Activity</h4>
+        <div id="message-chart" style="height:250px;"></div>
+        <h4>Student Network</h4>
+        <p>Each point represents a student in the class.  A larger point means that the student has participated in more discussions. Each line between students shows how they interact with each other.  A larger line means that the two students have had more discussions with each other.</p>
+        <p>Click and drag to move around, and use the mousewheel to zoom in and out.  Hovering over a point shows you only the classmates with whom that student has has discussions.</p>
+        <div id="student-network-chart-container">
+            <div id="student-network-chart"></div>
         </div>
     </div>
 </script>
 
 <script id="usersDetailTemplate" type="text/template">
-    <div class="row">
-        <div id="users-container">
-        </div>
+    <div id="users-container">
     </div>
 </script>
 
 <script id="settingsDetailTemplate" type="text/template">
-    <div class="row">
-        <div id="settings-container">
-        </div>
+    <div id="settings-container">
     </div>
 </script>
 
@@ -144,6 +159,10 @@
 
 <script id="noNotificationsTemplate" type="text/template">
     <p>You don't have any notifications yet.</p>
+</script>
+
+<script id="noAnnouncementsTemplate" type="text/template">
+    <p>There aren't any course announcements yet.</p>
 </script>
 
 <script id="userTemplate" type="text/template">

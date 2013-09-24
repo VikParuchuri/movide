@@ -1,6 +1,6 @@
 from django.forms import widgets
 from rest_framework import serializers
-from models import Tag, Message, UserProfile, EmailSubscription, Classgroup, Rating, ClassSettings, Resource, StudentClassSettings
+from models import Tag, Message, UserProfile, EmailSubscription, Classgroup, Rating, ClassSettings, Resource, StudentClassSettings, MESSAGE_TYPE_CHOICES
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 import logging
@@ -36,8 +36,8 @@ class ClassSettingsField(serializers.SlugRelatedField):
 
 class TagSerializer(serializers.Serializer):
     pk = serializers.Field()
-    messages = serializers.SlugRelatedField(many=True, slug_field='text', queryset=Message.objects.all(), blank=True, null=True)
-    classgroup = serializers.SlugRelatedField(many=False, slug_field="name", blank=True, null=True, queryset=Classgroup.objects.all())
+    messages = serializers.SlugRelatedField(many=True, slug_field='text', queryset=Message.objects.all(), required=False)
+    classgroup = serializers.SlugRelatedField(many=False, slug_field="name", required=False, queryset=Classgroup.objects.all())
     description = serializers.CharField()
     name = serializers.CharField()
     modified = serializers.Field()
@@ -94,7 +94,7 @@ class ClassSettingsSerializer(serializers.ModelSerializer):
     classgroup = serializers.SlugRelatedField(many=False, slug_field="name", read_only=True)
     class Meta:
         model = ClassSettings
-        fields = ("is_public", "moderate_posts", "classgroup", "modified", )
+        fields = ("is_public", "moderate_posts", "classgroup", "modified", "welcome_message", )
 
 class StudentClassSettingsSerializer(serializers.ModelSerializer):
     classgroup = serializers.SlugRelatedField(many=False, slug_field="name", read_only=True)
@@ -122,14 +122,15 @@ def set_attributes(attributes, values, instance):
 class ClassgroupSerializer(serializers.Serializer):
     name = serializers.CharField()
     display_name = serializers.Field()
-    description = serializers.CharField(required=False)
-    class_settings = serializers.RelatedField(many=False, blank=True, null=True)
-    owner = serializers.SlugRelatedField(many=False, slug_field="username", blank=True, null=True, queryset=User.objects.all())
-    users = serializers.SlugRelatedField(many=True, slug_field="username", blank=True, null=True, queryset=User.objects.all())
+    class_settings = serializers.RelatedField(many=False, required=False)
+    owner = serializers.SlugRelatedField(many=False, slug_field="username", required=False, queryset=User.objects.all())
+    users = serializers.SlugRelatedField(many=True, slug_field="username", required=False, queryset=User.objects.all())
     pk = serializers.Field()
     modified = serializers.Field()
     created = serializers.Field()
     link = serializers.Field(source="link")
+    welcome_message = serializers.Field(source="welcome_message")
+    description = serializers.Field(source="description")
 
     def restore_object(self, attrs, instance=None):
         user = self.context['request'].user
@@ -172,13 +173,13 @@ class RatingField(serializers.RelatedField):
 class MessageSerializer(serializers.Serializer):
     pk = serializers.Field()
     reply_count = serializers.Field(source="reply_count")
-    tags = serializers.SlugRelatedField(many=True, slug_field="name", blank=True, null=True, queryset=Tag.objects.all())
-    user = serializers.SlugRelatedField(many=False, slug_field="username", blank=True, null=True, queryset=User.objects.all())
+    tags = serializers.SlugRelatedField(many=True, slug_field="name", required=False, queryset=Tag.objects.all())
+    user = serializers.SlugRelatedField(many=False, slug_field="username", required=False, queryset=User.objects.all())
     user_image = serializers.Field(source="profile_image")
-    reply_to = serializers.PrimaryKeyRelatedField(required=False, blank=True, null=True, queryset=Message.objects.all())
-    ratings = RatingField(many=True, read_only=True, blank=True, null=True)
-    classgroup = serializers.SlugRelatedField(slug_field="name", blank=True, null=True, queryset=Classgroup.objects.all())
-    resources = serializers.PrimaryKeyRelatedField(many=True, blank=True, null=True, queryset=Resource.objects.all())
+    reply_to = serializers.PrimaryKeyRelatedField(required=False, queryset=Message.objects.all())
+    ratings = RatingField(many=True, read_only=True, required=False)
+    classgroup = serializers.SlugRelatedField(slug_field="name", required=False, queryset=Classgroup.objects.all())
+    resources = serializers.PrimaryKeyRelatedField(many=True, required=False, queryset=Resource.objects.all())
     created_timestamp = serializers.Field(source="created_timestamp")
     text = serializers.CharField()
     source = serializers.CharField()
@@ -188,6 +189,7 @@ class MessageSerializer(serializers.Serializer):
     modified = serializers.Field()
     depth = serializers.Field(source="depth")
     avatar_url = serializers.Field(source="avatar_url")
+    message_type = serializers.ChoiceField(choices=MESSAGE_TYPE_CHOICES, default="D")
 
     def restore_object(self, attrs, instance=None):
         user = self.context['request'].user
@@ -200,6 +202,12 @@ class MessageSerializer(serializers.Serializer):
         else:
             if instance.user != user:
                 raise serializers.ValidationError("Attempting to edit a message that is not yours.")
+
+        message_type = attrs.get('message_type')
+        if message_type == "A" and user != instance.classgroup.owner:
+            raise serializers.ValidationError("You cannot make an announcement unless you own a course.")
+
+        instance.message_type = message_type
 
         instance = set_attributes(attributes, attrs, instance)
         instance.save()
@@ -252,9 +260,9 @@ def create_user_profile(user):
 class UserSerializer(serializers.Serializer):
     image = serializers.Field(source="profile.image")
     username = serializers.CharField()
-    messages = serializers.SlugRelatedField(many=True, slug_field="text", read_only=True, blank=True, null=True)
-    resources = serializers.SlugRelatedField(many=True, slug_field="resources", read_only=True, blank=True, null=True)
-    classgroups = serializers.SlugRelatedField(many=True, slug_field="name", blank=True, null=True, queryset=Classgroup.objects.all())
+    messages = serializers.SlugRelatedField(many=True, slug_field="text", read_only=True, required=False)
+    resources = serializers.SlugRelatedField(many=True, slug_field="resources", read_only=True, required=False)
+    classgroups = serializers.SlugRelatedField(many=True, slug_field="name", required=False, queryset=Classgroup.objects.all())
     pk = serializers.Field()
 
     def restore_object(self, attrs, instance=None):
