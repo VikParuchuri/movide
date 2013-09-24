@@ -10,6 +10,8 @@ from collections import Counter
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.validators import RegexValidator
+from avatar.templatetags.avatar_tags import avatar_url
+from django.conf import settings
 import re
 import calendar
 import logging
@@ -147,6 +149,9 @@ class Message(models.Model):
 
     def created_timestamp(self):
         return calendar.timegm(self.created.utctimetuple())
+
+    def avatar_url(self):
+        return avatar_url(self.user)
 
 class Rating(models.Model):
     rating = models.IntegerField(default=0)

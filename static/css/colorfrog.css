@@ -387,7 +387,7 @@ blockquote.big-quote {
       font-weight: 300;
       color: #919191; }
     .comments .comment .comment-content{
-        padding: 5px 0px 5px 20px
+        padding: 5px 0px 5px 5px
     }
 
 iframe {

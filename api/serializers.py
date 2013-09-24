@@ -187,6 +187,7 @@ class MessageSerializer(serializers.Serializer):
     approved = serializers.BooleanField()
     modified = serializers.Field()
     depth = serializers.Field(source="depth")
+    avatar_url = serializers.Field(source="avatar_url")
 
     def restore_object(self, attrs, instance=None):
         user = self.context['request'].user
