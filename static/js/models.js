@@ -978,10 +978,12 @@ $(document).ready(function() {
         student_settings_form: "#student-settings-form",
         avatar_change_template: "#avatarChangeTemplate",
         avatar_change_form: "#avatar-change-form",
+        class_settings_template: "#classSettingsTemplate",
+        class_settings_form: "#class-settings-form",
         events: {
         },
         initialize: function(options){
-            _.bindAll(this, 'render', 'fetch', 'rebind_events');
+            _.bindAll(this, 'render', 'fetch', 'rebind_events', 'render_class_settings');
             this.is_owner = $("#classinfo").data("is-owner");
             this.class_link = $("#classinfo").data("class-link");
             this.class_settings_link = this.class_link + "class_settings/";
@@ -1008,8 +1010,16 @@ $(document).ready(function() {
             var avatar_html = tmpl({avatar_html : this.avatar_change});
             return avatar_html
         },
+        render_class_settings: function(){
+            var tmpl = _.template($(this.class_settings_template).html());
+            var settings_html = tmpl({form_html : this.class_settings, class_link: window.location.host + this.class_link});
+            return settings_html;
+        },
         render: function () {
             $(this.el).html(this.render_student_settings() + this.render_avatar_change());
+            if(this.is_owner == true){
+                $(this.el).append(this.render_class_settings());
+            }
             $("label[for='id_avatar']").hide();
             this.rebind_events();
             return this;
@@ -1021,14 +1031,19 @@ $(document).ready(function() {
         rebind_events: function(){
             $(this.student_settings_form).unbind();
             $(this.avatar_change_form).unbind();
+            $(this.class_settings_form).unbind();
             var that = this;
             $(this.student_settings_form).ajaxForm(function() {
-                $(that.student_settings_form).find('.help-block').html("Successfully saved your preferences.");
                 that.refresh();
+                $(that.student_settings_form).find('.help-block-message').html("Successfully saved your preferences.");
             });
             $(this.avatar_change_form).ajaxForm(function() {
-                $(that.avatar_change_form).find('.help-block').html("Updated your avatar.");
                 that.refresh();
+                $(that.avatar_change_form).find('.help-block-message').html("Updated your avatar.");
+            });
+            $(this.class_settings_form).ajaxForm(function() {
+                that.refresh();
+                $(that.class_settings_form).find('.help-block-message').html("Saved your class settings.");
             });
         },
         remove_el: function(){

@@ -7,8 +7,8 @@
     {% avatar user %}
     <p>Upload a new picture</p>
     <form enctype="multipart/form-data" method="POST" action="{% url 'avatar_add' %}" id="avatar-change-form">
-        {{ upload_avatar_form|bootstrap }}
+        {{ upload_avatar_form.as_p }}
         <p>{% csrf_token %}<input type="submit" value="{% trans "Upload New Picture" %}" /></p>
-        <div class="help-block"></div>
+        <div class="help-block help-block-message"></div>
     </form>
 {% endblock %}

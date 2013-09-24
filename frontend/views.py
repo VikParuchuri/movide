@@ -8,7 +8,7 @@ from django.http import Http404, HttpResponse
 from api.models import Classgroup, RatingNotification, MessageNotification, StudentClassSettings, ClassSettings
 from rest_framework.response import Response
 from rest_framework import status
-from api.forms import StudentClassSettingsForm
+from api.forms import StudentClassSettingsForm, ClassSettingsForm
 
 log=logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ def uncleared_notification_count(user, classgroup):
     message_count = MessageNotification.objects.filter(receiving_user=user, receiving_message__classgroup=classgroup, cleared=False).count()
     return rating_count + message_count
 
-def student_settings(request, classgroup):
+def verify_settings(request, classgroup):
     if classgroup is None:
         raise Http404
 
@@ -72,6 +72,11 @@ def student_settings(request, classgroup):
 
     if request.user.classgroups.filter(name=classgroup).count() == 0 and request.user != cg.owner:
         raise Http404
+
+    return cg
+
+def student_settings(request, classgroup):
+    cg = verify_settings(request, classgroup)
 
     student_settings, created = StudentClassSettings.objects.get_or_create(user=request.user, classgroup=cg)
 
@@ -85,11 +90,33 @@ def student_settings(request, classgroup):
     return render(request, 'dashboard/settings_form.html', {
         'form': form,
         'action_link': student_settings.link(),
-        'form_id': 'student-settings-form'
+        'form_id': 'student-settings-form',
+        'save_button_value': 'Save Preferences'
         })
 
-def class_settings(request):
-    return HttpResponse({})
+def class_settings(request, classgroup):
+    cg = verify_settings(request, classgroup)
+
+    if request.user != cg.owner:
+        raise Http404
+
+    class_settings = ClassSettings.objects.get(classgroup=cg)
+
+    if request.method == 'POST':
+        form = ClassSettingsForm(request.POST, instance=class_settings)
+        if form.is_valid():
+            form.save()
+        else:
+            log.info(form.errors)
+    else:
+        form = ClassSettingsForm(instance=class_settings)
+
+    return render(request, 'dashboard/settings_form.html', {
+        'form': form,
+        'action_link': class_settings.link(),
+        'form_id': 'class-settings-form',
+        'save_button_value': 'Save Class Settings',
+    })
 
 VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications', 'settings']
 @login_required()

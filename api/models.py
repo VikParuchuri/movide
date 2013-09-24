@@ -170,6 +170,9 @@ class ClassSettings(models.Model):
 
     modified = models.DateTimeField(auto_now=True)
 
+    def link(self):
+        return "/classes/" + self.classgroup.name + "/class_settings/"
+
 class StudentClassSettings(models.Model):
     classgroup = models.ForeignKey(Classgroup, related_name="student_class_settings")
     user = models.ForeignKey(User, related_name="student_class_settings")
