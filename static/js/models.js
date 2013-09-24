@@ -972,36 +972,64 @@ $(document).ready(function() {
     });
 
     var SettingsView = BaseView.extend({
-        tagName: "div",
-        className: "settings",
+        el: "#settings-container",
         template_name: "#settingsTemplate",
+        student_settings_template: "#studentSettingsTemplate",
+        student_settings_form: "#student-settings-form",
+        avatar_change_template: "#avatarChangeTemplate",
+        avatar_change_form: "#avatar-change-form",
         events: {
         },
         initialize: function(options){
-            _.bindAll(this, 'render', 'fetch');
+            _.bindAll(this, 'render', 'fetch', 'rebind_events');
             this.is_owner = $("#classinfo").data("is-owner");
-            this.class_link = $("#classinfo").data("class-api-link");
-            this.class_settings_link = this.class_link + "settings/";
+            this.class_link = $("#classinfo").data("class-link");
+            this.class_settings_link = this.class_link + "class_settings/";
             this.student_class_settings_link = this.class_link + "student_settings/";
+            this.avatar_change_link = $("#classinfo").data('avatar-change-link');
             this.classgroup = options.classgroup;
             this.fetch();
         },
         fetch: function(){
-            var student_settings = $.getValues(this.student_class_settings_link, this.class_name);
-            var class_settings=undefined;
+            this.student_settings = $.getValues(this.student_class_settings_link, {classgroup: this.classgroup});
+            this.avatar_change = $.getValues(this.avatar_change_link);
+            this.class_settings=undefined;
             if(this.is_owner == true){
-                class_settings = $.getValues(this.class_settings_link, this.class_name);
+                this.class_settings = $.getValues(this.class_settings_link, {classgroup: this.classgroup});
             }
-            console.log(student_settings);
-            console.log(class_settings);
+        },
+        render_student_settings: function(){
+            var tmpl = _.template($(this.student_settings_template).html());
+            var settings_html = tmpl({form_html : this.student_settings});
+            return settings_html;
+        },
+        render_avatar_change: function(){
+            var tmpl = _.template($(this.avatar_change_template).html());
+            var avatar_html = tmpl({avatar_html : this.avatar_change});
+            return avatar_html
         },
         render: function () {
-            var tmpl = _.template($(this.template_name).html());
-            var model_json = this.get_model_json();
-            var model_html = tmpl(model_json);
-
-            $(this.el).html(model_html);
+            $(this.el).html(this.render_student_settings() + this.render_avatar_change());
+            $("label[for='id_avatar']").hide();
+            this.rebind_events();
             return this;
+        },
+        refresh: function(){
+            this.fetch();
+            this.render();
+        },
+        rebind_events: function(){
+            $(this.student_settings_form).unbind();
+            $(this.avatar_change_form).unbind();
+            var that = this;
+            $(this.student_settings_form).ajaxForm(function() {
+                $(that.student_settings_form).find('.help-block').html("Successfully saved your preferences.");
+                that.refresh();
+            });
+            $(this.avatar_change_form).ajaxForm(function() {
+                $(that.avatar_change_form).find('.help-block').html("Updated your avatar.");
+                that.refresh();
+            });
         },
         remove_el: function(){
             $(this.el).remove();

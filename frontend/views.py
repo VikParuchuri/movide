@@ -5,9 +5,10 @@ from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from api.tasks import UserTwitterData
 from django.http import Http404, HttpResponse
-from api.models import Classgroup, RatingNotification, MessageNotification
+from api.models import Classgroup, RatingNotification, MessageNotification, StudentClassSettings, ClassSettings
 from rest_framework.response import Response
 from rest_framework import status
+from api.forms import StudentClassSettingsForm
 
 log=logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ def verify_code(request):
     try:
         cg = Classgroup.objects.get(name=class_name)
     except Classgroup.DoesNotExist:
-        return Http404
+        raise Http404
 
     if not cg.class_settings.allow_signups:
         return HttpResponse(status=400)
@@ -60,17 +61,47 @@ def uncleared_notification_count(user, classgroup):
     message_count = MessageNotification.objects.filter(receiving_user=user, receiving_message__classgroup=classgroup, cleared=False).count()
     return rating_count + message_count
 
+def student_settings(request, classgroup):
+    if classgroup is None:
+        raise Http404
+
+    try:
+        cg = Classgroup.objects.get(name=classgroup)
+    except Classgroup.DoesNotExist:
+        raise Http404
+
+    if request.user.classgroups.filter(name=classgroup).count() == 0 and request.user != cg.owner:
+        raise Http404
+
+    student_settings, created = StudentClassSettings.objects.get_or_create(user=request.user, classgroup=cg)
+
+    if request.method == 'POST':
+        form = StudentClassSettingsForm(request.POST, instance=student_settings)
+        if form.is_valid():
+            form.save()
+    else:
+        form = StudentClassSettingsForm(instance=student_settings)
+
+    return render(request, 'dashboard/settings_form.html', {
+        'form': form,
+        'action_link': student_settings.link(),
+        'form_id': 'student-settings-form'
+        })
+
+def class_settings(request):
+    return HttpResponse({})
+
 VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications', 'settings']
 @login_required()
 def classview(request, classgroup, **kwargs):
     active_page = kwargs.get('active_page', 'messages')
     if active_page not in VALID_ACTIVE_PAGES:
-        return Http404
+        raise Http404
 
     try:
         cg = Classgroup.objects.get(name=classgroup)
     except Classgroup.DoesNotExist:
-        return Http404
+        raise Http404
 
     is_owner = str(cg.owner == request.user).lower()
     template_vars = {

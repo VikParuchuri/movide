@@ -13,6 +13,12 @@ from django.core.validators import RegexValidator
 import re
 import calendar
 import logging
+EMAIL_FREQUENCY_CHOICES = (
+    ('N', "Don't receive email."),
+    ('D', "Receive a daily digest email."),
+    ('A', "Receive emails as notifications happen."),
+)
+
 log = logging.getLogger(__name__)
 alphanumeric = re.compile(r'[^a-zA-Z0-9]+')
 
@@ -160,17 +166,18 @@ class ClassSettings(models.Model):
     modified = models.DateTimeField(auto_now=True)
 
 class StudentClassSettings(models.Model):
-    EMAIL_FREQUENCY_CHOICES = (
-        ('N', "Don't receive email."),
-        ('D', "Receive a daily digest email."),
-        ('A', "Receive emails as notifications happen."),
-    )
     classgroup = models.ForeignKey(Classgroup, related_name="student_class_settings")
     user = models.ForeignKey(User, related_name="student_class_settings")
     email_frequency = models.CharField(max_length=3, choices=EMAIL_FREQUENCY_CHOICES, default="A")
 
     class Meta:
         unique_together = (("classgroup", "user"),)
+
+    def email_frequency_choices(self):
+        return EMAIL_FREQUENCY_CHOICES
+
+    def link(self):
+        return "/classes/" + self.classgroup.name + "/student_settings/"
 
 class Tag(models.Model):
     name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True, db_index=True, validators=[RegexValidator(regex=alphanumeric)])

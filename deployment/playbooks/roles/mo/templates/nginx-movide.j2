@@ -11,11 +11,11 @@ server {
     location /static/ { # STATIC_URL
         alias {{movide_dir}}/staticfiles/;
         expires 1m;
-	autoindex on;
+	    autoindex on;
     }
 
     location /media/ { # MEDIA_URL
-        alias /home/www/myhostname/static/; # MEDIA_ROOT
+        alias {{movide_dir}}/media/; # MEDIA_ROOT
         expires 30d;
     }
 

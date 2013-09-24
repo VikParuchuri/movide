@@ -91,17 +91,19 @@ class RatingSerializer(serializers.Serializer):
         return instance
 
 class ClassSettingsSerializer(serializers.ModelSerializer):
-    classgroup = serializers.SlugRelatedField(many=False, slug_field="name")
+    classgroup = serializers.SlugRelatedField(many=False, slug_field="name", read_only=True)
     class Meta:
         model = ClassSettings
         fields = ("is_public", "moderate_posts", "classgroup", "modified", )
 
 class StudentClassSettingsSerializer(serializers.ModelSerializer):
-    classgroup = serializers.SlugRelatedField(many=False, slug_field="name")
-    user = serializers.Field(source="user__username")
+    classgroup = serializers.SlugRelatedField(many=False, slug_field="name", read_only=True)
+    user = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    email_frequency_choices = serializers.Field()
+
     class Meta:
         model = StudentClassSettings
-        fields = ("classgroup", "user", "email_frequency" )
+        fields = ("classgroup", "user", "email_frequency", "email_frequency_choices", )
 
 def make_random_key():
     existing_keys = [t['access_key'] for t in ClassSettings.objects.all().values('access_key')]

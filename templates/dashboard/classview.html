@@ -1,4 +1,5 @@
 {% extends "dashboard.html" %}
+{% load avatar_tags %}
 {% load staticfiles %}
 
 {% block dashboard_js %}
@@ -37,7 +38,7 @@
 {% endblock %}
 
 {% block class_info %}
-    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name="{{ display_name }}" data-is-owner="{{ is_owner }}" data-class-link="{{ link }}" data-access-key="{{ access_key }}" data-active-page="{{ active_page }}" data-class-api-link="{{ class_api_link }}">
+    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name="{{ display_name }}" data-is-owner="{{ is_owner }}" data-class-link="{{ link }}" data-access-key="{{ access_key }}" data-active-page="{{ active_page }}" data-class-api-link="{{ class_api_link }}" data-avatar-change-link="{% url 'avatar_change' %}">
 {% endblock %}
 
 {% block dashboard_content %}
