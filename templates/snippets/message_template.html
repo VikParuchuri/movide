@@ -20,20 +20,29 @@
         <div><h4><%= user %></h4><span class="time"> said <%= created_formatted %></span></div>
         <%= text %>
     </div>
-    <% if(depth<1) { %>
-        <a type="button" class="view-reply-panel" href="#">
-            Reply
-        </a>
-        <% if (reply_count > 0) { %>
-        <a type="button" class="view-reply-panel" href="#">
-            View Discussion
-        </a>
+    <div class="comment-footer">
+        <% if(depth<1) { %>
+            <a type="button" class="view-reply-panel" href="#">
+                Reply
+            </a>
+            <% if (reply_count > 0) { %>
+                <a type="button" class="view-reply-panel" href="#">
+                    View Discussion
+                </a>
+            <% } %>
         <% } %>
-        <div class="reply-panel" id="reply-panel-<%= pk %>" data-is-open="false" data-message-id="<%= pk %>">
-            <div id="reply-to-message-<%= pk %>" class="message-reply" data-start-discussion="false">
+        <% if (is_owner == true) { %>
+            <div class="pull-right">
+                <a type="button" class="btn btn-xs delete-message-button"><span class="glyphicon glyphicon-remove"></span></a>
             </div>
-            <div class="message-replies-container" id="message-replies-container-<%= pk %>">
+        <% } %>
+        <% if(depth<1) { %>
+            <div class="reply-panel" id="reply-panel-<%= pk %>" data-is-open="false" data-message-id="<%= pk %>">
+                <div id="reply-to-message-<%= pk %>" class="message-reply" data-start-discussion="false">
+                </div>
+                <div class="message-replies-container" id="message-replies-container-<%= pk %>">
+                </div>
             </div>
-        </div>
-    <% } %>
+        <% } %>
+    </div>
 </div>

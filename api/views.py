@@ -233,6 +233,19 @@ class MessageDetailView(APIView):
         serializer = MessageSerializer(message)
         return Response(serializer.data)
 
+    def delete(self, request, pk, format=None):
+        message = self.get_object(pk)
+
+        if request.user != message.classgroup.owner:
+            error_msg = "User not authorized to delete this message."
+            log.error(error_msg)
+            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+        message.classgroup = None
+        message.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class UserView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
     query_attributes = ["classgroup",]

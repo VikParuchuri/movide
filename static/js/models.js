@@ -140,7 +140,7 @@ $(document).ready(function() {
     var Message = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
-            return '/api/messages/' + this.id;
+            return '/api/messages/' + this.id + "/";
         },
         methodUrl: {
             'create': '/api/messages/'
@@ -154,7 +154,7 @@ $(document).ready(function() {
     var EmailSubscription = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
-            return '/api/subscribe/' + this.id;
+            return '/api/subscribe/' + this.id + "/";
         },
         methodUrl: {
             'create': '/api/subscribe/'
@@ -165,7 +165,7 @@ $(document).ready(function() {
     var User = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
-            return '/api/users/' + this.id;
+            return '/api/users/' + this.id + "/";
         },
         methodUrl: {
             'create': '/api/users/'
@@ -617,18 +617,21 @@ $(document).ready(function() {
         },
         user_tag_delete: function(event){
             event.preventDefault();
-            event.preventDefault();
             var username = $(event.target).closest('tr').find('td.username').data('username');
             var that = this;
-            $.ajax({
-                type: "POST",
-                url: this.user_remove_link,
-                data: {username: username},
-                success: function(){
-                    that.display_message("User removed.", true);
-                },
-                error: function(){
-                    that.display_message("Failed to remove user.", false);
+            bootbox.confirm("Are you sure you want to delete this user?  They will be removed from the class immediately, but their posts will remain.", function(result) {
+                if(result==true){
+                    $.ajax({
+                        type: "POST",
+                        url: that.user_remove_link,
+                        data: {username: username},
+                        success: function(){
+                            that.display_message("User removed.", true);
+                        },
+                        error: function(){
+                            that.display_message("Failed to remove user.", false);
+                        }
+                    });
                 }
             });
             return false;
@@ -733,12 +736,14 @@ $(document).ready(function() {
             this.model.bind('change', this.render);
             this.model.bind('remove', this.unrender);
             this.class_owner = $("#classinfo").data('class-owner');
+            this.is_owner = $("#classinfo").data('is-owner');
         },
         get_model_json: function(){
             var model_json = this.model.toJSON();
             model_json.created_formatted = model_json.created.replace("Z","");
             model_json.created_formatted = moment.utc(model_json.created_formatted).local().fromNow();
             model_json.written_by_owner = (this.class_owner == model_json.user);
+            model_json.is_owner = this.is_owner;
             if(model_json.notification_created != undefined){
                 model_json.notification_created_formatted = model_json.notification_created.replace("Z","");
                 model_json.notification_created_formatted = moment.utc(model_json.notification_created_formatted).local().fromNow();
@@ -771,6 +776,7 @@ $(document).ready(function() {
         view_reply_panel: '.view-reply-panel',
         reply_to_message: '.reply-to-message-button',
         start_a_discussion: '.start-a-discussion-button',
+        delete_a_message: '.delete-message-button',
         user_join_template_name: "#userJoinTemplate",
         isLoading: false,
         interval_id: undefined,
@@ -789,12 +795,13 @@ $(document).ready(function() {
             'click .reply-to-message-button': this.post_reply_to_message,
             'click .start-a-discussion-button': this.post_reply_to_message,
             'click .reply-to-message': this.handle_reply_collapse,
-            'click #show-more-messages-button': this.self_refresh
+            'click #show-more-messages-button': this.self_refresh,
+            'click .delete-message-button': this.delete_message
         },
         initialize: function (options) {
             _.bindAll(this, 'render', 'renderMessage', 'refresh', 'render_messages',
                 'destroy_view', 'render_message_replies', 'render_reply_panel', 'post_reply_to_message',
-                'checkScroll', 'show_message_notification', 'self_refresh'
+                'checkScroll', 'show_message_notification', 'self_refresh', 'delete_message'
             );
             this.collection = new this.collection_class();
             this.classgroup = options.classgroup;
@@ -825,6 +832,20 @@ $(document).ready(function() {
                 }
             }
             return top_level
+        },
+        delete_message: function(event){
+            event.preventDefault();
+            var that = this;
+            var comment = $(event.target).closest('.comment');
+            var message_id = comment.data('message-id');
+            bootbox.confirm("Are you sure you want to delete this post?  You will not be able to see it afterwards.", function(result) {
+                if(result==true){
+                    var message = new Message({'pk' : message_id});
+                    message.destroy();
+                    comment.remove();
+                }
+            });
+            return false;
         },
         post_reply_to_message: function(event){
             event.preventDefault();
@@ -892,10 +913,11 @@ $(document).ready(function() {
         },
         render_reply_panel: function(event){
             event.preventDefault();
-            var message_id = $(event.target).parent().data('message-id');
-            var reply_panel = $(event.target).parent().find("#reply-panel-" + message_id);
-            var reply_container = $(event.target).parent().find('#reply-to-message-' + message_id);
-            var comment_container = $(event.target).parent().find('#message-replies-container-' + message_id);
+            var parent = $(event.target).closest('.comment');
+            var message_id = parent.data('message-id');
+            var reply_panel = parent.find("#reply-panel-" + message_id);
+            var reply_container = parent.find('#reply-to-message-' + message_id);
+            var comment_container = parent.find('#message-replies-container-' + message_id);
 
             var is_open = reply_panel.data('is_open');
             if(is_open){
@@ -920,6 +942,8 @@ $(document).ready(function() {
             $(this.view_reply_panel).click(this.render_reply_panel);
             $(this.reply_to_message).unbind();
             $(this.reply_to_message).click(this.post_reply_to_message);
+            $(this.delete_a_message).unbind();
+            $(this.delete_a_message).click(this.delete_message);
             $(this.start_a_discussion).unbind();
             $(this.start_a_discussion).click(this.post_reply_to_message);
             $(window).unbind();

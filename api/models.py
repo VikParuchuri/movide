@@ -154,7 +154,7 @@ class Message(models.Model):
     source = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
     reply_to = models.ForeignKey('self', related_name="replies", blank=True, null=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, related_name="messages")
-    classgroup = models.ForeignKey(Classgroup, related_name="messages")
+    classgroup = models.ForeignKey(Classgroup, related_name="messages", blank=True, null=True)
     approved = models.BooleanField(default=False)
     resources = models.ManyToManyField(Resource, related_name="messages", blank=True, null=True)
     message_type = models.CharField(choices=MESSAGE_TYPE_CHOICES, default="D", max_length=3)
@@ -296,7 +296,7 @@ def create_message_notification(sender, instance, **kwargs):
                         )
                 except IntegrityError:
                     log.warn("MessageNotification already exists with receiver message {0} and origin message {1}".format(m.id, instance.id))
-    elif instance.reply_to is None and instance.user == instance.classgroup.owner and instance.message_type == "A":
+    elif instance.reply_to is None and instance.classgroup is not None and instance.user == instance.classgroup.owner and instance.message_type == "A":
         for user in instance.classgroup.users.all():
             if user != instance.classgroup.owner:
                 try:

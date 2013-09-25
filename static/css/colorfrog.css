@@ -352,6 +352,9 @@ blockquote.big-quote {
         display: inline-block;
         margin-left: 5px;
     }
+    .comments .comment .comment-footer{
+        margin-bottom: 5px;
+    }
     .comments .comment .message-replies-container .comment{
         border: none;
         border-top: 1px solid #D6D6D6;
@@ -359,6 +362,9 @@ blockquote.big-quote {
         padding: 5px 0px 5px 5px;
     }
     .comments .comment .message-info-labels .label{
+        margin-left: 10px;
+    }
+    .comments .comment .message-info-labels .message-delete{
         margin-left: 10px;
     }
     .comments .message-replies-container{
@@ -754,6 +760,7 @@ form {
   border-top: solid 1px #029fe2; }
 .blue .btn {
   background-color: #8a46ab;
+  background-image: none;
   color: #fff; }
   .blue .btn:hover, .blue .btn:focus {
     color: #fff;
