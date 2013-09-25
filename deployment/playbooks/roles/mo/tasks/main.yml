@@ -120,8 +120,12 @@
     -  restart movide
 
 #Change cache permissions
-- name: create virtualenv directory
+- name: create cache directory
   file: path=${movide_dir}/cache/ owner=movide group=ar mode=2775 state=directory recurse=yes
+
+#Change media permissions
+- name: create media directory
+  file: path=${movide_dir}/media/ owner=movide group=ar mode=2775 state=directory recurse=yes
 
 #Install system packages
 - name:  install movide apt packages

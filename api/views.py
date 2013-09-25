@@ -22,6 +22,7 @@ from dateutil import parser
 from notifications import NotificationText
 import datetime
 import calendar
+import pytz
 from django.forms.models import model_to_dict
 log = logging.getLogger(__name__)
 
@@ -340,8 +341,8 @@ class MessageNotificationView(QueryView):
         self.get_query_params()
         self.verify_membership()
 
-        start_time = datetime.datetime.fromtimestamp(int(self.query_dict['start_time']))
-
+        start_time = datetime.datetime.utcfromtimestamp(int(self.query_dict['start_time']))
+        start_time = start_time.replace(tzinfo=pytz.utc)
         messages = Message.objects.filter(classgroup=self.cg, created__gt=start_time, reply_to__isnull=True)
 
         return Response({'message_count': max(0,messages.count()-1)})
