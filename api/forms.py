@@ -21,9 +21,12 @@ class StudentClassSettingsForm(forms.ModelForm):
 class ClassSettingsForm(forms.ModelForm):
     access_key = forms.CharField(widget=PlainTextWidget, required=False)
     description = forms.CharField()
+    allow_signups = forms.BooleanField(help_text="Allow students to sign up for the course using the access.", label="Allow signups", required=False)
+    enable_posting = forms.BooleanField(help_text="Allow students to make discussion posts (if this is disabled, they will still be able to reply).", label="Enable posting", required=False)
+
     class Meta:
         model = ClassSettings
-        fields = ["access_key", "allow_signups", "welcome_message", "description", ]
+        fields = ["access_key", "allow_signups", "enable_posting", "welcome_message", "description", ]
 
     def clean_access_key(self):
         instance = getattr(self, 'instance', None)

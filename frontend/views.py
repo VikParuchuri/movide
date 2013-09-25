@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from api.forms import StudentClassSettingsForm, ClassSettingsForm
 from django.contrib.auth.models import User
+import json
 
 log=logging.getLogger(__name__)
 
@@ -142,6 +143,7 @@ def classview(request, classgroup, **kwargs):
         'notification_count': uncleared_notification_count(request.user, cg),
         'class_owner': cg.owner.username,
         'class_api_link': cg.api_link(),
+        'autocomplete_list': json.dumps(cg.autocomplete_list()),
         }
 
     if request.user.classgroups.filter(name=classgroup).count() == 0:
@@ -191,6 +193,14 @@ def remove_user(request, classgroup):
 
     return HttpResponse(status=200)
 
+@login_required()
+def autocomplete_names(request, classgroup):
+    if request.method != 'GET':
+        raise Http404
+
+    cg = verify_settings(request, classgroup)
+
+    return HttpResponse(json.dumps(cg.autocomplete_list()), status=200)
 
 
 

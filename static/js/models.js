@@ -444,7 +444,8 @@ $(document).ready(function() {
             this.refresh();
             var tmpl = _.template($("#messageDetailTemplate").html());
             $(this.el).html(tmpl({
-                is_owner: this.is_owner
+                is_owner: this.is_owner,
+                enable_posting: this.class_model.get('class_settings').enable_posting
             }));
             this.message_view = new MessagesView(this.options);
             this.message_view.render();
@@ -776,6 +777,7 @@ $(document).ready(function() {
         view_reply_panel: '.view-reply-panel',
         reply_to_message: '.reply-to-message-button',
         start_a_discussion: '.start-a-discussion-button',
+        start_a_discussion_input: '#start-a-discussion-input',
         delete_a_message: '.delete-message-button',
         user_join_template_name: "#userJoinTemplate",
         isLoading: false,
@@ -783,6 +785,7 @@ $(document).ready(function() {
         show_more_messages_container: "#show-more-messages-container",
         show_more_messages_template: "#showMoreMessagesTemplate",
         show_more_messages_button: "#show-more-messages-button",
+        autocomplete_enabled_input: ".autocomplete-enabled-input",
         stop_polling: false,
         message_count: 0,
         document_title: document.title,
@@ -816,6 +819,7 @@ $(document).ready(function() {
             this.is_owner = $("#classinfo").data("is-owner");
             this.access_key = $("#classinfo").data("access-key");
             this.link = window.location.host + $("#classinfo").data("class-link");
+            this.autocomplete_list = JSON.parse($('#autocomplete-list').html());
         },
         render_messages: function(){
             this.render();
@@ -946,6 +950,21 @@ $(document).ready(function() {
             $(this.delete_a_message).click(this.delete_message);
             $(this.start_a_discussion).unbind();
             $(this.start_a_discussion).click(this.post_reply_to_message);
+            $(this.autocomplete_enabled_input).autocomplete({ disabled: true });
+            var autocomplete_list = this.autocomplete_list;
+            $(this.autocomplete_enabled_input).autocomplete({
+                source:  function(request, response) {
+                    var results = $.ui.autocomplete.filter(autocomplete_list, request.term);
+
+                    response(results.slice(0, 10));
+                },
+                disabled: false,
+                messages: {
+                    noResults: '',
+                    results: function() {}
+                },
+                minLength: 1
+            });
             $(window).unbind();
             $(window).scroll(this.checkScroll);
             $(this.show_more_messages_button).unbind();

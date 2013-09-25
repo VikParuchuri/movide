@@ -13,10 +13,7 @@
 <h1>{% trans "Sign In" %}</h1>
 
 {% if socialaccount.providers  %}
-<p>{% blocktrans with site.name as site_name %}Please sign in with one
-of your existing third party accounts. Or, <a href="{{ signup_url }}">sign up</a> 
-for a {{site_name}} account and sign in
-below:{% endblocktrans %}</p>
+<p>{% blocktrans with site.name as site_name %}If you have an existing third party account, you can select it below and sign in:{% endblocktrans %}</p>
 
 <div class="socialaccount_ballot">
 
@@ -24,9 +21,9 @@ below:{% endblocktrans %}</p>
     {% include "socialaccount/snippets/provider_list.html" with process="login" %}
   </ul>
 
-  <div class="login-or">{% trans 'or' %}</div>
-
 </div>
+
+<p>Or, sign in below with your {{ site.name }} account.  If you don't have an account, you can <a href="{{ signup_url }}">sign up</a>.</p>
 
 {% include "socialaccount/snippets/login_extra.html" %}
 

@@ -23,8 +23,8 @@
 </script>
 
 <script id="homeDetailTemplate" type="text/template">
-    <p class="lead"><%= display_name %> -- <%= description %></p>
-    <div class="welcome-message"><%= welcome_message %></div>
+    <p class="lead"><%= display_name %> -- <%= class_settings.description %></p>
+    <div class="welcome-message"><%= class_settings.welcome_message %></div>
     <h4>Recent Class Announcements</h4>
     <div id="messages-container">
     </div>
@@ -36,29 +36,31 @@
 </script>
 
 <script id="messageDetailTemplate" type="text/template">
-    <div class="row">
-        <div class="col-xs-12">
-            <div id="start-a-discussion" data-start-discussion="true" class="message-reply">
-                <form role="form">
-                    <div class="form-group reply-to-message-form">
-                        <label class="sr-only" for="start-a-discussion-input">Tag</label>
-                        <textarea type="text" class="form-control input-lg" id="start-a-discussion-input" placeholder="Enter message here..."></textarea>
-                        <span class="help-block"></span>
-                    </div>
-                    <% if(is_owner==true) { %>
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" id="make-discussion-announcement-input"> Make this an announcement
-                            </label>
+    <% if(is_owner == true || enable_posting == true) { %>
+        <div class="row">
+            <div class="col-xs-12">
+                <div id="start-a-discussion" data-start-discussion="true" class="message-reply">
+                    <form role="form">
+                        <div class="form-group reply-to-message-form ui-front">
+                            <label class="sr-only" for="start-a-discussion-input">Tag</label>
+                            <textarea type="text" class="form-control input-lg autocomplete-enabled-input" id="start-a-discussion-input" placeholder="Enter message here..."></textarea>
+                            <span class="help-block"></span>
                         </div>
-                    <% } %>
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-small start-a-discussion-button">Start a new discussion</button>
-                    </div>
-                </form>
+                        <% if(is_owner==true) { %>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="make-discussion-announcement-input"> Make this an announcement
+                                </label>
+                            </div>
+                        <% } %>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-small start-a-discussion-button">Start a new discussion</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+    <% } %>
     <div class="row">
         <div class="col-xs-12">
             <div id="messages-container">
@@ -185,9 +187,9 @@
 
 <script id="messageReplyTemplate" type="text/template">
     <form role="form" class="form-inline">
-        <div class="form-group reply-to-message-form">
+        <div class="form-group reply-to-message-form ui-front">
             <label class="sr-only" for="reply-to-message-input-<%= pk %>">Tag</label>
-            <textarea type="text" class="form-control input-lg" id="reply-to-message-input-<%= pk %>" placeholder="Enter reply here..." rows="1" cols="60"></textarea>
+            <textarea type="text" class="form-control input-lg autocomplete-enabled-input" id="reply-to-message-input-<%= pk %>" placeholder="Enter reply here..." rows="1" cols="60"></textarea>
             <span class="help-block" id="reply-to-message-message-<%= pk %>"></span>
         </div>
         <button type="submit" class="btn btn-small reply-to-message-button" id="reply-to-message-button-<%= pk %>" data-primary-key="<%= pk %>">Send Reply</button>

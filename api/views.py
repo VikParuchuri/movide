@@ -98,6 +98,16 @@ class ClassgroupView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class RatingView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, format=None):
+        serializer = RatingSerializer(data=request.DATA, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class ClassgroupDetailView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -115,6 +125,8 @@ class ClassgroupDetailView(APIView):
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = ClassgroupSerializer(classgroup)
+        if classgroup.class_settings is not None:
+            serializer.data['class_settings'] = ClassSettingsSerializer(classgroup.class_settings).data
         return Response(serializer.data)
 
 class MessageView(QueryView):

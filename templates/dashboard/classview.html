@@ -42,6 +42,9 @@
 
 {% block class_info %}
     <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name="{{ display_name }}" data-is-owner="{{ is_owner }}" data-class-link="{{ link }}" data-access-key="{{ access_key }}" data-active-page="{{ active_page }}" data-class-api-link="{{ class_api_link }}" data-avatar-change-link="{% url 'avatar_change' %}" data-class-owner="{{ class_owner }}">
+    <script type="application/json" id="autocomplete-list">
+        {{ autocomplete_list|safe }}
+    </script>
 {% endblock %}
 
 {% block dashboard_content %}

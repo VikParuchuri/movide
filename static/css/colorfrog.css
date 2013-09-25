@@ -1138,3 +1138,10 @@ form {
     -moz-border-radius: 8px;
     border-radius: 8px;
 }
+
+ul.socialaccount_providers{
+    list-style-type: none;
+}
+ul.socialaccount_providers li{
+    margin-bottom: 5px;
+}

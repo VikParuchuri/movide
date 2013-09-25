@@ -77,6 +77,19 @@
     margin-bottom: 30px;
 }
 
+ul.ui-autocomplete{
+    list-style-type: none;
+    padding-left: 5px;
+}
+
+    ul.ui-autocomplete li:hover{
+        background-color: lightyellow;
+    }
+
+    ul.ui-autocomplete a:hover{
+        text-decoration: none;
+    }
+
 /*
  * Off Canvas
  * --------------------------------------------------

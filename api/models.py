@@ -53,21 +53,14 @@ class Classgroup(models.Model):
             settings = None
         return settings
 
-    def welcome_message(self):
-        settings = self.get_class_settings()
-        if settings is None:
-            message = DEFAULT_WELCOME_MESSAGE
-        else:
-            message = settings.welcome_message
-        return message
-
-    def description(self):
-        settings = self.get_class_settings()
-        if settings is None:
-            message = DEFAULT_CLASS_DESCRIPTION
-        else:
-            message = settings.description
-        return message
+    def autocomplete_list(self):
+        names = self.users.values('username')
+        names = ["@" + n['username'] for n in names]
+        tags = self.tags.values('name')
+        tags = ["#" + t['name'] for t in tags]
+        resources = self.resources.values('name')
+        resources = ["*" + r['name'] for r in resources]
+        return names + tags + resources
 
     def link(self):
         return "/classes/" + self.name + "/"
@@ -193,12 +186,16 @@ class Rating(models.Model):
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        unique_together = (("message", "owner"),)
+
 class ClassSettings(models.Model):
     classgroup = models.OneToOneField(Classgroup, related_name="class_settings", blank=True, null=True)
     is_public = models.BooleanField(default=False)
     moderate_posts = models.BooleanField(default=True)
     access_key = models.CharField(max_length=MAX_CHARFIELD_LENGTH, unique=True)
     allow_signups = models.BooleanField(default=True)
+    enable_posting = models.BooleanField(default=True)
     welcome_message = models.TextField(default=DEFAULT_WELCOME_MESSAGE)
     description = models.TextField(default=DEFAULT_CLASS_DESCRIPTION)
 

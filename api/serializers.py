@@ -80,8 +80,11 @@ class RatingSerializer(serializers.Serializer):
 
         attributes = ["rating"]
 
+        if message.classgroup not in user.classgroups:
+            raise serializers.ValidationError("Attempting rate a post that is not in your class.")
+
         if instance is None:
-            instance = Rating(owner=user, message=message)
+            instance, created = Rating.objects.get_or_create(owner=user, message=message)
         else:
             if instance.owner != user:
                 raise serializers.ValidationError("Attempting to edit a rating that is not yours.")
@@ -94,7 +97,8 @@ class ClassSettingsSerializer(serializers.ModelSerializer):
     classgroup = serializers.SlugRelatedField(many=False, slug_field="name", read_only=True)
     class Meta:
         model = ClassSettings
-        fields = ("is_public", "moderate_posts", "classgroup", "modified", "welcome_message", )
+        fields = ("is_public", "moderate_posts", "classgroup",
+                  "modified", "welcome_message", "enable_posting", "description", )
 
 class StudentClassSettingsSerializer(serializers.ModelSerializer):
     classgroup = serializers.SlugRelatedField(many=False, slug_field="name", read_only=True)
@@ -129,8 +133,6 @@ class ClassgroupSerializer(serializers.Serializer):
     modified = serializers.Field()
     created = serializers.Field()
     link = serializers.Field(source="link")
-    welcome_message = serializers.Field(source="welcome_message")
-    description = serializers.Field(source="description")
 
     def restore_object(self, attrs, instance=None):
         user = self.context['request'].user
@@ -196,6 +198,12 @@ class MessageSerializer(serializers.Serializer):
         classgroup = attrs.get('classgroup')
 
         attributes = ["text", "source", "reply_to"]
+
+        if (classgroup.class_settings is not None and
+            classgroup.class_settings.enable_posting is False and
+            user != classgroup.owner):
+            raise serializers.ValidationError("You are not allowed to make a post right now.")
+
 
         if instance is None:
             instance = Message(user=user, classgroup=classgroup)
