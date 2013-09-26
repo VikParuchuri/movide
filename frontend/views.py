@@ -3,7 +3,6 @@ from django.conf import settings
 import logging
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
-from api.tasks import UserTwitterData
 from django.http import Http404, HttpResponse
 from api.models import Classgroup, RatingNotification, MessageNotification, StudentClassSettings, ClassSettings
 from rest_framework.response import Response
@@ -13,13 +12,6 @@ from django.contrib.auth.models import User
 import json
 
 log=logging.getLogger(__name__)
-
-def create_profile(authorized_tokens, user):
-    user_data = UserTwitterData(authorized_tokens['screen_name'])
-    profile = user_data.create_profile(user)
-    profile.oauth_token = authorized_tokens['oauth_token']
-    profile.oauth_secret = authorized_tokens['oauth_token_secret']
-    profile.save()
 
 @login_required()
 def dashboard(request):

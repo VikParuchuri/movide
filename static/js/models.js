@@ -161,6 +161,11 @@ $(document).ready(function() {
         }
     });
 
+    var Rating = methodModel.extend({
+        idAttribute: 'pk',
+        url: '/api/ratings/'
+    });
+
 
     var User = methodModel.extend({
         idAttribute: 'pk',
@@ -779,6 +784,7 @@ $(document).ready(function() {
         start_a_discussion: '.start-a-discussion-button',
         start_a_discussion_input: '#start-a-discussion-input',
         delete_a_message: '.delete-message-button',
+        like_a_message_button: '.like-message-button',
         user_join_template_name: "#userJoinTemplate",
         isLoading: false,
         interval_id: undefined,
@@ -799,12 +805,13 @@ $(document).ready(function() {
             'click .start-a-discussion-button': this.post_reply_to_message,
             'click .reply-to-message': this.handle_reply_collapse,
             'click #show-more-messages-button': this.self_refresh,
-            'click .delete-message-button': this.delete_message
+            'click .delete-message-button': this.delete_message,
+            'click .like-message-button': this.like_message
         },
         initialize: function (options) {
             _.bindAll(this, 'render', 'renderMessage', 'refresh', 'render_messages',
                 'destroy_view', 'render_message_replies', 'render_reply_panel', 'post_reply_to_message',
-                'checkScroll', 'show_message_notification', 'self_refresh', 'delete_message'
+                'checkScroll', 'show_message_notification', 'self_refresh', 'delete_message', 'like_message'
             );
             this.collection = new this.collection_class();
             this.classgroup = options.classgroup;
@@ -836,6 +843,20 @@ $(document).ready(function() {
                 }
             }
             return top_level
+        },
+        like_message: function(event){
+            event.preventDefault();
+            var button = $(event.target);
+            var comment = button.closest('.comment');
+            var message_id = comment.data('message-id');
+            var rating = new Rating({'message' : message_id, 'rating': 1});
+            button.parent().attr('disabled', true);
+            rating.save({}, {
+                success: function(){
+
+                }
+            });
+            return false;
         },
         delete_message: function(event){
             event.preventDefault();
@@ -948,6 +969,8 @@ $(document).ready(function() {
             $(this.reply_to_message).click(this.post_reply_to_message);
             $(this.delete_a_message).unbind();
             $(this.delete_a_message).click(this.delete_message);
+            $(this.like_a_message_button).unbind();
+            $(this.like_a_message_button).click(this.like_message);
             $(this.start_a_discussion).unbind();
             $(this.start_a_discussion).click(this.post_reply_to_message);
             $(this.autocomplete_enabled_input).autocomplete({ disabled: true });

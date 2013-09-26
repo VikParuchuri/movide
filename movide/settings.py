@@ -319,6 +319,8 @@ LOGIN_REDIRECT_URL = "/dashboard/"
 
 LOGIN_URL = "/accounts/login/"
 
+ACCESS_CODE_LENGTH = 6
+
 try:
     from .private import *
 except Exception:

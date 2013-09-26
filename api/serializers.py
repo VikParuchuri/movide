@@ -1,6 +1,8 @@
 from django.forms import widgets
 from rest_framework import serializers
-from models import Tag, Message, UserProfile, EmailSubscription, Classgroup, Rating, ClassSettings, Resource, StudentClassSettings, MESSAGE_TYPE_CHOICES
+from models import (Tag, Message, UserProfile, EmailSubscription, Classgroup,
+                    Rating, ClassSettings, Resource, StudentClassSettings,
+                    MESSAGE_TYPE_CHOICES, make_random_key)
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 import logging
@@ -69,8 +71,8 @@ class TagSerializer(serializers.Serializer):
         return instance
 
 class RatingSerializer(serializers.Serializer):
-    message = serializers.PrimaryKeyRelatedField(many=False)
-    owner = serializers.SlugRelatedField(slug_field="username")
+    message = serializers.PrimaryKeyRelatedField(many=False, queryset=Message.objects.all())
+    owner = serializers.SlugRelatedField(slug_field="username", read_only=True)
     rating = serializers.IntegerField()
     modified = serializers.Field()
 
@@ -80,7 +82,7 @@ class RatingSerializer(serializers.Serializer):
 
         attributes = ["rating"]
 
-        if message.classgroup not in user.classgroups:
+        if message.classgroup not in user.classgroups.all():
             raise serializers.ValidationError("Attempting rate a post that is not in your class.")
 
         if instance is None:
@@ -108,13 +110,6 @@ class StudentClassSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentClassSettings
         fields = ("classgroup", "user", "email_frequency", "email_frequency_choices", )
-
-def make_random_key():
-    existing_keys = [t['access_key'] for t in ClassSettings.objects.all().values('access_key')]
-    access_key = User.objects.make_random_password(6)
-    while access_key in existing_keys:
-        access_key = User.objects.make_random_password(6)
-    return access_key
 
 def set_attributes(attributes, values, instance):
     for attrib in attributes:
@@ -192,6 +187,7 @@ class MessageSerializer(serializers.Serializer):
     depth = serializers.Field(source="depth")
     avatar_url = serializers.Field(source="avatar_url")
     message_type = serializers.ChoiceField(choices=MESSAGE_TYPE_CHOICES, default="D")
+    total_rating = serializers.Field(source="total_rating")
 
     def restore_object(self, attrs, instance=None):
         user = self.context['request'].user

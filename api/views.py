@@ -129,6 +129,11 @@ class ClassgroupDetailView(APIView):
             serializer.data['class_settings'] = ClassSettingsSerializer(classgroup.class_settings).data
         return Response(serializer.data)
 
+def add_likes_to_data(data, user):
+    for m in data:
+        m['has_been_rated'] = (user.ratings.filter(message__id=m['pk']).count() > 0)
+    return data
+
 class MessageView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
     query_attributes = ["tag", "classgroup", "user", "in_reply_to_id", "message_type",]
@@ -164,10 +169,13 @@ class MessageView(QueryView):
 
         try:
             serializer = PaginatedMessageSerializer(paginator.page(page), context={'request' : request})
+            add_likes_to_data(serializer.data['results'], request.user)
         except PageNotAnInteger:
             serializer = MessageSerializer(queryset, context={'request': request}, many=True)
+            add_likes_to_data(serializer.data, request.user)
         except EmptyPage:
             serializer = PaginatedMessageSerializer(paginator.page(paginator.num_pages), context={'request' : request})
+            add_likes_to_data(serializer.data['results'], request.user)
 
         return Response(serializer.data)
 
