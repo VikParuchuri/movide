@@ -143,8 +143,13 @@ class ClassgroupSerializer(serializers.Serializer):
                 instance.save()
                 user.classgroups.add(instance)
                 user.save()
-                class_settings = ClassSettings(classgroup=instance, access_key=make_random_key())
-                class_settings.save()
+
+                try:
+                    class_settings = ClassSettings(classgroup=instance, access_key=make_random_key())
+                    class_settings.save()
+                except IntegrityError:
+                    class_settings = ClassSettings.objects.get(classgroup=instance)
+
             except IntegrityError:
                 error_msg = "Class name is already taken."
                 log.exception(error_msg)

@@ -96,6 +96,7 @@
                         </ul>
                     </li>
                 {% else %}
+                    <li {% if request.path == "/about/" %}class="active"{% endif %}><a href="/about/">About</a></li>
                     <li {% if request.path == "/accounts/signup/" %}class="active"{% endif %}><a href="/accounts/signup/">Signup</a></li>
                     <li {% if request.path == "/accounts/login/" %}class="active"{% endif %}><a href="/accounts/login/">Login</a></li>
                 {% endif %}
@@ -113,7 +114,7 @@
             <div class="row">
                 <div class="col-xs-12">
                     <div class="row">
-                        <div class="col-sm-4 alt">
+                        <div class="col-xs-4 alt">
                             <div class="background-inner">
                                 <h3>Subscribe</h3>
                                 <p>Our newsletter keeps you up to date with news and happenings from Movide.  Hear about all of the exciting new things we are up to!</p>
@@ -126,7 +127,15 @@
                                 <span class="help-block" id="email-signup-message"></span>
                             </div>
                         </div>
-                        <div class="col-sm-4 col-sm-offset-4 alt">
+                        <div class="col-xs-4 alt">
+                            <div class="background-inner">
+                                <h3>Site Links</h3>
+                                <ul class="footer-links">
+                                    <li><a href="/about/">About</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-xs-4 alt">
                             <div class="background-inner">
                                 <h3>Connect</h3>
                                 <ul class="contact-info">

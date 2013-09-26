@@ -194,6 +194,9 @@ def autocomplete_names(request, classgroup):
 
     return HttpResponse(json.dumps(cg.autocomplete_list()), status=200)
 
+def about(request):
+    return render_to_response("about.html", context_instance=RequestContext(request))
+
 
 
 

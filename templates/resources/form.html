@@ -1,0 +1,8 @@
+{% load bootstrap %}
+
+<form action="{{ action_link }}" method="POST" id="{{ form_id }}">
+    {% csrf_token %}
+    {{ form|bootstrap }}
+    <input type="submit" value="Create Resource" />
+    <div class="help-block help-block-resource"></div>
+</form>

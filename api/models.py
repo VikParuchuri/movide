@@ -140,6 +140,11 @@ class Resource(models.Model):
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
+    def render(self):
+        from resources import ResourceRenderer
+        renderer = ResourceRenderer(self.data, self.resource_type)
+        return renderer.render()
+
 class Message(models.Model):
     text = models.TextField()
     source = models.CharField(max_length=MAX_CHARFIELD_LENGTH)

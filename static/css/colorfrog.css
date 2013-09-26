@@ -1145,3 +1145,12 @@ ul.socialaccount_providers{
 ul.socialaccount_providers li{
     margin-bottom: 5px;
 }
+
+ul.footer-links{
+
+}
+    ul.footer-links a{
+        font-size: 1.3em;
+        color: #333333;
+        margin-bottom:10px;
+    }

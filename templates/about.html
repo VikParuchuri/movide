@@ -1,182 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="utf-8" />
-	
-	<title>Colorfrog - About</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<!-- Bootstrap css -->
-	<link href="../static/css/bootstrap.css" rel="stylesheet" media="screen">
-	<!-- Theme css -->
-	<link href="../static/css/colorfrog.css" rel="stylesheet" media="screen">
+{% extends "base.html" %}
+{% load staticfiles %}
 
-	<link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-	<link href="../static/favicon.ico" rel="shortcut icon" type="image/x-icon" />
-	<script src="../static/js/respond.min.js"></script>
+{% block additional_js %}
+{% endblock %}
 
-	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-	<script src="../static/js/bootstrap.js"></script>
-	<script src="../static/js/jquery.fitvids.js"></script>
-	<script src="../static/js/colorfrog.js"></script>
-	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
-	<script>google.maps.event.addDomListener(window, 'load', initialize);</script>
-	
-	<!--[if lt IE 9]>
-	<script>
-		document.createElement('header');document.createElement('nav');document.createElement('section');document.createElement('article');document.createElement('aside');document.createElement('footer');
-	</script>
-	<![endif]-->
+{% block title %}
+    Engage with your students.
+{% endblock %}
 
-</head>
-<body>
-<!--
-Use the corresponding body tag for your chosen theme
-<body class="blue">
-<body class="orange">
-<body class="green">
-<body class="bw">
--->
+{% block meta_description %}
+{% endblock %}
 
-	<div class="container">
-		<header>
-			<a class="brand" href="index.html">Colorfrog</a>
-		</header>
+{% block content %}
+    <div class="jumbotron">
+        <div class="container">
+            <h1>What is Movide?</h1>
+            <h2>Discover why we get up in the morning.</h2>
+        </div>
+    </div> <!-- //end hero-unit -->
 
-		<button class="btn navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-			<span class="icon-bar"></span>
-			<span class="icon-bar"></span>
-			<span class="icon-bar"></span>
-		</button>
-		
-		<nav class="navbar-collapse collapse">
-			<ul class="nav nav-pills">
-				<li><a href="index.html">Home</a></li>
-				<li><a href="styles.html">Styles</a></li>
-				<li><a href="templates.html">Templates</a></li>
-				<li><a href="support.html">Support</a></li>              
-			</ul>
-		</nav>
-	</div> <!-- //end container -->	
-	
-	<div class="jumbotron">
-		<div class="container">
-			<h1>We are...</h1>
-			<h2>A place to add faces to names.</h2>
-		</div>
-	</div> <!-- //end hero-unit -->
-	
-	<div class="container content underHero">
-		<div class="row">
-			
-			<div class="col-sm-4 person">
-				<div class="person-meta">
-					<img src="../static/img/bio-small.jpg" alt="" />
-					<h4>Ben Goodyear</h4>
-					<ul>
-						<li><a href="http://twitter.com/bengoodyear">@bengoodyear</a></li>
-						<li><a href="http://bengoodyear.com">bengoodyear.com</a></li>
-					</ul>
-				</div>
-				<p class="lead">Front-end web developer. Tea drinker. Cheese eater.</p>
-				<p>Bacon ipsum dolor sit amet kielbasa pork loin bacon fatback frankfurter ball tip strip steak tri-tip flank ribeye venison chicken tenderloin swine. Brisket tri-tip shoulder, salami doner hamburger frankfurter strip steak. T-bone turkey ham hock, ribeye leberkas sausage chuck. Pancetta jerky turkey pork. Bresaola jowl ham hock ground round ball tip chuck beef ribs t-bone turkey pork chop pig sausage biltong. Frankfurter jowl tri-tip strip steak shoulder chicken andouille ground round shankle drumstick spare ribs ham salami. Turkey short ribs t-bone, leberkas boudin sirloin tongue meatloaf doner turducken.</p>
-			</div> <!-- //end span4 -->
-			
-			<div class="col-sm-4 person">
-				<div class="person-meta">
-					<img src="../static/img/bio-small.jpg" alt="" />
-					<h4>Ben Goodyear</h4>
-					<ul>
-						<li><a href="http://twitter.com/bengoodyear">@bengoodyear</a></li>
-						<li><a href="http://bengoodyear.com">bengoodyear.com</a></li>
-					</ul>
-				</div>
-				<p class="lead">Front-end web developer. Tea drinker. Cheese eater.</p>
-				<p>Bacon ipsum dolor sit amet kielbasa pork loin bacon fatback frankfurter ball tip strip steak tri-tip flank ribeye venison chicken tenderloin swine. Brisket tri-tip shoulder, salami doner hamburger frankfurter strip steak. T-bone turkey ham hock, ribeye leberkas sausage chuck. Pancetta jerky turkey pork. Bresaola jowl ham hock ground round ball tip chuck beef ribs t-bone turkey pork chop pig sausage biltong. Frankfurter jowl tri-tip strip steak shoulder chicken andouille ground round shankle drumstick spare ribs ham salami. Turkey short ribs t-bone, leberkas boudin sirloin tongue meatloaf doner turducken.</p>
-			</div> <!-- //end span4 -->
-			
-			<div class="col-sm-4 person">
-				<div class="person-meta">
-					<img src="../static/img/bio-small.jpg" alt="" />
-					<h4>Ben Goodyear</h4>
-					<ul>
-						<li><a href="http://twitter.com/bengoodyear">@bengoodyear</a></li>
-						<li><a href="http://bengoodyear.com">bengoodyear.com</a></li>
-					</ul>
-				</div>
-				<p class="lead">Front-end web developer. Tea drinker. Cheese eater.</p>
-				<p>Bacon ipsum dolor sit amet kielbasa pork loin bacon fatback frankfurter ball tip strip steak tri-tip flank ribeye venison chicken tenderloin swine. Brisket tri-tip shoulder, salami doner hamburger frankfurter strip steak. T-bone turkey ham hock, ribeye leberkas sausage chuck. Pancetta jerky turkey pork. Bresaola jowl ham hock ground round ball tip chuck beef ribs t-bone turkey pork chop pig sausage biltong. Frankfurter jowl tri-tip strip steak shoulder chicken andouille ground round shankle drumstick spare ribs ham salami. Turkey short ribs t-bone, leberkas boudin sirloin tongue meatloaf doner turducken.</p>
-			</div> <!-- //end span4 -->
-		
-		</div> <!-- //end row -->	
-	</div> <!-- //end container -->	
-	
-		<div id="map">
-		<div class="container">
-			<div class="row">
-				<div class="col-xs-12">
-					<div class="row">
-						<div class="col-sm-4 alt">
-							<div class="background-inner">
-								<h3>Subscribe</h3>
-								<p>To our newsletter to keep up to date with news and events from Colorfrog</p>
-								<div class="input-group">
-									<input class="form-control" type="text" placeholder="your email address" />				
-									<div class="input-group-btn">			  
-										<button class="btn" type="button"><span class="glyphicon glyphicon-chevron-right"></span></button>
-									</div>
-								</div>
-								<small class="clearfix">We don't send out newsletters often, so no worrying about spam. Also, we never share your email address with anyone.</small>
-							</div>
-						</div>
-						<div class="col-sm-4 col-sm-offset-4 alt">
-							<div class="background-inner">
-								<h3>Connect</h3>
-								<ul class="contact-info">
-									<li class="contact-info-address">Some Street 30, 00000, Country</li>
-									<li class="contact-info-call">+0102345678</li>
-									<li class="contact-info-mail"><a href="mailto:">info@colorfrog.com</a></li>
-								</ul>
-								<ul class="social-info">
-									<li>
-										<a href="" class="social-info-twitter">Twitter</a>
-									</li>	
-									<li>
-										<a href="" class="social-info-facebook">Facebook</a>
-									</li>
-									<li>
-										<a href="" class="social-info-pintrest">Pintrest</a>
-									</li>
-									<li>
-										<a href="" class="social-info-github">Github</a>
-									</li>					
-									<li>
-										<a href="" class="social-info-linkedin">LinkedIn</a>
-									</li>
-								</ul>																															
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div> <!-- //end container -->
-		<div id="footer-map"></div>
-	</div> <!-- //end map -->
-			
-	<footer>
-		<div class="container">
-			<div class="row">
-				<div class="col-sm-6">
-					<p>Copyright &copy; 2013 Colorfrog. All rights reserved. <a href="">Terms</a> &amp; <a href="">Privacy</a>.</p>		
-				</div>
-				<div class="col-sm-6">
-					<p class="text-right">
-					Style: <a href="" class="st" id="style-bw">Black & White</a>, <a href="" class="st" id="style-orange">Orange</a>, <a href="" class="st" id="style-green">Green</a>, <a href="" class="st" id="style-blue">Blue</a>
-					</p>
-				</div>
-			</div>
-		</div>   <!--//end container -->   
-	</footer>
+    <div class="container content underHero">
+        <div class="row">
 
+            <div class="col-xs-6 person">
+                <h2>Our Vision</h2>
+                <p class="lead">Discussion is integral to learning.</p>
+                <p>Movide enables students and teachers to have conversations.  We want these conversations to be about useful content, including content from sources like <a href="https://www.khanacademy.org/">Khan Academy</a> and <a href="https://www.edx.org/">edX</a>.  We want teachers to be able to understand which students are learning, and how they are learning.  Most of all, we want Movide to be a joy to work with.</p>
+                <p>Ultimately, we want to help move beyond the LMS and make learning a continuous conversation. A huge task like this won't happen overnight, but we are committed to working to make this vision a reality.  By trying out Movide and letting us know what you think, you will be a huge help to us in this journey.</p>
+            </div> <!-- //end span4 -->
 
-</body>
-</html>
+            <div class="col-xs-6 person">
+                <h2>Our Founder</h2>
+                <div class="person-meta">
+                    <img src="{% static 'img/vik_profile_small.png' %}" alt=""/>
+                    <h4>Vik Paruchuri</h4>
+                    <ul>
+                        <li><a href="http://twitter.com/VikParuchuri">@VikParuchuri</a></li>
+                        <li><a href="http://vikparuchuri.com">vikparuchuri.com</a></li>
+                    </ul>
+                </div>
+                <p class="lead">All-around software person.  Sometimes teaches machines to think like humans.  Passionate about helping people learn.</p>
+                <p>In 2011, I was a diplomat in the Foreign Service, stationed in South America.  I graduated college in 2008 and majored in American History.  I have worked at UPS and Pepsi in operations management.  What do all of these things have in common?  Nothing, aside from the fact that none of them interested me enough to stick with.</p>
+                <p>In late 2011, I realized that I wanted to create products with a tangible impact.  I figured that I would support myself by predicting the stock market (easy, right?) while I did this.  Unfortunately, I didn't know programming, or statistics, or linear algebra (I could make quite a list here).  Luckily, I was able to learn, though great online resources like <a href="https://www.khanacademy.org/">Khan Academy</a>.  I entered a lot of competitions on a site called <a href="http://www.kaggle.com/">Kaggle</a>, which allows data scientists all over the world to compete to solve interesting problems.  One such problem was posed by the Hewlett Foundation, and asked how computers can score essays automatically.  I ended up doing quite well in it.</p>
+                <p>I then went to work for <a href="https://www.edx.org/">edX</a>, a MOOC provider started by Harvard and MIT, and worked on developing their open response assessment technology.  <a href="http://vikparuchuri.com/blog/on-the-automated-scoring-of-essays/">My blog</a> has a summary of some of this work.  All of these experiences combined to make me very interested in how students can learn best in an online environment.  Movide is an attempt to streamline and enhance the <a href="http://en.wikipedia.org/wiki/Learning_management_system">LMS</a> and make it easier for students to interact and learn. </p>
+            </div> <!-- //end span4 -->
+
+        </div> <!-- //end row -->
+    </div> <!-- //end container -->
+{% endblock %}
+
