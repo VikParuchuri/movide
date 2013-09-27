@@ -8,12 +8,15 @@
     <!-- Bootstrap css -->
 
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/colorfrog.css' %}"/>
     <link rel="stylesheet" type="text/css" href="{% static 'css/morris.css' %}"/>
     <link rel="stylesheet" type="text/css" href="{% static 'css/zocial/zocial.css' %}"/>
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
-    <link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-    <link href="{% static 'img/favicon.ico' %}" rel="shortcut icon" type="image/x-icon" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}"/>
+    <link rel='stylesheet' href='{% static 'css/app.css' %}'>
+
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400,700|Yanone+Kaffeesatz:200,300,400,700|Raleway:200,300,400,500,700' rel='stylesheet' type='text/css'>
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+
+    <link href="{% static 'img/favicon.ico' %}?v=2" rel="shortcut icon" type="image/x-icon" />
 
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
@@ -22,19 +25,24 @@
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.0.0/backbone-min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/3.0.4/jquery.imagesloaded.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/fitvids/1.0.1/jquery.fitvids.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.4.2/morris.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.1.0/moment.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery.form/3.32/jquery.form.js"></script>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/jquery.isotope/1.5.25/jquery.isotope.min.js'></script>
+
     <script src="{% static 'js/sigma.min.js' %}"></script>
     <script src="{% static 'js/sigma.forceatlas2.js' %}"></script>
     <script src="{% static 'js/colorbrewer.js' %}"></script>
     <script src="{% static 'js/respond.min.js' %}"></script>
-    <script src="{% static 'js/colorfrog.js' %}"></script>
     <script src="{% static 'js/bootbox.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/models.js' %}"></script>
+    <script src="{% static 'js/models.js' %}"></script>
     <script src="{% static 'js/base.js' %}"></script>
+    <script src='{% static 'js/jquery.visible.min.js' %}'></script>
+    <script src='{% static 'js/jquery.knob.js' %}'></script>
+    <script src='{% static 'js/jquery.scrollUp.min.js' %}'></script>
+    <script src='{% static 'js/application.js' %}'></script>
+
 
     <!--[if lt IE 9]>
 	<script>
@@ -65,108 +73,87 @@
     {% endblock %}">
 
 </head>
-<body class="blue">
-
-    <div class="container">
-        <header>
-            <a class="current brand" href="/">Movide</a>
-        </header>
-
-        <button class="btn navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-        </button>
-
-        <nav class="navbar-collapse collapse">
-            <ul class="nav nav-pills">
-                <li {% if request.path == "/" %}class="current active"{% endif %}><a href="/">Home</a></li>
-                {% if user.is_authenticated %}
-                    <li {% if request.path == "/dashboard/" %}class="active"{% endif %}><a href="/dashboard/">Dashboard</a></li>
-                    {% block additional_nav %}
-                    {% endblock %}
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                            <span class="glyphicon glyphicon-user"></span>
-                            {{ user.username }}
-                            <b class="caret"></b>
+<body>
+<div id="wrap">
+<div class='header-main'>
+        <div class='container'>
+            <nav class='navbar navbar-default' role='navigation'>
+                <div class='navbar-header'>
+                    <button class='navbar-toggle' data-target='.navbar-ex1-collapse' data-toggle='collapse' type='button'>
+                        <span class='sr-only'>Toggle navigation</span>
+                        <span class='icon-bar'></span>
+                        <span class='icon-bar'></span>
+                        <span class='icon-bar'></span>
+                    </button>
+                    <a class='current navbar-brand' href='/'>
+                        <img alt='' height='45px' src='{% static 'img/logo_new.png'%}'>
+                    </a>
+                </div>
+                <div class='collapse navbar-collapse navbar-ex1-collapse'>
+                    {% if not user.is_authenticated %}
+                        <a class='btn btn-default navbar-btn navbar-right' data-toggle='modal' href='#loginModal'>
+                            Login
+                            <i class='icon-signin'></i>
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/accounts/logout/">Logout</a></li>
-                        </ul>
-                    </li>
-                {% else %}
-                    <li {% if request.path == "/about/" %}class="active"{% endif %}><a href="/about/">About</a></li>
-                    <li {% if request.path == "/accounts/signup/" %}class="active"{% endif %}><a href="/accounts/signup/">Signup</a></li>
-                    <li {% if request.path == "/accounts/login/" %}class="active"{% endif %}><a href="/accounts/login/">Login</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-    </div> <!-- //end container -->
+                        <a class='btn btn-default navbar-btn navbar-right' data-toggle='modal' href='#signupModal'>
+                            Sign Up
+                            <i class='icon-user'></i>
+                        </a>
+                    {% endif %}
+                    <ul class='nav navbar-nav navbar-right'>
+                    <li {% if request.path == "/" %}class="current active"{% endif %}><a href="/">Home</a></li>
+                    <li {% if request.path == "/about/" %}class="current active"{% endif %}><a href="/about/">About</a></li>
+                    {% if user.is_authenticated %}
+                        <li {% if request.path == "/dashboard/" %}class="current active"{% endif %}><a href="/dashboard/">Dashboard</a></li>
+                        {% block additional_nav %}
+                        {% endblock %}
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <span class="glyphicon glyphicon-user"></span>
+                                {{ user.username }}
+                                <b class="caret"></b>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/accounts/logout/">Logout</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+
+                    {% endif %}
+                    </ul>
+                </div>
+            </nav>
+        </div>
+
+    </div>
 
     {% block content %}
     {% endblock %}
-
+    <div id="push"></div>
+</div>
 
 {% block footer %}
-    <div id="map">
+    <footer id="footer">
         <div class="container">
             <div class="row">
-                <div class="col-xs-12">
-                    <div class="row">
-                        <div class="col-xs-4 alt">
-                            <div class="background-inner">
-                                <h3>Subscribe</h3>
-                                <p>Our newsletter keeps you up to date with news and happenings from Movide.  Hear about all of the exciting new things we are up to!</p>
-                                <div class="input-group">
-                                    <input class="form-control" type="text" placeholder="your email address" id="email-signup-address" />
-                                    <div class="input-group-btn">
-                                        <button class="btn" type="button" id="email-signup-button"><span class="glyphicon glyphicon-chevron-right"></span></button>
-                                    </div>
-                                </div>
-                                <span class="help-block" id="email-signup-message"></span>
-                            </div>
-                        </div>
-                        <div class="col-xs-4 alt">
-                            <div class="background-inner">
-                                <h3>Site Links</h3>
-                                <ul class="footer-links">
-                                    <li><a href="/about/">About</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-xs-4 alt">
-                            <div class="background-inner">
-                                <h3>Connect</h3>
-                                <ul class="contact-info">
-                                    <li class="contact-info-address">Central Square, Cambridge, MA</li>
-                                    <li class="contact-info-call">(617) 520-4566</li>
-                                    <li class="contact-info-mail"><a href="mailto:">info@movide.com</a></li>
-                                </ul>
-                                <ul class="social-info">
-                                    <li>
-                                        <a href="http://twitter.com/movideapp" class="social-info-twitter">Twitter</a>
-                                    </li>
-                                    <li>
-                                        <a href="http://www.facebook.com/pages/Movide/500899039995186" class="social-info-facebook">Facebook</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+                <div class="col-md-6">
+                    <ul class="footer-menu">
+                        <li>Central Square, Cambridge, MA, USA</li>
+                        <li>info@movide.com</li>
+                        <li>(617) 520-4566</li>
+                    </ul>
+                    <div class="copyright">
+                        2013 &copy; Equirio. All rights reserved.
                     </div>
                 </div>
-            </div>
-        </div> <!-- //end container -->
-    </div> <!-- //end map -->
-
-    <footer>
-        <div class="container">
-            <div class="row">
-                <div class="col-sm-6">
-                    <p>Copyright &copy; 2013 Equirio. All rights reserved.</p>
+                <div class="col-md-6">
+                    <ul class="footer-social">
+                        <li><a href="http://www.facebook.com/pages/Movide/500899039995186"><i class="icon-facebook"></i></a></li>
+                        <li><a href="http://twitter.com/movideapp"><i class="icon-twitter"></i></a></li>
+                    </ul>
                 </div>
             </div>
-        </div>   <!--//end container -->
+        </div>
     </footer>
 {% endblock %}
 

@@ -1,0 +1,131 @@
+
+ul.socialaccount_providers{
+    list-style-type: none;
+}
+ul.socialaccount_providers li{
+    margin-bottom: 5px;
+}
+
+ul.footer-links{
+
+}
+ul.footer-links a{
+    font-size: 1.3em;
+    color: #333333;
+    margin-bottom:10px;
+}
+
+.person-meta ul{
+    list-style-type: none;
+}
+
+ul.footer-menu li{
+    color: #FFFFFF;
+}
+
+.comments form label {
+    display: inline; }
+.comments form div {
+    margin-top: 15px; }
+.comments form input[type="text"] {
+    width: 90%; }
+.comments form textarea {
+    width: 90%; }
+.comments .comment {
+    margin: 15px 0 15px 0;
+    border: 1px solid #D6D6D6;
+    padding: 10px;
+    box-shadow: 0 1px 3px 0 rgba(56,61,72,0.21);
+}
+.comments .comment.announcement{
+    box-shadow: 0 1px 3px 0 #FF4D4D;
+}
+.comments .comment h4{
+    display: inline-block;
+}
+.comments .comment .time{
+    display: inline-block;
+    margin-left: 5px;
+}
+.comments .comment .comment-footer{
+    margin-bottom: 5px;
+}
+.comments .comment .message-replies-container .comment{
+    border: none;
+    border-top: 1px solid #D6D6D6;
+    box-shadow: none;
+    padding: 5px 0px 5px 5px;
+}
+.comments .comment .message-info-labels .label{
+    margin-left: 10px;
+}
+.comments .comment .message-info-labels .message-delete{
+    margin-left: 10px;
+}
+.comments .message-replies-container{
+    margin-left: 10px;
+}
+.comments .notification-message{
+    margin-left: 20px;
+}
+.comments .comment.post-author .header img {
+    -moz-border-radius: 30px;
+    -ms-border-radius: 30px;
+    -o-border-radius: 30px;
+    -webkit-border-radius: 30px;
+    border-radius: 30px;
+    display: block;
+    width: 54px;
+    height: 54px;
+    border: none; }
+.comments .comment .header img {
+    background-color: #ececec;
+    float: left;
+    margin-right: 15px;
+    display: block;
+    width: 54px;
+    height: 54px;
+    border: none; }
+.comments .comment .header h4 {
+    margin-top: 0; }
+.comments .comment .header div {
+    float: left; }
+.comments .comment .header .time {
+    font-weight: 300;
+    color: #919191; }
+.comments .comment .comment-content{
+    padding: 5px 0px 5px 5px
+}
+
+html,
+body {
+    height: 100%;
+    /* The html and body elements cannot have any padding or margin. */
+}
+/* Wrapper for page content to push down footer */
+#wrap {
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+    /* Negative indent footer by it's height */
+    margin: 0 auto -60px;
+}
+
+/* Set the fixed height of the footer here */
+#push,
+#footer {
+    height: 60px;
+}
+#footer {
+    background-color: #eee;
+}
+
+/* Lastly, apply responsive CSS fixes as necessary */
+@media (max-width: 767px) {
+    #footer {
+        margin-left: -20px;
+        margin-right: -20px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}

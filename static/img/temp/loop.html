@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel='stylesheet' href='assets/css/app.css'>
+  <link rel='stylesheet' href='assets/css/animate.min.css'>
+
+  <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400,700|Yanone+Kaffeesatz:200,300,400,700|Raleway:200,300,400,500,700' rel='stylesheet' type='text/css'>
+  <link href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+
+  <link href="assets/favicon.ico" rel="shortcut icon">
+  <link href="assets/apple-touch-icon.png" rel="apple-touch-icon">
+  <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+  <!--[if lt IE 9]>
+    @javascript html5shiv respond.min
+  <![endif]-->
+
+  <title>New Project</title>
+
+</head>
+
+<body>
+  <!-- Login Modal -->
+<div aria-hidden='true' aria-labelledby='loginModalLabel' class='modal fade' id='loginModal' role='dialog' tabindex='-1'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header'>
+        <button aria-hidden='true' class='close' data-dismiss='modal' type='button'>×</button>
+        <h4 class='modal-title'>Login example</h4>
+      </div>
+      <div class='modal-body'>
+        <form action='#' role='form'>
+          <div class='row'>
+            <div class='col-md-6'>
+              <label class='control-label' for=''>Username</label>
+              <input class='form-control' placeholder='your username' type='text'>
+            </div>
+            <div class='col-md-6'>
+              <label class='control-label' for=''>Password</label>
+              <input class='form-control' placeholder='your password' type='text'>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class='modal-footer'>
+        <button class='btn btn-default' data-dismiss='modal' type='button'>Close</button>
+        <button class='btn btn-primary' type='button'>Log In</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Contact Modal -->
+<div aria-hidden='true' aria-labelledby='contactModalLabel' class='modal fade' id='contactModal' role='dialog' tabindex='-1'>
+  <div class='modal-dialog'>
+    <div class='modal-content'>
+      <div class='modal-header'>
+        <button aria-hidden='true' class='close' data-dismiss='modal' type='button'>×</button>
+        <h4 class='modal-title'>Contact Us Form</h4>
+      </div>
+      <div class='modal-body'>
+        <form action='#' role='form'>
+          <div class='form-group'>
+            <div class='row'>
+              <div class='col-md-6'>
+                <label class='control-label' for=''>Your Name</label>
+                <input class='form-control' placeholder='your username' type='text'>
+              </div>
+              <div class='col-md-6'>
+                <label class='control-label' for=''>Your Email</label>
+                <input class='form-control' placeholder='your password' type='text'>
+              </div>
+            </div>
+          </div>
+          <div class='form-group'>
+            <div class='row'>
+              <div class='col-md-12'>
+                <label class='control-label' for=''>Your Message</label>
+                <textarea class='form-control' name='' rows='4'></textarea>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class='modal-footer'>
+        <button class='btn btn-default' data-dismiss='modal' type='button'>Cancel</button>
+        <button class='btn btn-primary' type='button'>Send Message</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class='header-main'>
+  <div class='container'>
+  <nav class='navbar navbar-default' role='navigation'>
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class='navbar-header'>
+      <button class='navbar-toggle' data-target='.navbar-ex1-collapse' data-toggle='collapse' type='button'>
+        <span class='sr-only'>Toggle navigation</span>
+        <span class='icon-bar'></span>
+        <span class='icon-bar'></span>
+        <span class='icon-bar'></span>
+      </button>
+      <a class='navbar-brand' href='index.html'>
+        <img alt='' height='45px' src='assets/images/logo-small-top.png'>
+      </a>
+    </div>
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class='collapse navbar-collapse navbar-ex1-collapse'>
+      <a class='btn btn-default navbar-btn navbar-right' data-toggle='modal' href='#loginModal'>
+        Sign In
+        <i class='icon-signin'></i>
+      </a>
+      <ul class='nav navbar-nav navbar-right'>
+        <li class='active'>
+          <a href='index.html'>Home</a>
+        </li>
+        <li>
+          <a href='about.html'>About Us</a>
+        </li>
+        <li>
+          <a href='portfolio.html'>Portfolio</a>
+        </li>
+        <li class='current'>
+          <a class='current' href='loop.html'>Blog</a>
+        </li>
+        <li>
+          <a data-toggle='modal' href='#contactModal'>Contact Us</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+</div>
+
+</div>
+<div class='separator-shadow-bottom bottom-margin'>
+  <img alt='' src='assets/images/shadow-separator-wide-bottom.png'>
+</div>
+<div class='container'>
+  <div class='row post-loop'>
+    <div class='col-md-2 col-md-offset-1'>
+      <div class='post-loop-author-info'>
+        <div class='author-avatar'>
+          <img alt='' src='http://placehold.it/500x500'>
+        </div>
+        <div class='author-meta'>
+          <h4 class='author-name'>by David Villa</h4>
+          <i class='icon-time'></i>
+          17 Nov, 2013
+        </div>
+      </div>
+    </div>
+    <div class='col-md-8'>
+      <div class='post-loop-content'>
+        <h2 class='has-sub-header'>
+          <a href='post.html'>Amazing Template</a>
+        </h2>
+        <div class='post-loop-meta'>
+          <span class='hidden-mobile-ib'>
+            <i class='icon-reorder'></i>
+            in
+            <a href='#'>Web Development</a>
+          </span>
+          <span>
+            <i class='icon-bookmark'></i>
+            10 min read
+          </span>
+          <span class='hidden-mobile-ib'>
+            <a href='#'>
+              <i class='icon-comments'></i>
+              24
+            </a>
+          </span>
+          <span class='hidden-mobile-ib'>
+            <a href='#'>
+              <i class='icon-heart'></i>
+              15
+            </a>
+          </span>
+        </div>
+        <p>
+          Collaboratively administrate empowered markets via plug-and-play networks. Dynamically procrastinate B2C users after installed base benefits. Dramatically visualize customer directed convergence without revolutionary ROI.
+        </p>
+        <div class='under-post'>
+          <div class='post-social'>
+            <span class='social-label'>SHARE:</span>
+            <a class='social-link' href='#'>
+              <i class='icon-facebook'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-twitter'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-linkedin'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-envelope'></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class='row post-loop'>
+    <div class='col-md-2 col-md-offset-1'>
+      <div class='post-loop-author-info'>
+        <div class='author-avatar'>
+          <img alt='' src='http://placehold.it/500x500'>
+        </div>
+        <div class='author-meta'>
+          <h4 class='author-name'>by Victor Valdes</h4>
+          <i class='icon-time'></i>
+          15 Nov, 2013
+        </div>
+      </div>
+    </div>
+    <div class='col-md-8'>
+      <div class='post-loop-content'>
+        <h2 class='has-sub-header'>
+          <a href='post.html'>Responsive Layout</a>
+        </h2>
+        <div class='post-loop-meta'>
+          <span class='hidden-mobile-ib'>
+            <i class='icon-reorder'></i>
+            in
+            <a href='#'>Graphic Design</a>
+          </span>
+          <span>
+            <i class='icon-bookmark'></i>
+            10 min read
+          </span>
+          <span class='hidden-mobile-ib'>
+            <a href='#'>
+              <i class='icon-comments'></i>
+              24
+            </a>
+          </span>
+          <span class='hidden-mobile-ib'>
+            <a href='#'>
+              <i class='icon-heart'></i>
+              15
+            </a>
+          </span>
+        </div>
+        <p>
+          Efficiently unleash cross-media information without cross-media value. Quickly maximize timely deliverables for real-time schemas.
+        </p>
+        <div class='under-post'>
+          <div class='post-social'>
+            <span class='social-label'>SHARE:</span>
+            <a class='social-link' href='#'>
+              <i class='icon-facebook'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-twitter'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-linkedin'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-envelope'></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class='row post-loop'>
+    <div class='col-md-2 col-md-offset-1'>
+      <div class='post-loop-author-info'>
+        <div class='author-avatar'>
+          <img alt='' src='http://placehold.it/500x500'>
+        </div>
+        <div class='author-meta'>
+          <h4 class='author-name'>by David Villa</h4>
+          <i class='icon-time'></i>
+          12 Nov, 2013
+        </div>
+      </div>
+    </div>
+    <div class='col-md-8'>
+      <div class='post-loop-content'>
+        <h2 class='has-sub-header'>
+          <a href='post.html'>Clean and Modern Look</a>
+        </h2>
+        <div class='post-loop-meta'>
+          <span class='hidden-mobile-ib'>
+            <i class='icon-reorder'></i>
+            in
+            <a href='#'>Web Development</a>
+          </span>
+          <span>
+            <i class='icon-bookmark'></i>
+            10 min read
+          </span>
+          <span class='hidden-mobile-ib'>
+            <a href='#'>
+              <i class='icon-comments'></i>
+              24
+            </a>
+          </span>
+          <span class='hidden-mobile-ib'>
+            <a href='#'>
+              <i class='icon-heart'></i>
+              15
+            </a>
+          </span>
+        </div>
+        <p>
+          Collaboratively administrate empowered markets via plug-and-play networks. Dynamically procrastinate B2C users after installed base benefits. Dramatically visualize customer directed convergence without revolutionary ROI.
+        </p>
+        <div class='under-post'>
+          <div class='post-social'>
+            <span class='social-label'>SHARE:</span>
+            <a class='social-link' href='#'>
+              <i class='icon-facebook'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-twitter'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-linkedin'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-envelope'></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class='row post-loop'>
+    <div class='col-md-2 col-md-offset-1'>
+      <div class='post-loop-author-info'>
+        <div class='author-avatar'>
+          <img alt='' src='http://placehold.it/500x500'>
+        </div>
+        <div class='author-meta'>
+          <h4 class='author-name'>by Victor Valdes</h4>
+          <i class='icon-time'></i>
+          15 Nov, 2013
+        </div>
+      </div>
+    </div>
+    <div class='col-md-8'>
+      <div class='post-loop-content'>
+        <h2 class='has-sub-header'>
+          <a href='post.html'>Responsive Layout</a>
+        </h2>
+        <div class='post-loop-meta'>
+          <span class='hidden-mobile-ib'>
+            <i class='icon-reorder'></i>
+            in
+            <a href='#'>Graphic Design</a>
+          </span>
+          <span>
+            <i class='icon-bookmark'></i>
+            10 min read
+          </span>
+          <span class='hidden-mobile-ib'>
+            <a href='#'>
+              <i class='icon-comments'></i>
+              24
+            </a>
+          </span>
+          <span class='hidden-mobile-ib'>
+            <a href='#'>
+              <i class='icon-heart'></i>
+              15
+            </a>
+          </span>
+        </div>
+        <p>
+          Efficiently unleash cross-media information without cross-media value. Quickly maximize timely deliverables for real-time schemas.
+        </p>
+        <div class='under-post'>
+          <div class='post-social'>
+            <span class='social-label'>SHARE:</span>
+            <a class='social-link' href='#'>
+              <i class='icon-facebook'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-twitter'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-linkedin'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-envelope'></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class='row post-loop'>
+    <div class='col-md-2 col-md-offset-1'>
+      <div class='post-loop-author-info'>
+        <div class='author-avatar'>
+          <img alt='' src='http://placehold.it/500x500'>
+        </div>
+        <div class='author-meta'>
+          <h4 class='author-name'>by David Villa</h4>
+          <i class='icon-time'></i>
+          12 Nov, 2013
+        </div>
+      </div>
+    </div>
+    <div class='col-md-8'>
+      <div class='post-loop-content'>
+        <h2 class='has-sub-header'>
+          <a href='post.html'>Amazing Template</a>
+        </h2>
+        <div class='post-loop-meta'>
+          <span class='hidden-mobile-ib'>
+            <i class='icon-reorder'></i>
+            in
+            <a href='#'>Web Development</a>
+          </span>
+          <span>
+            <i class='icon-bookmark'></i>
+            10 min read
+          </span>
+          <span class='hidden-mobile-ib'>
+            <a href='#'>
+              <i class='icon-comments'></i>
+              24
+            </a>
+          </span>
+          <span class='hidden-mobile-ib'>
+            <a href='#'>
+              <i class='icon-heart'></i>
+              15
+            </a>
+          </span>
+        </div>
+        <p>
+          Collaboratively administrate empowered markets via plug-and-play networks. Dynamically procrastinate B2C users after installed base benefits. Dramatically visualize customer directed convergence without revolutionary ROI.
+        </p>
+        <div class='under-post'>
+          <div class='post-social'>
+            <span class='social-label'>SHARE:</span>
+            <a class='social-link' href='#'>
+              <i class='icon-facebook'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-twitter'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-linkedin'></i>
+            </a>
+            <a class='social-link' href='#'>
+              <i class='icon-envelope'></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  <footer id="main-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+          <ul class="footer-menu">
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Contact Us</a></li>
+          </ul>
+          <div class="copyright">
+            2013 &copy; Theme Earth. All rights reserved.
+          </div>
+        </div>
+        <div class="col-md-6">
+          <ul class="footer-social">
+            <li><a href="#"><i class="icon-facebook"></i></a></li>
+            <li><a href="#"><i class="icon-twitter"></i></a></li>
+            <li><a href="#"><i class="icon-dribbble"></i></a></li>
+            <li><a href="#"><i class="icon-linkedin"></i></a></li>
+            <li><a href="#"><i class="icon-google-plus"></i></a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <script src='assets/js/jquery.js'></script>
+<script src='assets/js/bootstrap/button.js'></script>
+<script src='assets/js/bootstrap/carousel.js'></script>
+<script src='assets/js/bootstrap/transition.js'></script>
+<script src='assets/js/bootstrap/collapse.js'></script>
+<script src='assets/js/bootstrap/modal.js'></script>
+<script src='assets/js/bootstrap/dropdown.js'></script>
+<script src='assets/js/jquery.visible.min.js'></script>
+<script src='assets/js/bootstrap/tab.js'></script>
+<script src='assets/js/jquery.isotope.min.js'></script>
+<script src='assets/js/jquery.knob.js'></script>
+<script src='assets/js/jquery.scrollUp.min.js'></script>
+<script src='assets/js/application.js'></script>
+</body>
+
+</html>

@@ -10,15 +10,40 @@ from rest_framework import status
 from api.forms import StudentClassSettingsForm, ClassSettingsForm
 from django.contrib.auth.models import User
 import json
+from allauth.account.views import LoginView, SignupView
 
 log=logging.getLogger(__name__)
+
+def mock_login_form(request):
+    login_view = LoginView()
+    login_view.request = request
+    login_view.template_name = "account/login_short.html"
+    return login_view.get(request).render().content
+
+def mock_signup_form(request):
+    signup_view = SignupView()
+    signup_view.request = request
+    signup_view.template_name = "account/signup_short.html"
+    return signup_view.get(request).render().content
+
+
+def get_modals(request):
+    return {
+        'login': mock_login_form(request),
+        'signup': mock_signup_form(request)
+    }
 
 @login_required()
 def dashboard(request):
     return render_to_response("dashboard/main.html", context_instance=RequestContext(request))
 
 def index(request):
-    return render_to_response("index.html", context_instance=RequestContext(request))
+    return render_to_response("index.html", get_modals(request),
+                              context_instance=RequestContext(request))
+
+def about(request):
+    return render_to_response("about.html", get_modals(request),
+                              context_instance=RequestContext(request))
 
 @login_required()
 def verify_code(request):
@@ -193,9 +218,6 @@ def autocomplete_names(request, classgroup):
     cg = verify_settings(request, classgroup)
 
     return HttpResponse(json.dumps(cg.autocomplete_list()), status=200)
-
-def about(request):
-    return render_to_response("about.html", context_instance=RequestContext(request))
 
 
 

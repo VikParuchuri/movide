@@ -1109,7 +1109,7 @@ $(document).ready(function() {
         },
         checkScroll: function () {
             var triggerPoint = 400;
-            if( !this.isLoading && $(window).scrollTop() + $(window).height() + triggerPoint > $('html').height() && this.enable_infinite_scroll == true ) {
+            if( !this.isLoading && ($(window).scrollTop() + $(window).height() + triggerPoint) > ($("#wrap").height()) && this.enable_infinite_scroll == true ) {
                 this.isLoading = true;
                 var that = this;
                 var status = this.collection.nextPage({

@@ -12,75 +12,159 @@
 {% endblock %}
 
 {% block content %}
-	<div class="jumbotron">
-		<div class="container">
-			<h1>Welcome to Movide.</h1>
-			<h2>A better way to manage a class.</h2>
-		</div>
+    {% include "snippets/modals.html" %}
+	<div class="noise-wrapper">
+        <div class='separator-shadow-bottom'>
+            <img alt='' src='{% static 'img/shadow-separator-wide-bottom.png' %}'>
+        </div>
+        <section class='leaderboard leaderboard-style-one'>
+            <div class='container'>
+                <h1>Welcome to Movide</h1>
+                <h2>What if there was a better way to connect with your students?</h2>
+                <div class='relative-w'>
+                </div>
+            </div>
+        </section>
 	</div> <!-- //end hero-unit -->
-	
-	<div class="jumbotron-sub">
-		<div class="container">
-			<div class="row">
-				<div class="col-xs-12">
-					<p>We focus on what's important - student learning and engagement.</p>
-				</div>
-			</div>
-		</div>
-	</div> <!-- //end submain -->
 
-	<div class="container content underHero">
-        <div class="row">
-            <div class="col-xs-12">
-                <h2 class="subTitle">Why Movide?</h2>
-                <hr>
+    <div class="area-content">
+        <div class="container">
+            <div class='separator-shadow-top sub-screenshot-shadow'>
+                <img alt='' src='{% static 'img/shadow-separator-wide-top.png' %}'>
             </div>
-            <div class="col-sm-4 feature">
-                <h3>Discussions are central</h3>
-                <p>Many LMS platforms include discussions as an afterthought.  Not us.  We believe that discussion is key to learning.</p>
+            <div class='iconed-features lift-on-hover style-1'>
+                <div class='row'>
+                    <div class='col-md-4'>
+                        <div class='iconed-feature' href='#'>
+                            <div class='feature-icon-w'>
+                                <i class='icon-comments'></i>
+                            </div>
+                            <h4>Discussions are central</h4>
+                            <p>We believe that discussion is key to learning, and with Movide, learning is a continuous conversation.</p>
+                        </div>
+                    </div>
+                    <div class='col-md-4'>
+                        <div class='iconed-feature' href='#'>
+                            <div class='feature-icon-w'>
+                                <i class='icon-lock'></i>
+                            </div>
+                            <h4>Safe and secure</h4>
+                            <p>Discussions are restricted to your class, and you can remove off topic conversations.</p>
+                        </div>
+                    </div>
+                    <div class='col-md-4'>
+                        <div class='iconed-feature' href='#'>
+                            <div class='feature-icon-w'>
+                                <i class='icon-usd'></i>
+                            </div>
+                            <h4>Free!</h4>
+                            <p>Movide is and will always be free.</p>
+                            <div class='slogan-buttons'>
+                                <a class='btn btn-primary btn-cta' data-toggle='modal' href='#signupModal'>
+                                    Add your class today!
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-sm-4 feature">
-                <h3>Safe and secure</h3>
-                <p>Discussions are restricted to your class, and you can remove off topic conversations.</p>
-            </div>
-            <div class="col-sm-4 feature">
-                <h3>Free!</h3>
-                <p>Movide is and will always be free.  Sign up and try it out today!</p>
-            </div>
-
-        </div> <!-- //end of row -->
-        <div class="row">
-            <div class="col-xs-12">
-                <h2 class="subTitle">How do I get started?</h2>
-                <hr>
-            </div>
-            <div class="col-sm-4 feature">
-                <h3>Form your class</h3>
-                <p>Create your class and add announcements, links, content, and messages.</p>
-            </div>
-            <div class="col-sm-4 feature">
-                <h3>Add students</h3>
-                <p>Give students a customized link and access code that they can use to join.</p>
-            </div>
-            <div class="col-sm-4 feature">
-                <h3>Go!</h3>
-                <p>You can start using Movide and having class discussions immediately.  We are constantly working to make Movide better, and would love to hear from you.</p>
+            <div class='separator-shadow-bottom bottom-margin'>
+                <img alt='' src='{% static 'img/shadow-separator-wide-bottom.png' %}'>
             </div>
 
-        </div> <!-- //end of row -->
-		
-		<div class="row"><div class="col-xs-12"><hr></div></div>
+            <div class='row bottom-margin'>
+                <div class='col-md-5'>
+                    <h2 class='header-lined'>Why Movide?</h2>
+                    <ul class='list-checkmarked text-bigger'>
+                        <li>Have meaningful discussions with your students.</li>
+                        <li>Share useful resources and announcements.</li>
+                        <li>Find out who is the most engaged with our detailed statistics.</li>
+                        <li>New students can join your class with a  personalized link and access code.</li>
+                        <li>Get started in minutes!</li>
+                    </ul>
+                    <!-- %a.btn.btn-default{:href => "#"} Show me Example -->
+                </div>
+                <div class='col-md-1'></div>
+                <div class='col-md-6'>
+                    <div class='relative-w'>
+                        <div class='loupe loupe-left'>
+                            <img alt='' src='{% static 'img/movide_preview_large_cropped.png' %}'>
+                        </div>
+                        <div class='frame-browser'>
+                            <div class='frame-buttons'>
+                                <div class='frame-button-close'></div>
+                                <div class='frame-button-max'></div>
+                                <div class='frame-button-min'></div>
+                            </div>
+                            <div class='frame-browser-image'>
+                                <img alt='' src='{% static 'img/movide_preview_large_cropped.png' %}'>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        <div class="row">
-            <div class="col-sm-4">
-                <h2 class="subTitle2">Start using Movide</h2>
+            <div class='separator-shadow-top bottom-margin'>
+                <img alt='' src='{% static 'img/shadow-separator-wide-top.png' %}'>
             </div>
-            <div class="col-sm-8">
-                <a class="btn btn-xlarge" href="/accounts/login/">Sign up or login</a>
+            <div class='slogan text-center'>
+                <h2 class='header-highlighted'>More about us</h2>
+                <p>We enable students and teachers to have conversations. We want these conversations to be about useful content, including content from sources like Khan Academy and edX. We want teachers to be able to understand which students are learning, and how they are learning. Most of all, we want Movide to be a joy to work with.</p>
+                <div class='slogan-buttons'>
+                    <a class='btn btn-primary btn-cta btn-lg animated swing' data-toggle='modal' href='#signupModal'>
+                        Add your class today!
+                    </a>
+                </div>
             </div>
-        </div> <!-- //end of row -->
-		
-		<div class="row"><div class="span12"><hr></div></div>
-		
-	</div> <!-- //end container -->	
+            <div class='iconed-features style-2'>
+                <div class='row'>
+                    <div class='col-md-4'>
+                        <div class='iconed-feature' href='#'>
+                            <div class='row'>
+                                <div class='col-md-8'>
+                                    <h4>Form your class</h4>
+                                    <p>Create your class and add announcements, links, content, and messages.</p>
+                                </div>
+                                <div class='col-md-4'>
+                                    <div class='feature-icon-w animated-when-visible' data-animation-type='rollIn'>
+                                        <i class='icon-arrow-right'></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class='col-md-4'>
+                        <div class='iconed-feature' href='#'>
+                            <div class='row'>
+                                <div class='col-md-8'>
+                                    <h4>Add students</h4>
+                                    <p>Give students a customized link and access code that they can use to join.</p>
+                                </div>
+                                <div class='col-md-4'>
+                                    <div class='feature-icon-w animated-when-visible' data-animation-type='rollIn'>
+                                        <i class='icon-arrow-right'></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class='col-md-4'>
+                        <div class='iconed-feature' href='#'>
+                            <div class='row'>
+                                <div class='col-md-8'>
+                                    <h4>Go!</h4>
+                                    <p>You can start using Movide and having class discussions immediately.</p>
+                                </div>
+                                <div class='col-md-4'>
+                                    <div class='feature-icon-w animated-when-visible' data-animation-type='rollIn'>
+                                        <i class='icon-ok-sign'></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

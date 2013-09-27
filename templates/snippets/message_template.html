@@ -38,14 +38,14 @@
         <% } %>
         <div class="pull-right">
             <% if (typeof(has_been_rated) != "undefined") { %>
-                <a type="button" class="btn btn-xs like-message-button" data-toggle="tooltip" title="Like this discussion"
+                <a type="button" class="btn like-message-button" data-toggle="tooltip" title="Like this discussion"
                    <% if(has_been_rated == true){ %>
                         disabled="true"
                    <% } %>
                         ><span class="glyphicon glyphicon-thumbs-up"></span></a>
             <% } %>
             <% if (is_owner == true) { %>
-                    <a type="button" class="btn btn-xs delete-message-button" data-toggle="tooltip" title="Delete this discussion"><span class="glyphicon glyphicon-remove"></span></a>
+                    <a type="button" class="btn delete-message-button" data-toggle="tooltip" title="Delete this discussion"><span class="glyphicon glyphicon-remove"></span></a>
             <% } %>
         </div>
         <% if(depth<1) { %>

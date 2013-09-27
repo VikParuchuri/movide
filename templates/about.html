@@ -12,40 +12,60 @@
 {% endblock %}
 
 {% block content %}
-    <div class="jumbotron">
-        <div class="container">
-            <h1>What is Movide?</h1>
-            <h2>Discover why we get up in the morning.</h2>
-        </div>
-    </div> <!-- //end hero-unit -->
-
-    <div class="container content underHero">
-        <div class="row">
-
-            <div class="col-xs-6 person">
-                <h2>Our Vision</h2>
-                <p class="lead">Discussion is integral to learning.</p>
-                <p>Movide enables students and teachers to have conversations.  We want these conversations to be about useful content, including content from sources like <a href="https://www.khanacademy.org/">Khan Academy</a> and <a href="https://www.edx.org/">edX</a>.  We want teachers to be able to understand which students are learning, and how they are learning.  Most of all, we want Movide to be a joy to work with.</p>
-                <p>Ultimately, we want to help move beyond the LMS and make learning a continuous conversation. A huge task like this won't happen overnight, but we are committed to working to make this vision a reality.  By trying out Movide and letting us know what you think, you will be a huge help to us in this journey.</p>
-            </div> <!-- //end span4 -->
-
-            <div class="col-xs-6 person">
-                <h2>Our Founder</h2>
-                <div class="person-meta">
-                    <img src="{% static 'img/vik_profile_small.png' %}" alt=""/>
-                    <h4>Vik Paruchuri</h4>
-                    <ul>
-                        <li><a href="http://twitter.com/VikParuchuri">@VikParuchuri</a></li>
-                        <li><a href="http://vikparuchuri.com">vikparuchuri.com</a></li>
-                    </ul>
+    {% include "snippets/modals.html" %}
+    <div class='highlight-content text-center cta-box light'>
+        <div class='container'>
+            <div class='row'>
+                <div class='col-md-2'></div>
+                <div class='col-md-8'>
+                    <h1 class='animated fadeInDown'>What is Movide?</h1>
+                    <h2>Discover why we get up in the morning.</h2>
                 </div>
-                <p class="lead">All-around software person.  Sometimes teaches machines to think like humans.  Passionate about helping people learn.</p>
-                <p>In 2011, I was a diplomat in the Foreign Service, stationed in South America.  I graduated college in 2008 and majored in American History.  I have worked at UPS and Pepsi in operations management.  What do all of these things have in common?  Nothing, aside from the fact that none of them interested me enough to stick with.</p>
-                <p>In late 2011, I realized that I wanted to create products with a tangible impact.  I figured that I would support myself by predicting the stock market (easy, right?) while I did this.  Unfortunately, I didn't know programming, or statistics, or linear algebra (I could make quite a list here).  Luckily, I was able to learn, though great online resources like <a href="https://www.khanacademy.org/">Khan Academy</a>.  I entered a lot of competitions on a site called <a href="http://www.kaggle.com/">Kaggle</a>, which allows data scientists all over the world to compete to solve interesting problems.  One such problem was posed by the Hewlett Foundation, and asked how computers can score essays automatically.  I ended up doing quite well in it.</p>
-                <p>I then went to work for <a href="https://www.edx.org/">edX</a>, a MOOC provider started by Harvard and MIT, and worked on developing their open response assessment technology.  <a href="http://vikparuchuri.com/blog/on-the-automated-scoring-of-essays/">My blog</a> has a summary of some of this work.  All of these experiences combined to make me very interested in how students can learn best in an online environment.  Movide is an attempt to streamline and enhance the <a href="http://en.wikipedia.org/wiki/Learning_management_system">LMS</a> and make it easier for students to interact and learn. </p>
-            </div> <!-- //end span4 -->
+            </div>
+        </div>
+    </div>
 
-        </div> <!-- //end row -->
-    </div> <!-- //end container -->
+    <div class='container'>
+        <div class='separator-shadow-bottom bottom-margin'>
+            <img alt='' src='{% static 'img/shadow-separator-wide-bottom.png' %}'>
+        </div>
+        <div class='row bottom-margin'>
+            <div class='col-md-6'>
+                <div class='team-member animated-when-visible' data-animation-type='bounceInUp'>
+                    <h2>Our Vision</h2>
+                    <p class="lead">Discussion is integral to learning.</p>
+                    <p>Movide enables students and teachers to have conversations.  We want these conversations to be about useful content, including content from sources like <a href="https://www.khanacademy.org/">Khan Academy</a> and <a href="https://www.edx.org/">edX</a>.  We want teachers to be able to understand which students are learning, and how they are learning.  Most of all, we want Movide to be a joy to work with.</p>
+                    <p>Ultimately, we want to help move beyond the LMS and make learning a continuous conversation. A huge task like this won't happen overnight, but we are committed to working to make this vision a reality.  By trying out Movide and letting us know what you think, you will be a huge help to us in this journey.</p>
+                </div>
+            </div>
+            <div class='col-md-6'>
+                <div class='team-member animated-when-visible delay-animation-one' data-animation-type='bounceInUp'>
+                    <h2>Our Founder</h2>
+                    <div class='member-avatar'>
+                        <img alt='' src='{% static 'img/vik_profile_small.png' %}'>
+                    </div>
+                    <h3>Vik Paruchuri</h3>
+                    <p class="lead">All-around software person.  Sometimes teaches machines to think like humans.  Passionate about helping people learn.</p>
+                    <p>In 2011, I was a diplomat in the Foreign Service, stationed in South America.  I graduated college in 2008 and majored in American History.  I have worked at UPS and Pepsi in operations management.  What do all of these things have in common?  Nothing, aside from the fact that none of them interested me enough to stick with.</p>
+                    <p>In late 2011, I realized that I wanted to create products with a tangible impact.  I figured that I would support myself by predicting the stock market (easy, right?) while I did this.  Unfortunately, I didn't know programming, or statistics, or linear algebra (I could make quite a list here).  Luckily, I was able to learn, though great online resources like <a href="https://www.khanacademy.org/">Khan Academy</a>.  I entered a lot of competitions on a site called <a href="http://www.kaggle.com/">Kaggle</a>, which allows data scientists all over the world to compete to solve interesting problems.  One such problem was posed by the Hewlett Foundation, and asked how computers can score essays automatically.  I ended up doing quite well in it.</p>
+                    <p>I then went to work for <a href="https://www.edx.org/">edX</a>, a MOOC provider started by Harvard and MIT, and worked on developing their open response assessment technology.  <a href="http://vikparuchuri.com/blog/on-the-automated-scoring-of-essays/">My blog</a> has a summary of some of this work.  All of these experiences combined to make me very interested in how students can learn best in an online environment.  Movide is an attempt to streamline and enhance the <a href="http://en.wikipedia.org/wiki/Learning_management_system">LMS</a> and make it easier for students to interact and learn. </p>
+                    <div class='member-social'>
+                        <a href='http://twitter.com/VikParuchuri'>
+                            <i class='icon-twitter'></i>
+                        </a>
+                        <a href='http://www.linkedin.com/in/vikparuchuri'>
+                            <i class='icon-linkedin'></i>
+                        </a>
+                        <a href='http://vikparuchuri.com'>
+                            <i class='icon-home'></i>
+                        </a>
+                        <a href='http://github.com/vikparuchuri'>
+                            <i class='icon-github'></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
