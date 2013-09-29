@@ -5,7 +5,8 @@ from django.conf import settings
 from rest_framework import viewsets, routers
 from views import (MessageView, MessageDetailView, ClassgroupView, ClassgroupDetailView,
                    UserView, UserDetail, EmailSubscription, MessageNotificationView, NotificationView,
-                   ClassSettingsView, StudentClassSettingsView, ClassgroupStatsView, RatingView)
+                   ClassSettingsView, StudentClassSettingsView, ClassgroupStatsView, RatingView,
+                   ResourceAuthorView)
 
 
 urlpatterns = patterns('',
@@ -22,5 +23,6 @@ urlpatterns = patterns('',
                        url(r'^messages/notifications/$', MessageNotificationView.as_view()),
                        url(r'^subscribe/$', EmailSubscription.as_view()),
                        url(r'^notifications/$', NotificationView.as_view()),
+                       url(r'^resources/author/$', ResourceAuthorView.as_view()),
                        )
 

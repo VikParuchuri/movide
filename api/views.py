@@ -1,12 +1,13 @@
 from __future__ import division
 from django.contrib.auth.models import User
-from models import Tag, Message, UserProfile, Classgroup, MessageNotification, RatingNotification, StudentClassSettings
+from models import (Tag, Message, UserProfile, Classgroup, MessageNotification,
+                    RatingNotification, StudentClassSettings, Resource)
 from rest_framework.views import APIView
 from serializers import (TagSerializer, MessageSerializer, UserSerializer,
                          EmailSubscriptionSerializer, ResourceSerializer,
                          ClassgroupSerializer, RatingSerializer, PaginatedMessageSerializer,
                          NotificationSerializer, PaginatedNotificationSerializer, StudentClassSettingsSerializer,
-                         ClassSettingsSerializer, ClassgroupStatsSerializer)
+                         ClassSettingsSerializer, ClassgroupStatsSerializer, alphanumeric_name)
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from django.db.models import Q, Count
@@ -24,6 +25,7 @@ import datetime
 import calendar
 import pytz
 from django.forms.models import model_to_dict
+from resources import ResourceRenderer
 log = logging.getLogger(__name__)
 
 RESULTS_PER_PAGE = 20
@@ -44,6 +46,22 @@ class QueryView(APIView):
             has_value = 0
             for attrib in attrib_set:
                 if attrib in self.query_dict and self.query_dict[attrib] is not None:
+                    has_value += 1
+            if has_value == 0:
+                error_msg = "Need to specify {0}.".format(attrib_set)
+                log.error(error_msg)
+                return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_post_params(self):
+        self.post_dict = {}
+        for attrib in self.post_attributes:
+            val = self.request.POST.get(attrib, None)
+            if val is not None:
+                self.post_dict[attrib] = val
+        for attrib_set in self.required_attributes:
+            has_value = 0
+            for attrib in attrib_set:
+                if attrib in self.post_dict and self.post_dict[attrib] is not None:
                     has_value += 1
             if has_value == 0:
                 error_msg = "Need to specify {0}.".format(attrib_set)
@@ -92,7 +110,7 @@ class ClassgroupView(APIView):
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        serializer = ClassgroupSerializer(data=request.DATA, context={'request' : request})
+        serializer = ClassgroupSerializer(data=request.DATA, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -403,3 +421,48 @@ class ClassgroupStatsView(QueryView):
 
         serializer = ClassgroupStatsSerializer(self.cg, context={'request': request})
         return Response(serializer.data)
+
+class ResourceAuthorView(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+    query_attributes = ["classgroup", "resource_type"]
+    required_attributes = [("classgroup",), ("resource_type",), ]
+    post_attributes = ["classgroup", "resource_type", "name"]
+
+    def get(self, request):
+        self.get_query_params()
+        self.verify_membership()
+
+        resource = Resource(owner=request.user, classgroup=self.cg, resource_type=self.query_dict['resource_type'])
+        renderer = ResourceRenderer(resource, static_data={
+            'request': request,
+            'author_post_link': '/api/resources/author/'
+        })
+
+        html = renderer.author_view()
+
+        return Response({'form_html': html})
+
+    def post(self, request):
+        self.get_post_params()
+        self.query_dict = {
+            'classgroup': self.post_dict['classgroup']
+        }
+        self.verify_membership()
+
+        data = {k:request.POST[k] for k in request.POST if k not in self.post_attributes}
+
+        name = alphanumeric_name(self.post_dict['name'])
+
+        resource = Resource(
+            owner=request.user,
+            classgroup=self.cg,
+            resource_type=self.post_dict['resource_type'],
+            data=data,
+            display_name=self.post_dict['name'],
+            name=name,
+        )
+
+        renderer = ResourceRenderer(resource)
+        renderer.save_module_data()
+
+        return Response({'success': True},status=status.HTTP_201_CREATED)

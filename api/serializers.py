@@ -239,10 +239,10 @@ class ResourceSerializer(serializers.Serializer):
     pk = serializers.Field()
     owner = serializers.SlugRelatedField(many=False, slug_field="username", read_only=True)
     classgroup = serializers.SlugRelatedField(many=False, slug_field="name", read_only=True)
-    data = serializers.CharField()
     approved = serializers.BooleanField()
     name = serializers.CharField()
     display_name = serializers.CharField()
+    author_view = serializers.CharField(source="author_view")
 
     modified = serializers.Field()
     created = serializers.Field()

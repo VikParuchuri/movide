@@ -137,7 +137,7 @@ def class_settings(request, classgroup):
         'save_button_value': 'Save Class Settings',
     })
 
-VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications', 'settings', 'home']
+VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications', 'settings', 'home', 'resources']
 @login_required()
 def classview(request, classgroup, **kwargs):
     active_page = kwargs.get('active_page', 'home')

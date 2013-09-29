@@ -473,6 +473,12 @@ $(document).ready(function() {
             this.settings_view = new SettingsView(this.options);
             this.settings_view.render();
         },
+        render_resources: function(){
+            this.refresh();
+            $(this.el).html($("#resourceDetailTemplate").html());
+            this.resources_view = new ResourcesView(this.options);
+            this.resources_view.render();
+        },
         render_home: function(){
             this.refresh();
             var tmpl = _.template($("#homeDetailTemplate").html());
@@ -495,6 +501,8 @@ $(document).ready(function() {
                 this.render_settings();
             } else if(this.active_page == "home"){
                 this.render_home();
+            } else if(this.active_page == "resources"){
+                this.render_resources();
             }
         },
         refresh: function(){
@@ -1224,6 +1232,67 @@ $(document).ready(function() {
         },
         remove_el: function(){
             $(this.el).remove();
+        }
+    });
+
+    var ResourcesView = BaseView.extend({
+        el: "#resources-container",
+        template_name: "#resourcesTemplate",
+        create_a_resource_button: "#create-a-resource-button",
+        resource_creation_link: "/api/resources/author",
+        create_a_resource_modal: "#resourceCreationModal",
+        resource_modal_id: "#create-a-resource-modal",
+        resource_form_container_id: "#resource-creation-form-container",
+        resource_type_button: ".resource-type-button",
+        resource_form_id: "#resource-creation-form",
+        events: {
+            'click #create-a-resource-button': this.create_resource
+        },
+        initialize: function(options){
+            _.bindAll(this, 'render', 'create_resource', 'rebind_events', 'show_resource_form');
+            this.is_owner = $("#classinfo").data("is-owner");
+            this.class_link = $("#classinfo").data("class-link");
+            this.classgroup = options.classgroup;
+        },
+        render: function () {
+            this.rebind_events();
+        },
+        refresh: function(){
+            this.render();
+        },
+        rebind_events: function(){
+            $(this.create_a_resource_button).unbind();
+            $(this.create_a_resource_button).click(this.create_resource);
+            $(this.resource_form_id).unbind();
+            var that = this;
+            $(this.resource_form_id).ajaxForm({
+                success: function() {
+                    $(that.resource_modal_id).modal('hide');
+                },
+                data: {
+                    classgroup: this.classgroup,
+                    resource_type: $(this.resource_form_container_id).data('resource-type')
+                },
+                error: function(){
+                    $(that.resource_modal_id).find('.help-block-resource').html('Could not create your resource.')
+                }
+            });
+        },
+        show_resource_form: function(event){
+            event.preventDefault();
+            var resource_type = $(event.target).data('resource-type');
+            var author_html = $.getValues(this.resource_creation_link, {classgroup: this.classgroup, resource_type: resource_type}).form_html;
+            $(this.resource_form_container_id).html(author_html);
+            $(this.resource_form_container_id).data('resource-type', resource_type);
+            this.rebind_events();
+            return false;
+        },
+        create_resource: function(){
+            var tmpl = $(this.create_a_resource_modal).html();
+            this.$el.append(tmpl);
+            $(this.resource_modal_id).modal('show');
+            $(this.resource_type_button).unbind();
+            $(this.resource_type_button).click(this.show_resource_form);
         }
     });
 

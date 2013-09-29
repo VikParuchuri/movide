@@ -131,8 +131,8 @@ class Classgroup(models.Model):
 class Resource(models.Model):
     owner = models.ForeignKey(User, related_name="resources")
     classgroup = models.ForeignKey(Classgroup, related_name="resources")
-    name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
-    display_name = models.CharField(max_length=MAX_NAME_LENGTH)
+    name = models.CharField(max_length=MAX_NAME_LENGTH, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
+    display_name = models.CharField(max_length=MAX_NAME_LENGTH, blank=True, null=True)
     resource_type = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
     data = models.TextField(blank=True, null=True)
     approved = models.BooleanField(default=False)
@@ -140,10 +140,24 @@ class Resource(models.Model):
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
-    def render(self):
+    def author_view(self):
         from resources import ResourceRenderer
-        renderer = ResourceRenderer(self.data, self.resource_type)
-        return renderer.render()
+        renderer = ResourceRenderer(self)
+        return renderer.author_view()
+
+    class Meta:
+        unique_together = (("classgroup", "name"),)
+
+class UserResourceState(models.Model):
+    resource = models.ForeignKey(Resource, related_name="user_resource_states")
+    user = models.ForeignKey(User, related_name="user_resource_states")
+    data = models.TextField()
+
+    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (("resource", "user"),)
 
 class Message(models.Model):
     text = models.TextField()
