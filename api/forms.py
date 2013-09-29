@@ -1,7 +1,21 @@
 from django import forms
-from models import EMAIL_FREQUENCY_CHOICES, StudentClassSettings, ClassSettings
+from models import EMAIL_FREQUENCY_CHOICES, StudentClassSettings, ClassSettings, TITLE_CHOICES
 from django.utils.safestring import mark_safe
 from django.forms.extras import widgets
+
+title_choices = ["Mr.", "Ms.", "Mrs."]
+
+class SignupForm(forms.Form):
+    first_name = forms.CharField(max_length=30, label='First Name')
+    last_name = forms.CharField(max_length=30, label='Last Name')
+    title = forms.ChoiceField(choices=TITLE_CHOICES)
+
+    def save(self, user):
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        user.save()
+        user.profile.title = self.cleaned_data['title']
+        user.profile.save()
 
 class PlainTextWidget(forms.Widget):
     input_type = 'text'

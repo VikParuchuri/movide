@@ -32,7 +32,7 @@ class NotificationText(object):
         return NOTIFICATION_TYPES[notification.notification_type].format(origin_user=notification.origin_message.user)
 
     def generate_text_rating(self, notification):
-        return NOTIFICATION_TYPES[notification.notification_type].format(origin_user=notification.origin_rating.owner)
+        return NOTIFICATION_TYPES[notification.notification_type].format(origin_user=notification.origin_rating.user)
 
     def get_messages(self):
         messages = []

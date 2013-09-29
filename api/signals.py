@@ -66,7 +66,7 @@ def create_message_notification(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Rating, dispatch_uid="create_rating_notification")
 def create_rating_notification(sender, instance, **kwargs):
-    if instance.message.user != instance.owner:
+    if instance.message.user != instance.user:
         try:
             RatingNotification.objects.get_or_create(
                 receiving_message=instance.message,

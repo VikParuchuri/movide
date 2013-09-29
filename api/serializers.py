@@ -9,9 +9,14 @@ import logging
 from django.conf import settings
 import re
 from rest_framework.pagination import PaginationSerializer
+from django.contrib.sites.models import get_current_site
 
 
 log = logging.getLogger(__name__)
+
+WELCOME_MESSAGE_TEMPLATE = """
+Welcome to your class {class_name}!  You can remove this announcement by hitting the delete button at the bottom right of this.  To invite your students, simply tell them to visit the url {class_link} and use the access code {access_key}.  You can view these again in the settings view, as well as enable or disable student signup.  If you have any questions, please feel free to email info@movide.com.  Hope you enjoy using Movide!
+"""
 
 def alphanumeric_name(string):
     return re.sub(r'\W+', '', string.lower().encode("ascii", "ignore"))
@@ -72,7 +77,7 @@ class TagSerializer(serializers.Serializer):
 
 class RatingSerializer(serializers.Serializer):
     message = serializers.PrimaryKeyRelatedField(many=False, queryset=Message.objects.all())
-    owner = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    user = serializers.SlugRelatedField(slug_field="username", read_only=True)
     rating = serializers.IntegerField()
     modified = serializers.Field()
 
@@ -86,9 +91,9 @@ class RatingSerializer(serializers.Serializer):
             raise serializers.ValidationError("Attempting rate a post that is not in your class.")
 
         if instance is None:
-            instance, created = Rating.objects.get_or_create(owner=user, message=message)
+            instance, created = Rating.objects.get_or_create(user=user, message=message)
         else:
-            if instance.owner != user:
+            if instance.user != user:
                 raise serializers.ValidationError("Attempting to edit a rating that is not yours.")
 
         instance = set_attributes(attributes, attrs, instance)
@@ -150,6 +155,22 @@ class ClassgroupSerializer(serializers.Serializer):
                 except IntegrityError:
                     class_settings = ClassSettings.objects.get(classgroup=instance)
 
+                try:
+                    message = Message(
+                        user=user,
+                        classgroup=instance,
+                        source="welcome",
+                        text=WELCOME_MESSAGE_TEMPLATE.format(
+                            class_name=instance.display_name,
+                            class_link=get_current_site(self.context['request']).domain + instance.link(),
+                            access_key=class_settings.access_key
+                        ),
+                        message_type="A",
+                    )
+                    message.save()
+                except IntegrityError:
+                    pass
+
             except IntegrityError:
                 error_msg = "Class name is already taken."
                 log.exception(error_msg)
@@ -169,7 +190,7 @@ class RatingField(serializers.RelatedField):
     def to_native(self, value):
         return {
             'rating': value.rating,
-            'owner': value.owner.username,
+            'user': value.user.username,
         }
 
 class MessageSerializer(serializers.Serializer):
@@ -237,12 +258,12 @@ class PaginatedNotificationSerializer(PaginationSerializer):
 
 class ResourceSerializer(serializers.Serializer):
     pk = serializers.Field()
-    owner = serializers.SlugRelatedField(many=False, slug_field="username", read_only=True)
+    user = serializers.SlugRelatedField(many=False, slug_field="username", read_only=True)
     classgroup = serializers.SlugRelatedField(many=False, slug_field="name", read_only=True)
     approved = serializers.BooleanField()
     name = serializers.CharField()
     display_name = serializers.CharField()
-    author_view = serializers.CharField(source="author_view")
+    created_timestamp = serializers.Field(source="created_timestamp")
 
     modified = serializers.Field()
     created = serializers.Field()
@@ -255,14 +276,18 @@ class ResourceSerializer(serializers.Serializer):
         attributes = ['data', 'approved']
 
         if instance is None:
-            instance = Resource(owner=user, classgroup=classgroup, name=alphanumeric_name(name), display_name=name)
+            instance = Resource(user=user, classgroup=classgroup, name=alphanumeric_name(name), display_name=name)
             instance.save()
         else:
-            if instance.owner != user:
+            if instance.user != user:
                 raise serializers.ValidationError("Class name is already taken.")
 
         instance = set_attributes(attributes, attrs, instance)
         return instance
+
+class PaginatedResourceSerializer(PaginationSerializer):
+    class Meta:
+        object_serializer_class = ResourceSerializer
 
 def create_user_profile(user):
     profile = UserProfile(user=user)
@@ -272,7 +297,7 @@ class UserSerializer(serializers.Serializer):
     image = serializers.Field(source="profile.image")
     username = serializers.CharField()
     messages = serializers.SlugRelatedField(many=True, slug_field="text", read_only=True, required=False)
-    resources = serializers.SlugRelatedField(many=True, slug_field="resources", read_only=True, required=False)
+    resources = serializers.SlugRelatedField(many=True, slug_field="name", read_only=True, required=False)
     classgroups = serializers.SlugRelatedField(many=True, slug_field="name", required=False, queryset=Classgroup.objects.all())
     pk = serializers.Field()
 

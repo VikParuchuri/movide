@@ -1,13 +1,14 @@
 from __future__ import division
 from django.contrib.auth.models import User
 from models import (Tag, Message, UserProfile, Classgroup, MessageNotification,
-                    RatingNotification, StudentClassSettings, Resource)
+                    RatingNotification, StudentClassSettings, Resource, UserResourceState)
 from rest_framework.views import APIView
 from serializers import (TagSerializer, MessageSerializer, UserSerializer,
                          EmailSubscriptionSerializer, ResourceSerializer,
                          ClassgroupSerializer, RatingSerializer, PaginatedMessageSerializer,
                          NotificationSerializer, PaginatedNotificationSerializer, StudentClassSettingsSerializer,
-                         ClassSettingsSerializer, ClassgroupStatsSerializer, alphanumeric_name)
+                         ClassSettingsSerializer, ClassgroupStatsSerializer, alphanumeric_name,
+                         PaginatedResourceSerializer)
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from django.db.models import Q, Count
@@ -24,6 +25,7 @@ from notifications import NotificationText
 import datetime
 import calendar
 import pytz
+import json
 from django.forms.models import model_to_dict
 from resources import ResourceRenderer
 log = logging.getLogger(__name__)
@@ -269,8 +271,11 @@ class MessageDetailView(APIView):
 
     def get(self, request, pk, format=None):
         message = self.get_object(pk)
-        serializer = MessageSerializer(message)
-        return Response(serializer.data)
+        if request.user == message.user:
+            serializer = MessageSerializer(message)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk, format=None):
         message = self.get_object(pk)
@@ -295,6 +300,7 @@ class UserView(QueryView):
 
     def get(self, request, format=None):
         self.get_query_params()
+        self.verify_membership()
 
         queryset = User.objects.all()
         queryset = self.filter_query_params(queryset)
@@ -332,8 +338,11 @@ class UserDetail(APIView):
 
     def get(self, request, pk, format=None):
         user = self.get_object(pk)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
+        if user == request.user:
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk, format=None):
         classgroup = request.DATA.get('classgroup', None)
@@ -422,17 +431,64 @@ class ClassgroupStatsView(QueryView):
         serializer = ClassgroupStatsSerializer(self.cg, context={'request': request})
         return Response(serializer.data)
 
+class ResourceDetail(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_object(self, pk):
+        return Resource.objects.get(pk=pk)
+
+    def get(self, request, pk):
+        resource = self.get_object(pk)
+        self.query_dict = {
+            'classgroup': resource.classgroup.name
+        }
+        self.verify_membership()
+
+        user_state, created = UserResourceState.objects.get_or_create(
+            user = request.user,
+            resource = resource
+        )
+
+        renderer = ResourceRenderer(resource, user_state)
+
+        return Response({'html': renderer.user_view()})
+
+class ResourceView(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+    query_attributes = ["classgroup"]
+    required_attributes = [("classgroup",), ]
+
+    def filter_classgroup(self, queryset, classgroup):
+        return queryset.filter(classgroup__name=classgroup)
+
+    def get(self, request):
+        self.get_query_params()
+        self.verify_membership()
+        queryset = Resource.objects.all()
+        queryset = self.filter_query_params(queryset).order_by("-created")
+        paginator = Paginator(queryset, RESULTS_PER_PAGE)
+        page = request.QUERY_PARAMS.get("page")
+
+        try:
+            serializer = PaginatedResourceSerializer(paginator.page(page), context={'request' : request})
+        except PageNotAnInteger:
+            serializer = ResourceSerializer(queryset, context={'request': request}, many=True)
+        except EmptyPage:
+            serializer = PaginatedResourceSerializer(paginator.page(paginator.num_pages), context={'request' : request})
+
+        return Response(serializer.data)
+
 class ResourceAuthorView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
     query_attributes = ["classgroup", "resource_type"]
     required_attributes = [("classgroup",), ("resource_type",), ]
-    post_attributes = ["classgroup", "resource_type", "name"]
+    post_attributes = ["classgroup", "resource_type", "name", "csrfmiddlewaretoken"]
 
     def get(self, request):
         self.get_query_params()
         self.verify_membership()
 
-        resource = Resource(owner=request.user, classgroup=self.cg, resource_type=self.query_dict['resource_type'])
+        resource = Resource(user=request.user, classgroup=self.cg, resource_type=self.query_dict['resource_type'])
         renderer = ResourceRenderer(resource, static_data={
             'request': request,
             'author_post_link': '/api/resources/author/'
@@ -449,12 +505,12 @@ class ResourceAuthorView(QueryView):
         }
         self.verify_membership()
 
-        data = {k:request.POST[k] for k in request.POST if k not in self.post_attributes}
+        data = json.dumps({k:request.POST[k] for k in request.POST if k not in self.post_attributes})
 
         name = alphanumeric_name(self.post_dict['name'])
 
         resource = Resource(
-            owner=request.user,
+            user=request.user,
             classgroup=self.cg,
             resource_type=self.post_dict['resource_type'],
             data=data,

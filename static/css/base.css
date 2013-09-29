@@ -133,3 +133,19 @@ body {
 .resource-type-buttons{
     margin-bottom: 20px;
 }
+
+.resource .resource-content div a{
+    display: inline-block;
+}
+
+.resource .resource-content div h4{
+    display: inline-block;
+}
+.resource .resource-content .time{
+    display: inline-block;
+    margin-left: 5px;
+}
+
+#create-a-resource-button{
+    margin-bottom: 20px;
+}

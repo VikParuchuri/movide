@@ -15,7 +15,7 @@
 </script>
 
 <script id="noNetworkChartTemplate" type="text/template">
-    <div class="alert alert-info">We can't display the student network chart until you start some discussions.</div>
+    <div class="alert alert-info">We can't display the student network chart until you have some interactions between users, such as message replies.</div>
 </script>
 
 <script id="noDailyActivityChartTemplate" type="text/template">
@@ -35,8 +35,27 @@
     </div>
 </script>
 
+<script id="resourceModal" type="text/template">
+    <div aria-hidden='true' class='modal fade view-a-resource-modal' role='dialog' tabindex='-1'>
+        <div class='modal-dialog'>
+            <div class='modal-content'>
+                <div class='modal-header'>
+                    <button aria-hidden='true' class='close' data-dismiss='modal' type='button'>×</button>
+                    <h4 class='modal-title'>Resource</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="resource-view">
+                        <%= html %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+
 <script id="resourceCreationModal" type="text/template">
-    <div aria-hidden='true' aria-labelledby='loginModalLabel' class='modal fade' id='create-a-resource-modal' role='dialog' tabindex='-1'>
+    <div aria-hidden='true' class='modal fade' id='create-a-resource-modal' role='dialog' tabindex='-1'>
         <div class='modal-dialog'>
             <div class='modal-content'>
                 <div class='modal-header'>
@@ -60,7 +79,7 @@
 <script id="resourceDetailTemplate" type="text/template">
     <div class="row">
         <div class="col-xs-12">
-            <button class="btn btn-small" id="create-a-resource-button">Create a resource</button>
+            <button class="btn btn-small" id="create-a-resource-button"><i class="glyphicon glyphicon-plus"></i> Create a resource</button>
         </div>
     </div>
     <div id="resources-container">
@@ -184,19 +203,23 @@
 </script>
 
 <script id="noUserTemplate" type="text/template">
-    <p>You don't have any students for this tag yet.  Why not add some?</p>
+    <div class="alert alert-info">You don't have any students for this tag yet.  Why not add some?</div>
+</script>
+
+<script id="noResourcesTemplate" type="text/template">
+    <div class="alert alert-info">There aren't any resources in this class yet. Why not add one now?</div>
 </script>
 
 <script id="noMessagesTemplate" type="text/template">
-    <p>There aren't any discussions in this class yet. Why not start a discussion now?</p>
+    <div class="alert alert-info">There aren't any discussions in this class yet. Why not start a discussion now?</div>
 </script>
 
 <script id="noNotificationsTemplate" type="text/template">
-    <p>You don't have any notifications yet.</p>
+    <div class="alert alert-info">You don't have any notifications yet.  You will start to see notifications as people respond to or like your discussions, or mention you.</div>
 </script>
 
 <script id="noAnnouncementsTemplate" type="text/template">
-    <p>There aren't any course announcements yet.</p>
+    <div class="alert alert-info">There aren't any course announcements yet.</div>
 </script>
 
 <script id="userTemplate" type="text/template">
@@ -211,7 +234,7 @@
         <td><%= message_count %></td>
         <td>
             <% if (is_owner == true) { %>
-                <a type="button" class="btn btn-xs user-tag-delete"><span class="glyphicon glyphicon-remove"></span></a>
+                <a type="button" class="btn btn-xs user-tag-delete" data-toggle="tooltip" title="Remove user from course"><span class="glyphicon glyphicon-remove"></span></a>
             <% } %>
         </td>
     </tr>
@@ -253,5 +276,24 @@
     <div id="show-more-messages-container"></div>
     <div class="comments" data-tag-name="<%= classgroup %>" id="comments">
         <%= messages %>
+    </div>
+</script>
+
+<script id="resourcesTemplate" type="text/template">
+    <div class="resources" data-tag-name="<%= classgroup %>" id="resources">
+        <%= resources %>
+    </div>
+</script>
+
+<script id="resourceTemplate" type="text/template">
+    <div class="resource" data-resource-id="<%= pk %>">
+        <div class="header">
+            <% if (typeof(image_url) != "undefined") { %>
+            <img src="<%= image_url %>" alt="<%= response_type %>" class="img-responsive img-rounded">
+            <% } %>
+        </div>
+        <div class="resource-content">
+            <div><a href="#" class="show-resource-modal-link" data-resource-id="<%= pk %>"><%= display_name %></a> shared by <h4><%= user %></h4><span class="time"> <%= created_formatted %></span></div>
+        </div>
     </div>
 </script>

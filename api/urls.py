@@ -6,7 +6,7 @@ from rest_framework import viewsets, routers
 from views import (MessageView, MessageDetailView, ClassgroupView, ClassgroupDetailView,
                    UserView, UserDetail, EmailSubscription, MessageNotificationView, NotificationView,
                    ClassSettingsView, StudentClassSettingsView, ClassgroupStatsView, RatingView,
-                   ResourceAuthorView)
+                   ResourceAuthorView, ResourceView, ResourceDetail)
 
 
 urlpatterns = patterns('',
@@ -24,5 +24,7 @@ urlpatterns = patterns('',
                        url(r'^subscribe/$', EmailSubscription.as_view()),
                        url(r'^notifications/$', NotificationView.as_view()),
                        url(r'^resources/author/$', ResourceAuthorView.as_view()),
+                       url(r'^resources/$', ResourceView.as_view()),
+                       url(r'^resources/(?P<pk>[0-9]+)/$', ResourceDetail.as_view()),
                        )
 

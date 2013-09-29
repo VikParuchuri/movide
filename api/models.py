@@ -25,6 +25,12 @@ MESSAGE_TYPE_CHOICES = (
     ('A', "Course announcement.")
 )
 
+TITLE_CHOICES = (
+    ("Mr.", "Mr."),
+    ("Ms.", "Ms."),
+    ("Mrs.", "Mrs.")
+)
+
 DEFAULT_WELCOME_MESSAGE = "Welcome to your course.  Check the discussions view to get started!  The instructor can edit this message in the settings view."
 DEFAULT_CLASS_DESCRIPTION = "One of the finest courses ever made. (the instructor can change this in the settings view)"
 
@@ -129,7 +135,7 @@ class Classgroup(models.Model):
         return {'nodes': nodes, 'edges': edges}
 
 class Resource(models.Model):
-    owner = models.ForeignKey(User, related_name="resources")
+    user = models.ForeignKey(User, related_name="resources")
     classgroup = models.ForeignKey(Classgroup, related_name="resources")
     name = models.CharField(max_length=MAX_NAME_LENGTH, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
     display_name = models.CharField(max_length=MAX_NAME_LENGTH, blank=True, null=True)
@@ -144,6 +150,9 @@ class Resource(models.Model):
         from resources import ResourceRenderer
         renderer = ResourceRenderer(self)
         return renderer.author_view()
+
+    def created_timestamp(self):
+        return calendar.timegm(self.created.utctimetuple())
 
     class Meta:
         unique_together = (("classgroup", "name"),)
@@ -203,13 +212,13 @@ class Message(models.Model):
 class Rating(models.Model):
     rating = models.IntegerField(default=0)
     message = models.ForeignKey(Message, related_name="ratings")
-    owner = models.ForeignKey(User, related_name="ratings", blank=True, null=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, related_name="ratings", blank=True, null=True, on_delete=models.SET_NULL)
 
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = (("message", "owner"),)
+        unique_together = (("message", "user"),)
 
 class ClassSettings(models.Model):
     classgroup = models.OneToOneField(Classgroup, related_name="class_settings", blank=True, null=True)
@@ -252,6 +261,7 @@ class Tag(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, related_name="profile", unique=True, blank=True, null=True)
     image = models.CharField(max_length=MAX_CHARFIELD_LENGTH, blank=True, null=True, unique=True)
+    title = models.CharField(choices=TITLE_CHOICES, max_length=3, blank=True, null=True)
     modified = models.DateTimeField(auto_now=True)
 
 class EmailSubscription(models.Model):

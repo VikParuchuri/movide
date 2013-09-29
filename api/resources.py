@@ -236,7 +236,7 @@ class HTMLModule(SimpleAuthoringMixin, ResourceModule):
     template = "resources/html_module.html"
 
     def render_module(self):
-        self.module_html = render_to_string(self.template, {
+        return render_to_string(self.template, {
             'html': self.html
         })
 
@@ -251,7 +251,7 @@ class LinkModule(SimpleAuthoringMixin, ResourceModule):
     template = "resources/link_module.html"
 
     def render_module(self):
-        self.module_html = render_to_string(self.template, {
+        return render_to_string(self.template, {
             'link': self.link
         })
 

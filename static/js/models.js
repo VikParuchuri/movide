@@ -151,6 +151,26 @@ $(document).ready(function() {
         }
     });
 
+    var Resource = methodModel.extend({
+        idAttribute: 'pk',
+        url: function () {
+            return '/api/resources/' + this.id + "/";
+        },
+        methodUrl: {
+            'create': '/api/resources/'
+        }
+    });
+
+    var Resources = PaginatedCollection.extend({
+        idAttribute: 'pk',
+        model: Resource,
+        baseUrl: '/api/resources/?page=1',
+        url: '/api/resources/?page=1',
+        comparator: function(m) {
+            return -parseInt(m.get('created_timestamp'));
+        }
+    });
+
     var EmailSubscription = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
@@ -522,7 +542,6 @@ $(document).ready(function() {
         collection_class : Users,
         view_class: UserView,
         template_name: "#userTableTemplate",
-        user_join_template_name: "#userJoinTemplate",
         user_add_message: "#user-add-message",
         classgroup: undefined,
         active: undefined,
@@ -569,14 +588,7 @@ $(document).ready(function() {
                 is_owner: this.is_owner
             });
 
-            tmpl = _.template($(this.user_join_template_name).html());
-            var user_join_html = tmpl({
-                link: this.link,
-                access_key: this.access_key,
-                is_owner: this.is_owner
-            });
-
-            $(this.el).html(user_join_html + content_html);
+            $(this.el).html(content_html);
             this.rebind_events();
             return this;
         },
@@ -793,7 +805,6 @@ $(document).ready(function() {
         start_a_discussion_input: '#start-a-discussion-input',
         delete_a_message: '.delete-message-button',
         like_a_message_button: '.like-message-button',
-        user_join_template_name: "#userJoinTemplate",
         isLoading: false,
         interval_id: undefined,
         show_more_messages_container: "#show-more-messages-container",
@@ -1047,14 +1058,7 @@ $(document).ready(function() {
                     model_html = model_html + $(that.renderMessage(item)).html();
                 }, this);
             } else {
-                var no_tmpl = _.template($(this.no_message_template_name).html());
-                tmpl = _.template($(this.user_join_template_name).html());
-                var user_join_html = tmpl({
-                    link: this.link,
-                    access_key: this.access_key,
-                    is_owner: this.is_owner
-                });
-                model_html = no_tmpl({classgroup: this.classgroup, display_tag: this.display_tag}) + user_join_html;
+                model_html = $(this.no_message_template_name).html();
             }
             var tmpl = _.template($(this.template_name).html());
             var content_html = tmpl({messages: model_html, classgroup: this.classgroup, display_tag: this.display_tag});
@@ -1235,6 +1239,43 @@ $(document).ready(function() {
         }
     });
 
+    var ResourceView = BaseView.extend({
+        tagName: "div",
+        className: "resources",
+        template_name: "#resourceTemplate",
+        events: {
+        },
+        initialize: function(){
+            _.bindAll(this, 'render');
+            this.model.bind('change', this.render);
+            this.model.bind('remove', this.unrender);
+            this.class_owner = $("#classinfo").data('class-owner');
+            this.is_owner = $("#classinfo").data('is-owner');
+        },
+        get_model_json: function(){
+            var model_json = this.model.toJSON();
+            model_json.created_formatted = model_json.created.replace("Z","");
+            model_json.created_formatted = moment.utc(model_json.created_formatted).local().fromNow();
+            model_json.written_by_owner = (this.class_owner == model_json.user);
+            model_json.is_owner = this.is_owner;
+            return model_json;
+        },
+        render: function () {
+            var tmpl = _.template($(this.template_name).html());
+            var model_json = this.get_model_json();
+            var model_html = tmpl(model_json);
+
+            $(this.el).html(model_html);
+            return this;
+        },
+        destroy: function() {
+            this.model.trigger('destroy', this.model, this.model.collection, {});
+        },
+        remove_el: function(){
+            $(this.el).remove();
+        }
+    });
+
     var ResourcesView = BaseView.extend({
         el: "#resources-container",
         template_name: "#resourcesTemplate",
@@ -1245,17 +1286,27 @@ $(document).ready(function() {
         resource_form_container_id: "#resource-creation-form-container",
         resource_type_button: ".resource-type-button",
         resource_form_id: "#resource-creation-form",
+        resource_container: "#resources-container",
+        resources_template: "#resourcesTemplate",
+        resource_template: "#resourceTemplate",
+        resource_modal_template: "#resourceModal",
+        view_a_resource_modal: '.view-a-resource-modal',
+        show_resource_modal_link: '.show-resource-modal-link',
+        no_resources_template: '#noResourcesTemplate',
+        collection_class: Resources,
+        view_class: ResourceView,
         events: {
-            'click #create-a-resource-button': this.create_resource
+            'click #create-a-resource-button': this.create_resource,
+            'click .show-resource-modal-link': this.show_resource_modal
         },
         initialize: function(options){
-            _.bindAll(this, 'render', 'create_resource', 'rebind_events', 'show_resource_form');
+            _.bindAll(this, 'render', 'create_resource', 'rebind_events', 'show_resource_form', 'show_resource_modal');
             this.is_owner = $("#classinfo").data("is-owner");
             this.class_link = $("#classinfo").data("class-link");
             this.classgroup = options.classgroup;
-        },
-        render: function () {
-            this.rebind_events();
+            this.collection = new this.collection_class();
+            this.fetch_data = {classgroup: this.classgroup};
+            this.collection.fetch({async: false, data: this.fetch_data});
         },
         refresh: function(){
             this.render();
@@ -1277,6 +1328,8 @@ $(document).ready(function() {
                     $(that.resource_modal_id).find('.help-block-resource').html('Could not create your resource.')
                 }
             });
+            $(this.show_resource_modal_link).unbind();
+            $(this.show_resource_modal_link).click(this.show_resource_modal);
         },
         show_resource_form: function(event){
             event.preventDefault();
@@ -1287,12 +1340,49 @@ $(document).ready(function() {
             this.rebind_events();
             return false;
         },
+        show_resource_modal: function(event){
+            event.preventDefault();
+            var resource_id = $(event.target).data('resource-id');
+            var tmpl = _.template($(this.resource_modal_template).html());
+            var resource = new Resource({pk: resource_id});
+            resource.fetch({async: false});
+            var modal_html = tmpl({
+                html: resource.get('html')
+            });
+            $(this.view_a_resource_modal).modal('hide');
+            $(this.view_a_resource_modal).remove();
+            $(this.el).append(modal_html);
+            console.log(modal_html);
+            $(this.view_a_resource_modal).modal('show');
+            return false;
+        },
         create_resource: function(){
             var tmpl = $(this.create_a_resource_modal).html();
             this.$el.append(tmpl);
             $(this.resource_modal_id).modal('show');
             $(this.resource_type_button).unbind();
             $(this.resource_type_button).click(this.show_resource_form);
+        },
+        render: function () {
+            var model_html = "";
+            var that = this;
+            if(this.collection.length > 0){
+                _.each(this.collection.models, function (item) {
+                    model_html = model_html + $(that.renderResource(item)).html();
+                }, this);
+            } else {
+                model_html = $(this.no_resources_template).html();
+            }
+            var tmpl = _.template($(this.template_name).html());
+            var content_html = tmpl({resources: model_html, classgroup: this.classgroup});
+            $(this.el).html(content_html);
+            this.rebind_events();
+        },
+        renderResource: function (item) {
+            var resourceView = new this.view_class({
+                model: item
+            });
+            return resourceView.render().el;
         }
     });
 
