@@ -4,6 +4,9 @@ from django import forms
 from django.templatetags.static import static
 from django.template import RequestContext
 import json
+import logging
+
+log = logging.getLogger(__name__)
 
 class ResourceScope(object):
     user = "user"
@@ -29,13 +32,14 @@ class ResourceForm(forms.Form):
                 yield (name, value)
 
 class Field(object):
-    def __init__(self, default=None, label=None, help_text=None, scope=None):
+    def __init__(self, default=None, label=None, help_text=None, scope=None, editable=False):
         if getattr(self, 'value', None) is None:
             self.value = default
         self.label = label
         self.help_text = help_text
         self.scope = scope
         self.default = default
+        self.editable = editable
 
     def __get__(self, obj, obj_type):
         if obj is None:
@@ -52,6 +56,35 @@ class Field(object):
     @classmethod
     def to_json(cls, value):
         return value
+
+class ListField(Field):
+    def __init__(self, **kwargs):
+        super(ListField, self).__init__(**kwargs)
+        if self.default is None:
+            self.default = []
+        if self.value is None:
+            self.value = self.default
+
+    def append(self, item):
+        self.value.append(item)
+
+    def __iter__(self):
+        for val in self.value:
+            yield val
+
+    def __getitem__(self, k):
+        return self.value[k]
+
+    def __len__(self):
+        return len(self.value)
+
+class DictField(Field):
+    def __init__(self, **kwargs):
+        super(DictField, self).__init__(**kwargs)
+        if self.default is None:
+            self.default = {}
+        if self.value is None:
+            self.value = self.default
 
 class ResourceHTML(object):
     css_template = "<link rel='stylesheet' href='{0}'>"
@@ -84,6 +117,9 @@ class ResourceHTML(object):
         return js_text + css_text + self.html
 
 class ResourceRenderer(object):
+    user_template = "resources/user_view.html"
+    author_template = "resources/author_view.html"
+
     def __init__(self, resource, user_resource_state=None, static_data=None):
         self.resource = resource
         self.user_resource_state = user_resource_state
@@ -113,13 +149,19 @@ class ResourceRenderer(object):
     def user_view(self):
         response = self.module.user_view()
         self.save_module_data()
-        return response
+        return render_to_string(self.user_template, {
+            'content': response,
+            'resource_id': self.resource.id
+            })
 
     def author_view(self):
         response = self.module.author_view()
-        return response
+        return render_to_string(self.author_template, {
+            'content': response
+        })
 
     def handle_ajax(self, action, post_data):
+        post_data = json.loads(post_data)
         response = self.module.handle_ajax(action, post_data)
         self.save_module_data()
         return response
@@ -142,7 +184,7 @@ class ResourceModule(object):
     js = []
     css = []
 
-    author_template = "resources/author.html"
+    resource_author_template = "resources/author.html"
     author_js = []
     author_css = []
 
@@ -160,12 +202,13 @@ class ResourceModule(object):
         self.form_field_dictionaries = []
         for field in self.fields:
             class_field = getattr(self.__class__, field)
-            self.form_field_dictionaries.append({
-                'label': class_field.label,
-                'help_text': class_field.help_text,
-                'name': field,
-                'value': getattr(self, field)
-            })
+            if class_field.scope == ResourceScope.author and class_field.editable == True:
+                self.form_field_dictionaries.append({
+                    'label': class_field.label,
+                    'help_text': class_field.help_text,
+                    'name': field,
+                    'value': getattr(self, field)
+                })
 
     def user_view(self):
         resource_html = ResourceHTML()
@@ -206,14 +249,14 @@ class ResourceModule(object):
 
     def author_view(self):
         resource_html = ResourceHTML()
-        resource_html.add_html(render_to_string(self.author_template, {'content': self.render_module_author()}))
+        resource_html.add_html(render_to_string(self.resource_author_template, {'content': self.render_module_author()}))
         for js in self.author_js:
             resource_html.add_js(js)
         for css in self.author_css:
             resource_html.add_css(css)
         return resource_html.get_html()
 
-    def handle_ajax(self, request):
+    def handle_ajax(self, action, post_data):
         raise NotImplementedError
 
     def get_data(self):
@@ -230,27 +273,26 @@ class SimpleAuthoringMixin(object):
             'form_id': "resource-creation-form",
         }, context_instance=RequestContext(self.static_data.get('request')))
 
-    def save_form_values(self, request):
-        form = ResourceForm(request.POST, extra=self.form_field_dictionaries)
+    def save_form_values(self, post_data):
+        form = ResourceForm(post_data, extra=self.form_field_dictionaries)
         if form.is_valid():
             for (name, value) in form.extra_fields(self.fields):
                 setattr(self, name, value)
 
-    def handle_ajax(self, request):
-        action = request.POST.get('action')
-
+    def handle_ajax(self, action, post_data):
         actions = {
             'save_form_values': self.save_form_values
         }
 
-        return actions[action](request)
+        return actions[action](post_data)
 
 class HTMLModule(SimpleAuthoringMixin, ResourceModule):
     html = Field(
         default="",
         label="Post text",
         help_text="The text of your post.  You can use HTML.",
-        scope=ResourceScope.author
+        scope=ResourceScope.author,
+        editable=True
     )
     template = "resources/html_module.html"
 
@@ -265,7 +307,8 @@ class LinkModule(SimpleAuthoringMixin, ResourceModule):
         default="",
         label="URL",
         help_text="The link to your resource.",
-        scope=ResourceScope.author
+        scope=ResourceScope.author,
+        editable=True
     )
     template = "resources/link_module.html"
 
@@ -274,10 +317,118 @@ class LinkModule(SimpleAuthoringMixin, ResourceModule):
             'link': self.link
         })
 
-class ProblemModule(ResourceModule):
-    pass
+class MultipleChoiceProblemModule(ResourceModule):
+    """
+    The options data structure is a list of lists.
+    So: [[text, correct], [text, correct]], like [["The sun is yellow", True], ["The sun is blue", False]].
+    """
+    options = ListField(
+        default=None,
+        label="Multiple choice options",
+        help_text="Options for this multiple choice problem.",
+        scope=ResourceScope.author
+    )
+    question = Field(
+        default=None,
+        label="Question",
+        help_text="The question for this problem.",
+        scope=ResourceScope.author,
+        editable=True
+    )
+    maximum_attempts = Field(
+        default=1,
+        label="Maximum attempts",
+        help_text="Maximum number of attempts allowed.",
+        scope=ResourceScope.author,
+        editable=True
+    )
+    attempts = Field(
+        default=0,
+        label="Student attempts",
+        help_text="Number of attempts the student has taken.",
+        scope=ResourceScope.user
+    )
+    answers = ListField(
+        default=None,
+        label = "Student answers",
+        help_text="List of which answer the student selected on each attempt.",
+        scope=ResourceScope.user
+    )
+
+    template = "resources/multiple_choice_module.html"
+    author_template = "resources/multiple_choice_author.html"
+    author_css = ["css/resource/multiple_choice.css"]
+    author_js = ["js/resource/multiple_choice_author.js"]
+    css = ["css/resource/multiple_choice.css"]
+    js = ["js/resource/multiple_choice_module.js"]
+
+    def save_form_values(self, post_data):
+        self.maximum_attempts = int(post_data['maximum_attempts'])
+        options = {int(k.replace('option', '')): post_data[k] for k in post_data if k.startswith('option')}
+
+        keys = options.keys()
+        keys.sort()
+
+        self.options = []
+        for o in keys:
+            self.options.append([options[o], o == int(post_data['correct'])])
+
+        return {'success': True}
+
+    def find_correct(self, response):
+        return self.options[int(response)][1]
+
+    def correct_answer(self):
+        for (i,o) in enumerate(self.options):
+            if o[1] == True:
+                return i
+
+    def handle_ajax(self, action, post_data):
+        ajax_handlers = {
+            'save_answer': self.save_answer,
+            'try_again': self.try_again,
+            'save_form_values': self.save_form_values
+        }
+
+        return json.dumps(ajax_handlers[action](post_data))
+
+    def save_answer(self, post_data):
+        self.answers.append(post_data['answer'])
+        self.attempts += 1
+        return {'correct': self.find_correct(post_data['answer'])}
+
+    def allow_retry(self):
+        allow_retry = False
+        if self.attempts < self.maximum_attempts:
+            allow_retry = True
+        return allow_retry
+
+    def try_again(self):
+        return {'allow_retry': self.allow_retry()}
+
+    def render_module(self):
+        previous_answer = None
+        if len(self.answers) > 0:
+            previous_answer = int(self.answers[-1])
+
+        return render_to_string(self.template, {
+            'options': [o[0] for o in self.options],
+            'question': self.question,
+            'previous_answer': previous_answer,
+            'allow_retry': self.allow_retry(),
+            'correct_answer': self.correct_answer()
+        })
+
+    def render_module_author(self):
+        form = ResourceForm(extra=self.form_field_dictionaries)
+        return render_to_string(self.author_template, {
+            'form': form,
+            'action_link': self.static_data.get('author_post_link'),
+            'form_id': "resource-creation-form",
+            }, context_instance=RequestContext(self.static_data.get('request')))
 
 RESOURCE_MODULES = {
     'html': HTMLModule,
-    'link': LinkModule
+    'link': LinkModule,
+    'multiplechoice': MultipleChoiceProblemModule
 }

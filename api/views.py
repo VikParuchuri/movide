@@ -467,8 +467,10 @@ class ResourceDetail(QueryView):
             resource = resource
         )
 
+        data = json.dumps({k:request.POST[k] for k in request.POST if k not in self.post_attributes})
+
         renderer = ResourceRenderer(resource, user_state)
-        ajax_response = renderer.handle_ajax(self.post_dict['action'], self.post_dict['data'])
+        ajax_response = renderer.handle_ajax(self.post_dict['action'], data)
         return Response(ajax_response)
 
 class ResourceView(QueryView):
@@ -531,12 +533,13 @@ class ResourceAuthorView(QueryView):
             user=request.user,
             classgroup=self.cg,
             resource_type=self.post_dict['resource_type'],
-            data=data,
             display_name=self.post_dict['name'],
             name=name,
+            data=data
         )
 
         renderer = ResourceRenderer(resource)
+        renderer.handle_ajax("save_form_values", data)
         renderer.save_module_data()
 
         return Response({'success': True},status=status.HTTP_201_CREATED)

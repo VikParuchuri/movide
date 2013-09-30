@@ -1,0 +1,54 @@
+{% load bootstrap %}
+
+<form action="{{ action_link }}" method="POST" id="{{ form_id }}" class="resource-creation-form">
+    {% csrf_token %}
+    {{ form|bootstrap }}
+    <table class="multiple-choice-creation">
+        <thead>
+            <tr>
+                <th>Option Text</th>
+                <th>Correct?</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <input type="text" class="form-control" name="option0" data-option-number="0" checked="true">
+                </td>
+                <td>
+                    <input type="radio" name="correct" value="0">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="text" class="form-control" name="option1" data-option-number="1" >
+                </td>
+                <td>
+                    <input type="radio" name="correct" value="1">
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="help-block">
+        Multiple choice options for students to select.  One of them must be set to be the correct choice.
+    </p>
+    <div class="form-group">
+        <button type="button" class="btn btn-default" id="add-option-button"><i class="glyphicon glyphicon-plus"></i> Add an option</button>
+        <button type="button" class="btn btn-default" id="remove-option-button"><i class="glyphicon glyphicon-minus"></i> Remove an option</button>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Create Resource" class="btn btn-default"/>
+    </div>
+    <div class="help-block help-block-resource"></div>
+</form>
+
+<script id="multipleChoiceOptionTemplate" type="text/template">
+    <tr>
+        <td>
+            <input type="text" class="form-control" name="<%= option_name %>" data-option-number="<%= option_number %>">
+        </td>
+        <td>
+            <input type="radio" name="correct" value="<%= option_number %>">
+        </td>
+    </tr>
+</script>

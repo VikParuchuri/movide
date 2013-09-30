@@ -63,6 +63,16 @@ $(document).ready(function() {
         });
     }
 
+    function csrf_post(url, data, success, error){
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: data,
+            success: success,
+            error: error
+        });
+    }
+
     function capitalize(string)
     {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -1368,7 +1378,6 @@ $(document).ready(function() {
             });
             $(this.show_resource_modal_link).unbind();
             $(this.show_resource_modal_link).click(this.show_resource_modal);
-            $(this.resource_modal_id).unbind();
             $(this.resource_modal_id).on('hidden.bs.modal', function () {
                 that.refresh();
             })
@@ -1435,4 +1444,5 @@ $(document).ready(function() {
     window.EmailSubscription = EmailSubscription;
     window.ClassDetailView = ClassDetailView;
     window.post_code = post_code;
+    window.csrf_post = csrf_post;
 });

@@ -322,7 +322,8 @@ LOGIN_URL = "/accounts/login/"
 
 ACCESS_CODE_LENGTH = 6
 
-ACCOUNT_SIGNUP_FORM_CLASS = 'api.forms.SignupForm'
+# Adds fields to signup form.  Remove for now.
+#ACCOUNT_SIGNUP_FORM_CLASS = 'api.forms.SignupForm'
 
 try:
     from .private import *

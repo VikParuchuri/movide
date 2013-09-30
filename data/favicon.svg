@@ -17,8 +17,8 @@
    inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="favicon.svg"
    inkscape:export-filename="/home/vik/vikparuchuri/movide/data/favicon_new.png"
-   inkscape:export-xdpi="30"
-   inkscape:export-ydpi="30">
+   inkscape:export-xdpi="14.4"
+   inkscape:export-ydpi="14.4">
   <defs
      id="defs4369">
     <linearGradient
@@ -57,7 +57,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.98994949"
      inkscape:cx="186.12136"
-     inkscape:cy="217.82055"
+     inkscape:cy="137.00835"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -74,7 +74,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>

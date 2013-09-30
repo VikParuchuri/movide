@@ -3,6 +3,6 @@
 <form action="{{ action_link }}" method="POST" id="{{ form_id }}" class="resource-creation-form">
     {% csrf_token %}
     {{ form|bootstrap }}
-    <input type="submit" value="Create Resource" />
+    <input type="submit" value="Create Resource" class="btn btn-default"/>
     <div class="help-block help-block-resource"></div>
 </form>
