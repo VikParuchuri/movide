@@ -1,6 +1,5 @@
 $(document).ready(function() {
     var classview = new window.ClassesView();
-    classview.render_dash();
 
     var message_class = '#create-class-message';
     var create_class_form = '.create-class-form';

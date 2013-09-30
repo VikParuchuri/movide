@@ -21,6 +21,14 @@ $(document).ready(function() {
             !(/^(\/\/|http:|https:).*/.test(url));
     }
 
+    var class_info = $("#classinfo");
+    var is_owner = class_info.data('is-owner');
+    var class_link = class_info.data('class-link');
+    var access_key = class_info.data("access-key");
+    var active_page = class_info.data("active-page");
+    var class_owner = class_info.data('class-owner');
+    var avatar_change_link = class_info.data('avatar-change-link');
+
     jQuery.extend({
         getValues: function(url, data) {
             var result = null;
@@ -264,7 +272,6 @@ $(document).ready(function() {
             this.classgroup = options.classgroup;
             this.model.bind('change', this.render);
             this.model.bind('remove', this.unrender);
-            this.is_owner = $("#classinfo").data("is-owner");
         },
         get_model_json: function(){
             var model_json = this.model.toJSON();
@@ -273,7 +280,7 @@ $(document).ready(function() {
         render: function () {
             var tmpl = _.template($(this.template_name).html());
             var model_json = this.get_model_json();
-            model_json.is_owner = this.is_owner;
+            model_json.is_owner = is_owner;
             var model_html = tmpl(model_json);
 
             $(this.el).html(model_html);
@@ -302,6 +309,7 @@ $(document).ready(function() {
                 classgroup: this.classgroup,
                 display_tag: this.display_tag
             };
+            this.render();
         },
         render: function(){
              var class_stats = new ClassgroupStats({name : this.classgroup});
@@ -440,94 +448,84 @@ $(document).ready(function() {
         events: {
         },
         initialize: function (options) {
-            _.bindAll(this, 'render', 'refresh', 'make_active');
+            _.bindAll(this, 'render', 'refresh', 'make_active', 'render_page', 'render_messages');
             this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
             this.options = {
                 classgroup: this.classgroup,
                 display_tag: this.display_tag
             };
-            this.is_owner= $("#classinfo").data('is-owner');
+            this.render();
         },
         make_active: function(elem){
             $("#tag-sidebar").find('li').removeClass("current active");
             $(elem).addClass("current active");
         },
-        base_render: function() {
-            this.class_model = new Class({name : this.classgroup});
-            this.class_model.fetch({async: false});
-            $(this.el).html("");
-            this.rebind_events();
-        },
         render_users: function() {
-            this.refresh();
             $(this.el).html($("#usersDetailTemplate").html());
             this.user_view = new UsersView(this.options);
-            this.user_view.render();
         },
         render_messages: function() {
-            this.refresh();
             var tmpl = _.template($("#messageDetailTemplate").html());
             $(this.el).html(tmpl({
-                is_owner: this.is_owner,
+                is_owner: is_owner,
                 enable_posting: this.class_model.get('class_settings').enable_posting
             }));
             this.message_view = new MessagesView(this.options);
-            this.message_view.render();
         },
         render_stats: function() {
-            this.refresh();
             $(this.el).html($("#statsDetailTemplate").html());
             this.stats_view = new StatsView(this.options);
-            this.stats_view.render();
         },
         render_notifications: function(){
-            this.refresh();
             $(this.el).html($("#notificationDetailTemplate").html());
             this.notifications_view = new NotificationsView(this.options);
-            this.notifications_view.render();
         },
         render_settings: function(){
-            this.refresh();
             $(this.el).html($("#settingsDetailTemplate").html());
             this.settings_view = new SettingsView(this.options);
-            this.settings_view.render();
         },
         render_resources: function(){
-            this.refresh();
             $(this.el).html($("#resourceDetailTemplate").html());
             this.resources_view = new ResourcesView(this.options);
-            this.resources_view.render();
         },
         render_home: function(){
-            this.refresh();
             var tmpl = _.template($("#homeDetailTemplate").html());
             $(this.el).html(tmpl(this.class_model.toJSON()));
             this.announcements_view = new AnnouncementsView(this.options);
-            this.announcements_view.render();
         },
         render: function () {
-            this.base_render();
-            this.active_page = $("#classinfo").data("active-page");
-            if(this.active_page == "messages"){
+            this.class_model = new Class({name : this.classgroup});
+            var that = this;
+            this.class_model.fetch({
+                success: function(model){
+                    $(that.el).empty();
+                    that.rebind_events();
+                    that.class_model = model;
+                    that.render_page();
+                }
+            });
+        },
+        render_page: function(){
+            if(active_page == "messages"){
                 this.render_messages();
-            } else if(this.active_page == "stats"){
+            } else if(active_page == "stats"){
                 this.render_stats();
-            } else if(this.active_page == "users"){
+            } else if(active_page == "users"){
                 this.render_users();
-            } else if(this.active_page == "notifications"){
+            } else if(active_page == "notifications"){
                 this.render_notifications();
-            } else if(this.active_page == "settings"){
+            } else if(active_page == "settings"){
                 this.render_settings();
-            } else if(this.active_page == "home"){
+            } else if(active_page == "home"){
                 this.render_home();
-            } else if(this.active_page == "resources"){
+            } else if(active_page == "resources"){
                 this.render_resources();
             }
         },
         refresh: function(){
             $(this.el).empty();
-            this.base_render();
+            this.render();
             this.setElement($(this.el));
         },
         rebind_events: function() {
@@ -556,16 +554,22 @@ $(document).ready(function() {
             this.classgroup = options.classgroup;
             this.active = options.active;
             this.display_tag = options.display_tag;
-            this.collection.fetch({async: false, data: {classgroup: this.classgroup}});
-            this.is_owner = $("#classinfo").data("is-owner");
-            this.access_key = $("#classinfo").data("access-key");
-            this.link = window.location.host + $("#classinfo").data("class-link");
-            this.user_add_link = $("#classinfo").data("class-link") + "add_user/";
-            this.user_remove_link = $("#classinfo").data("class-link") + "remove_user/";
+            this.link = window.location.host + class_link;
+            this.user_add_link = class_link + "add_user/";
+            this.user_remove_link = class_link + "remove_user/";
             this.options={
                 classgroup: this.classgroup,
                 display_tag: this.display_tag
-            }
+            };
+
+            var that = this;
+            this.collection.fetch({
+                data: {classgroup: this.classgroup},
+                success: function(collection){
+                    that.collection = collection;
+                    that.render();
+                }
+            });
         },
         render_table: function(){
             this.render();
@@ -585,7 +589,7 @@ $(document).ready(function() {
                 content: model_html,
                 classgroup: this.classgroup,
                 display_tag: this.display_tag,
-                is_owner: this.is_owner
+                is_owner: is_owner
             });
 
             $(this.el).html(content_html);
@@ -636,10 +640,15 @@ $(document).ready(function() {
         refresh: function(options){
             this.classgroup = options.classgroup;
             this.display_tag = options.display_tag;
-            this.collection.fetch({async:false, data: {classgroup: this.classgroup}});
-            this.setElement(this.el_name);
-            $(this.el).empty();
-            this.render_table();
+            var that=this;
+            this.collection.fetch({
+                    data: {classgroup: this.classgroup,
+                    success: function(){
+                        that.setElement(this.el_name);
+                        $(that.el).empty();
+                        that.render_table();
+                    }
+            }});
         },
         user_tag_delete: function(event){
             event.preventDefault();
@@ -708,10 +717,15 @@ $(document).ready(function() {
         collection_class : Classes,
         view_class: ClassView,
         initialize: function () {
-            _.bindAll(this, 'render', 'renderClass', 'renderNone', 'refresh');
+            _.bindAll(this, 'render', 'renderClass', 'renderNone', 'refresh', 'render_dash');
             this.collection = new this.collection_class();
-            this.collection.fetch({async:false});
-            this.is_owner = $("#classinfo").data("is-owner");
+            var that = this;
+            this.collection.fetch({
+                success: function(collection){
+                    that.collection = collection;
+                    that.render_dash();
+                }
+            });
         },
         render_dash: function(){
             if(this.collection.length > 0){
@@ -745,9 +759,14 @@ $(document).ready(function() {
             $(this.class_item_el).append(tagView.render().el);
         },
         refresh: function(){
-            this.collection.fetch({async:false});
-            $(this.class_item_el).empty();
-            this.render_dash();
+            var that = this;
+            this.collection.fetch({
+                success: function(collection){
+                    that.collection = collection;
+                    $(that.class_item_el).empty();
+                    that.render_dash();
+                }
+            });
         }
     });
 
@@ -761,15 +780,13 @@ $(document).ready(function() {
             _.bindAll(this, 'render');
             this.model.bind('change', this.render);
             this.model.bind('remove', this.unrender);
-            this.class_owner = $("#classinfo").data('class-owner');
-            this.is_owner = $("#classinfo").data('is-owner');
         },
         get_model_json: function(){
             var model_json = this.model.toJSON();
             model_json.created_formatted = model_json.created.replace("Z","");
             model_json.created_formatted = moment.utc(model_json.created_formatted).local().fromNow();
-            model_json.written_by_owner = (this.class_owner == model_json.user);
-            model_json.is_owner = this.is_owner;
+            model_json.written_by_owner = (class_owner == model_json.user);
+            model_json.is_owner = is_owner;
             if(model_json.notification_created != undefined){
                 model_json.notification_created_formatted = model_json.notification_created.replace("Z","");
                 model_json.notification_created_formatted = moment.utc(model_json.notification_created_formatted).local().fromNow();
@@ -839,13 +856,18 @@ $(document).ready(function() {
             if(this.additional_filter_parameters != undefined){
                 this.fetch_data= $.extend({}, this.additional_filter_parameters, this.fetch_data)
             }
-
-            this.collection.fetch({async: false, data: this.fetch_data});
-            this.rebind_collection();
-            this.is_owner = $("#classinfo").data("is-owner");
-            this.access_key = $("#classinfo").data("access-key");
-            this.link = window.location.host + $("#classinfo").data("class-link");
+            this.link = window.location.host + class_link;
             this.autocomplete_list = JSON.parse($('#autocomplete-list').html());
+
+            var that=this;
+            this.collection.fetch({
+                data: this.fetch_data,
+                success: function(collection){
+                    that.collection = collection;
+                    that.rebind_collection();
+                    that.render();
+                }
+            });
         },
         render_messages: function(){
             this.render();
@@ -900,7 +922,7 @@ $(document).ready(function() {
             var start_discussion;
             if(message_div.data('start-discussion') == true){
                 var message_type = "D";
-                if(this.is_owner==true){
+                if(is_owner==true){
                     var checked = message_div.find('#make-discussion-announcement-input').is(":checked");
                     if(checked==true){
                         message_type = "A";
@@ -924,18 +946,22 @@ $(document).ready(function() {
                     $(message_block).html("Discussion started! You may need to reload the page to see it.");
                     $(button).attr('disabled', false);
                     if(start_discussion == true){
-                        that.collection.fetch({async: false, data: that.fetch_data});
+                        that.collection.fetch({
+                            data: that.fetch_data,
+                            success: function() {
+                                that.rebind_events();
+                            }
+                        });
                     } else {
                         that.render_message_replies(primary_key);
+                        that.rebind_events();
                     }
-                    that.rebind_events();
                 },
                 error: function(){
                     $(reply_form).removeClass("has-success").addClass("has-error");
                     $(message_block).html("There was a problem sending your message.  Please try again later.");
                     $(button).attr('disabled', false);
-                },
-                async: false
+                }
             });
 
             return false;
@@ -1104,15 +1130,20 @@ $(document).ready(function() {
             this.display_tag = options.display_tag;
             this.unbind_collection();
             this.collection.url = this.collection.baseUrl;
-            this.collection.fetch({async:false, data: this.fetch_data});
-            this.rebind_collection();
-            this.setElement(this.el_name);
-            $(this.el).empty();
-            this.render_messages();
+            var that = this;
+            this.collection.fetch({
+                data: this.fetch_data,
+                success: function(collection){
+                    that.collection = collection;
+                    that.rebind_collection();
+                    that.setElement(that.el_name);
+                    $(that.el).empty();
+                    that.render_messages();
+                }
+            });
         },
         self_refresh: function(){
           this.refresh(this.options);
-          this.rebind_events();
           this.message_count = 0;
           this.stop_polling= false;
         },
@@ -1131,8 +1162,7 @@ $(document).ready(function() {
                     },
                     error: function(){
                         that.isLoading = false;
-                    },
-                    async: false
+                    }
                 });
                 if(status==false){
                     that.isLoading = false;
@@ -1172,19 +1202,17 @@ $(document).ready(function() {
         },
         initialize: function(options){
             _.bindAll(this, 'render', 'fetch', 'rebind_events', 'render_class_settings');
-            this.is_owner = $("#classinfo").data("is-owner");
-            this.class_link = $("#classinfo").data("class-link");
-            this.class_settings_link = this.class_link + "class_settings/";
-            this.student_class_settings_link = this.class_link + "student_settings/";
-            this.avatar_change_link = $("#classinfo").data('avatar-change-link');
+            this.class_settings_link = class_link + "class_settings/";
+            this.student_class_settings_link = class_link + "student_settings/";
             this.classgroup = options.classgroup;
             this.fetch();
+            this.render();
         },
         fetch: function(){
             this.student_settings = $.getValues(this.student_class_settings_link, {classgroup: this.classgroup});
-            this.avatar_change = $.getValues(this.avatar_change_link);
+            this.avatar_change = $.getValues(avatar_change_link);
             this.class_settings=undefined;
-            if(this.is_owner == true){
+            if(is_owner == true){
                 this.class_settings = $.getValues(this.class_settings_link, {classgroup: this.classgroup});
             }
         },
@@ -1200,12 +1228,12 @@ $(document).ready(function() {
         },
         render_class_settings: function(){
             var tmpl = _.template($(this.class_settings_template).html());
-            var settings_html = tmpl({form_html : this.class_settings, class_link: window.location.host + this.class_link});
+            var settings_html = tmpl({form_html : this.class_settings, class_link: window.location.host + class_link});
             return settings_html;
         },
         render: function () {
             $(this.el).html(this.render_student_settings() + this.render_avatar_change());
-            if(this.is_owner == true){
+            if(is_owner == true){
                 $(this.el).append(this.render_class_settings());
             }
             $("label[for='id_avatar']").hide();
@@ -1249,15 +1277,13 @@ $(document).ready(function() {
             _.bindAll(this, 'render');
             this.model.bind('change', this.render);
             this.model.bind('remove', this.unrender);
-            this.class_owner = $("#classinfo").data('class-owner');
-            this.is_owner = $("#classinfo").data('is-owner');
         },
         get_model_json: function(){
             var model_json = this.model.toJSON();
             model_json.created_formatted = model_json.created.replace("Z","");
             model_json.created_formatted = moment.utc(model_json.created_formatted).local().fromNow();
-            model_json.written_by_owner = (this.class_owner == model_json.user);
-            model_json.is_owner = this.is_owner;
+            model_json.written_by_owner = (class_owner == model_json.user);
+            model_json.is_owner = is_owner;
             return model_json;
         },
         render: function () {
@@ -1300,16 +1326,28 @@ $(document).ready(function() {
             'click .show-resource-modal-link': this.show_resource_modal
         },
         initialize: function(options){
-            _.bindAll(this, 'render', 'create_resource', 'rebind_events', 'show_resource_form', 'show_resource_modal');
-            this.is_owner = $("#classinfo").data("is-owner");
-            this.class_link = $("#classinfo").data("class-link");
+            _.bindAll(this, 'render', 'create_resource', 'rebind_events', 'show_resource_form', 'show_resource_modal', 'refresh');
             this.classgroup = options.classgroup;
             this.collection = new this.collection_class();
             this.fetch_data = {classgroup: this.classgroup};
-            this.collection.fetch({async: false, data: this.fetch_data});
+            var that = this;
+            this.collection.fetch({
+                data: this.fetch_data,
+                success: function(collection) {
+                    that.collection = collection;
+                    that.render();
+                }
+            });
         },
         refresh: function(){
-            this.render();
+            $(this.el).empty();
+            var that = this;
+            this.collection.fetch({
+                data: this.fetch_data,
+                success: function() {
+                    that.render();
+                }
+            });
         },
         rebind_events: function(){
             $(this.create_a_resource_button).unbind();
@@ -1330,6 +1368,10 @@ $(document).ready(function() {
             });
             $(this.show_resource_modal_link).unbind();
             $(this.show_resource_modal_link).click(this.show_resource_modal);
+            $(this.resource_modal_id).unbind();
+            $(this.resource_modal_id).on('hidden.bs.modal', function () {
+                that.refresh();
+            })
         },
         show_resource_form: function(event){
             event.preventDefault();
@@ -1352,7 +1394,6 @@ $(document).ready(function() {
             $(this.view_a_resource_modal).modal('hide');
             $(this.view_a_resource_modal).remove();
             $(this.el).append(modal_html);
-            console.log(modal_html);
             $(this.view_a_resource_modal).modal('show');
             return false;
         },

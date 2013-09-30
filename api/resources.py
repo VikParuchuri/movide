@@ -119,8 +119,8 @@ class ResourceRenderer(object):
         response = self.module.author_view()
         return response
 
-    def handle_ajax(self, request):
-        response = self.module.handle_ajax(request)
+    def handle_ajax(self, action, post_data):
+        response = self.module.handle_ajax(action, post_data)
         self.save_module_data()
         return response
 
@@ -139,6 +139,12 @@ class ResourceRenderer(object):
 
 class ResourceModule(object):
     resource_template = "resources/resource.html"
+    js = []
+    css = []
+
+    author_template = "resources/author.html"
+    author_js = []
+    author_css = []
 
     def __init__(self, resource_data, user_data, static_data):
 
@@ -162,9 +168,13 @@ class ResourceModule(object):
             })
 
     def user_view(self):
-        return render_to_string(self.resource_template, {
-            'content': self.render_module()
-        })
+        resource_html = ResourceHTML()
+        resource_html.add_html(render_to_string(self.resource_template, {'content': self.render_module()}))
+        for js in self.js:
+            resource_html.add_js(js)
+        for css in self.css:
+            resource_html.add_css(css)
+        return resource_html.get_html()
 
     def render_module(self):
         raise NotImplementedError
@@ -191,8 +201,17 @@ class ResourceModule(object):
                     value = class_field.default
                 setattr(self, field, value)
 
-    def author_view(self):
+    def render_module_author(self):
         raise NotImplementedError
+
+    def author_view(self):
+        resource_html = ResourceHTML()
+        resource_html.add_html(render_to_string(self.author_template, {'content': self.render_module_author()}))
+        for js in self.author_js:
+            resource_html.add_js(js)
+        for css in self.author_css:
+            resource_html.add_css(css)
+        return resource_html.get_html()
 
     def handle_ajax(self, request):
         raise NotImplementedError
@@ -203,7 +222,7 @@ class ResourceModule(object):
 
 class SimpleAuthoringMixin(object):
 
-    def author_view(self):
+    def render_module_author(self):
         form = ResourceForm(extra=self.form_field_dictionaries)
         return render_to_string("resources/form.html", {
             'form': form,
@@ -254,6 +273,9 @@ class LinkModule(SimpleAuthoringMixin, ResourceModule):
         return render_to_string(self.template, {
             'link': self.link
         })
+
+class ProblemModule(ResourceModule):
+    pass
 
 RESOURCE_MODULES = {
     'html': HTMLModule,

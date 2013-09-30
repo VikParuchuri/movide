@@ -433,6 +433,7 @@ class ClassgroupStatsView(QueryView):
 
 class ResourceDetail(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
+    post_attributes = ["action", "data"]
 
     def get_object(self, pk):
         return Resource.objects.get(pk=pk)
@@ -452,6 +453,23 @@ class ResourceDetail(QueryView):
         renderer = ResourceRenderer(resource, user_state)
 
         return Response({'html': renderer.user_view()})
+
+    def post(self, request, pk):
+        resource = self.get_object(pk)
+        self.query_dict = {
+            'classgroup': resource.classgroup.name
+        }
+        self.verify_membership()
+        self.get_post_params()
+
+        user_state, created = UserResourceState.objects.get_or_create(
+            user = request.user,
+            resource = resource
+        )
+
+        renderer = ResourceRenderer(resource, user_state)
+        ajax_response = renderer.handle_ajax(self.post_dict['action'], self.post_dict['data'])
+        return Response(ajax_response)
 
 class ResourceView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
