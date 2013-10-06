@@ -1,3 +1,11 @@
-<div class="resource-container" data-resource-id="{{ resource_id }}">
+<div class="resource-container" data-resource-id="{{ resource_id }}" id="resource-container-{{ resource_id }}" data-class-name="{{ class_name }}">
     {{ content|safe }}
 </div>
+
+{% if js_class_name %}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var xmodule_view = new {{ js_class_name }}("#resource-container-{{ resource_id }}");
+        });
+    </script>
+{% endif %}

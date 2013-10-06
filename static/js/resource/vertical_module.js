@@ -1,0 +1,2 @@
+window.VerticalUser = (function(el) {
+});

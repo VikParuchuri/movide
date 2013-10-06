@@ -1,8 +1,8 @@
-$(document).ready(function() {
+window.MultipleChoiceAuthor= (function(el) {
     var option_number = 2;
     var option_template = _.template($("#multipleChoiceOptionTemplate").html());
-    $('#add-option-button').click(function() {
-        var text_inputs = $('td input[type="text"]');
+    $('#add-option-button', el).click(function() {
+        var text_inputs = $('td input[type="text"]', el);
         var option_numbers = [];
         for(var i=0;i<text_inputs.length;i++){
             option_numbers.push($(text_inputs[i]).data('option-number'))
@@ -14,8 +14,8 @@ $(document).ready(function() {
         });
         $('.multiple-choice-creation tbody').append(option_html);
     });
-    $('#remove-option-button').click(function() {
-        var table_rows = $('.multiple-choice-creation tbody tr');
+    $('#remove-option-button', el).click(function() {
+        var table_rows = $('.multiple-choice-creation tbody tr', el);
         $(table_rows).last().remove();
     });
 });

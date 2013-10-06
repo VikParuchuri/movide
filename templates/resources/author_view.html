@@ -1,1 +1,12 @@
-{{ content|safe }}
+<div class="resource-author-container {% if resource_type != "vertical" %}sortable{% endif %}" data-resource-id="{{ resource_id }}" id="resource-author-container-{{ resource_id }}" data-resource-type="{{ resource_type }}" data-class-name="{{ class_name }}">
+    {% if resource_type != "vertical" %}<a type="button" class='btn pull-right component-removal-button' type='button' data-toggle="tooltip" title="Remove this component."><span class="glyphicon glyphicon-remove"></span></a>{% endif %}
+    {{ content|safe }}
+</div>
+
+{% if js_class_name %}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var xmodule_view = new {{ js_class_name }}("#resource-author-container-{{ resource_id }}");
+        });
+    </script>
+{% endif %}

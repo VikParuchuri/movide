@@ -1,0 +1,18 @@
+.child-container .resource-author-container{
+    border-left: 5px solid #eee;
+    margin: 10px 0px 30px 0px;
+    padding: 10px;
+}
+
+.child-container .resource-container{
+    border-left: 5px solid #eee;
+    margin: 10px 0px 30px 0px;
+    padding: 10px;
+}
+
+.resource-container .description{
+    background-color: #f0f7fd;
+    border-color: #d0e3f0;
+    padding: 15px 30px 15px 15px;
+    margin-bottom: 30px;
+}

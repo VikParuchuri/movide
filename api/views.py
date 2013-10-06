@@ -10,6 +10,7 @@ from serializers import (TagSerializer, MessageSerializer, UserSerializer,
                          ClassSettingsSerializer, ClassgroupStatsSerializer, alphanumeric_name,
                          PaginatedResourceSerializer)
 from rest_framework.response import Response
+from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework import status, generics, permissions
 from django.db.models import Q, Count
 from django.http import Http404
@@ -52,7 +53,7 @@ class QueryView(APIView):
             if has_value == 0:
                 error_msg = "Need to specify {0}.".format(attrib_set)
                 log.error(error_msg)
-                return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+                raise PermissionDenied(error_msg)
 
     def get_post_params(self):
         self.post_dict = {}
@@ -68,7 +69,7 @@ class QueryView(APIView):
             if has_value == 0:
                 error_msg = "Need to specify {0}.".format(attrib_set)
                 log.error(error_msg)
-                return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+                raise PermissionDenied(error_msg)
 
     def filter_query_params(self, queryset):
         for attrib in self.query_attributes:
@@ -82,25 +83,35 @@ class QueryView(APIView):
         if "user" in self.query_dict and "classgroup" not in self.query_dict:
             if self.request.user.username != self.query_dict['user']:
                 error_msg = "User {0} for query does not match queried user {1}.".format(self.request.user.username, self.query_dict['user'])
-                return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+                log.error(error_msg)
+                raise PermissionDenied(error_msg)
 
     def verify_classgroup(self):
         if "classgroup" in self.query_dict:
             cg = Classgroup.objects.get(name=self.query_dict['classgroup'])
             if cg.owner != self.request.user and self.request.user.classgroups.filter(name=self.query_dict['classgroup']).count()==0:
                 error_msg = "Attempting to query a class that you are not part of."
-                return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+                log.error(error_msg)
+                raise PermissionDenied(error_msg)
 
     def verify_membership(self):
         try:
             self.cg = Classgroup.objects.get(name=self.query_dict['classgroup'])
         except Classgroup.DoesNotExist:
             error_msg = "Invalid class name given."
-            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+            log.error(error_msg)
+            raise PermissionDenied(error_msg)
 
         if self.request.user.classgroups.filter(id=self.cg.id).count()==0 and self.cg.owner != self.request.user:
             error_msg = "User not authorized to see given class."
-            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+            log.error(error_msg)
+            raise PermissionDenied(error_msg)
+
+    def verify_ownership(self):
+        if self.cg.owner != self.request.user:
+            error_msg = "User is not the owner of the given class."
+            log.error(error_msg)
+            raise PermissionDenied(error_msg)
 
 class ClassgroupView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -439,20 +450,46 @@ class ResourceDetail(QueryView):
         return Resource.objects.get(pk=pk)
 
     def get(self, request, pk):
+        view_type = request.GET.get('view_type', 'user')
         resource = self.get_object(pk)
         self.query_dict = {
             'classgroup': resource.classgroup.name
         }
         self.verify_membership()
 
-        user_state, created = UserResourceState.objects.get_or_create(
-            user = request.user,
-            resource = resource
-        )
+        if view_type == "user":
+            user_state, created = UserResourceState.objects.get_or_create(
+                user=request.user,
+                resource=resource
+            )
 
-        renderer = ResourceRenderer(resource, user_state)
+            renderer = ResourceRenderer(resource, user_state, static_data={
+                'request': request,
+            })
 
-        return Response({'html': renderer.user_view()})
+            html = renderer.user_view().get_html()
+        else:
+            self.verify_ownership()
+            renderer = ResourceRenderer(resource, static_data={
+                'request': request,
+                'author_post_link': '/api/resources/author/'
+                })
+
+            html = renderer.author_view().get_html()
+
+        return Response({'html': html, 'display_name': resource.display_name})
+
+    def delete(self, request, pk):
+        resource = self.get_object(pk)
+        self.query_dict = {
+            'classgroup': resource.classgroup.name
+        }
+        self.verify_membership()
+        self.verify_ownership()
+
+        resource.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def post(self, request, pk):
         resource = self.get_object(pk)
@@ -463,13 +500,22 @@ class ResourceDetail(QueryView):
         self.get_post_params()
 
         user_state, created = UserResourceState.objects.get_or_create(
-            user = request.user,
-            resource = resource
+            user=request.user,
+            resource=resource
         )
 
-        data = json.dumps({k:request.POST[k] for k in request.POST if k not in self.post_attributes})
+        data = {}
+        for k in request.POST:
+            if k.endswith("[]"):
+                data[k.replace("[]", "")] = request.POST.getlist(k)
+            else:
+                data[k] = request.POST[k]
 
-        renderer = ResourceRenderer(resource, user_state)
+        data = json.dumps(data)
+
+        renderer = ResourceRenderer(resource, user_state, static_data={
+            'request': request,
+            })
         ajax_response = renderer.handle_ajax(self.post_dict['action'], data)
         return Response(ajax_response)
 
@@ -477,6 +523,7 @@ class ResourceView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
     query_attributes = ["classgroup"]
     required_attributes = [("classgroup",), ]
+    post_attributes = ["resource_type"]
 
     def filter_classgroup(self, queryset, classgroup):
         return queryset.filter(classgroup__name=classgroup)
@@ -485,7 +532,7 @@ class ResourceView(QueryView):
         self.get_query_params()
         self.verify_membership()
         queryset = Resource.objects.all()
-        queryset = self.filter_query_params(queryset).order_by("-created")
+        queryset = self.filter_query_params(queryset).filter(name__isnull=False, resource_type="vertical").order_by("-created")
         paginator = Paginator(queryset, RESULTS_PER_PAGE)
         page = request.QUERY_PARAMS.get("page")
 
@@ -498,25 +545,62 @@ class ResourceView(QueryView):
 
         return Response(serializer.data)
 
-class ResourceAuthorView(QueryView):
-    permission_classes = (permissions.IsAuthenticated,)
-    query_attributes = ["classgroup", "resource_type"]
-    required_attributes = [("classgroup",), ("resource_type",), ]
-    post_attributes = ["classgroup", "resource_type", "name", "csrfmiddlewaretoken"]
 
-    def get(self, request):
-        self.get_query_params()
+    def post(self, request):
+        self.query_dict = {
+            'classgroup': request.DATA.get('classgroup')
+        }
+
         self.verify_membership()
 
-        resource = Resource(user=request.user, classgroup=self.cg, resource_type=self.query_dict['resource_type'])
+        resource_type=request.DATA.get('resource_type')
+
+        if resource_type != "vertical":
+            raise Http404
+
+        resource = Resource(
+            resource_type=resource_type,
+            user=request.user,
+            classgroup=self.cg
+        )
+        resource.save()
+
         renderer = ResourceRenderer(resource, static_data={
             'request': request,
             'author_post_link': '/api/resources/author/'
         })
 
-        html = renderer.author_view()
+        html = renderer.author_view().get_html()
 
-        return Response({'form_html': html})
+        return Response({'html': html, 'display_name': resource.display_name})
+
+class ResourceAuthorView(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+    query_attributes = ["classgroup", "resource_type", "vertical_id"]
+    required_attributes = [("classgroup",), ("resource_type",), ]
+    post_attributes = ["classgroup", "resource_type", "csrfmiddlewaretoken", "resource_id"]
+
+    def get(self, request):
+        self.get_query_params()
+        self.verify_membership()
+
+        parent = Resource.objects.get(pk=int(self.query_dict['vertical_id']))
+        resource = Resource(
+            user=request.user,
+            classgroup=self.cg,
+            resource_type=self.query_dict['resource_type'],
+            parent=parent
+        )
+        resource.save()
+
+        renderer = ResourceRenderer(resource, static_data={
+            'request': request,
+            'author_post_link': '/api/resources/author/'
+        })
+
+        html = renderer.author_view().get_html()
+
+        return Response({'html': html, 'display_name': resource.display_name})
 
     def post(self, request):
         self.get_post_params()
@@ -527,19 +611,28 @@ class ResourceAuthorView(QueryView):
 
         data = json.dumps({k:request.POST[k] for k in request.POST if k not in self.post_attributes})
 
-        name = alphanumeric_name(self.post_dict['name'])
+        resource_id = self.post_dict.get('resource_id')
+        if resource_id is None:
+            resource = Resource(
+                user=request.user,
+                classgroup=self.cg,
+                resource_type=self.post_dict['resource_type'],
+                data=data
+            )
+        else:
+            resource = Resource.objects.get(
+                pk=int(resource_id)
+            )
 
-        resource = Resource(
-            user=request.user,
-            classgroup=self.cg,
-            resource_type=self.post_dict['resource_type'],
-            display_name=self.post_dict['name'],
-            name=name,
-            data=data
-        )
-
-        renderer = ResourceRenderer(resource)
-        renderer.handle_ajax("save_form_values", data)
+        renderer = ResourceRenderer(resource, static_data={
+            'request': request,
+            'author_post_link': '/api/resources/author/'
+        })
+        response = renderer.handle_ajax("save_form_values", data)
         renderer.save_module_data()
 
-        return Response({'success': True},status=status.HTTP_201_CREATED)
+        resource.display_name = renderer.module.name
+        resource.name = alphanumeric_name(renderer.module.name)
+        resource.save()
+
+        return Response(response,status=status.HTTP_201_CREATED)

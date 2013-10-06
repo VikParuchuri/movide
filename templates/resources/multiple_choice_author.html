@@ -11,22 +11,35 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>
-                    <input type="text" class="form-control" name="option0" data-option-number="0" checked="true">
-                </td>
-                <td>
-                    <input type="radio" name="correct" value="0">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <input type="text" class="form-control" name="option1" data-option-number="1" >
-                </td>
-                <td>
-                    <input type="radio" name="correct" value="1">
-                </td>
-            </tr>
+            {% if options %}
+                {% for option in options %}
+                    <tr>
+                        <td>
+                            <input type="text" class="form-control" name="option{{ forloop.counter0 }}" data-option-number="{{ forloop.counter0 }}" value="{{ option.0 }}">
+                        </td>
+                        <td>
+                            <input type="radio" name="correct" value="{{ forloop.counter0 }}" {% if option.1 %}checked="true"{% endif %}>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td>
+                        <input type="text" class="form-control" name="option0" data-option-number="0">
+                    </td>
+                    <td>
+                        <input type="radio" name="correct" value="0" checked="true">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="text" class="form-control" name="option1" data-option-number="1" >
+                    </td>
+                    <td>
+                        <input type="radio" name="correct" value="1">
+                    </td>
+                </tr>
+            {% endif %}
         </tbody>
     </table>
     <p class="help-block">
@@ -37,7 +50,7 @@
         <button type="button" class="btn btn-default" id="remove-option-button"><i class="glyphicon glyphicon-minus"></i> Remove an option</button>
     </div>
     <div class="form-group">
-        <input type="submit" value="Create Resource" class="btn btn-default"/>
+        <input type="submit" value="Save Component" class="btn btn-default"/>
     </div>
     <div class="help-block help-block-resource"></div>
 </form>

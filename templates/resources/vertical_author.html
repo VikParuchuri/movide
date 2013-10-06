@@ -1,0 +1,27 @@
+{% load bootstrap %}
+
+<h4>Basic Settings</h4>
+<div class="basic-settings">
+    <form action="{{ action_link }}" method="POST" id="{{ form_id }}" class="resource-creation-form">
+        {% csrf_token %}
+        {{ form|bootstrap }}
+        <div class="form-group">
+            <input type="submit" value="Save" class="btn btn-default"/>
+        </div>
+        <div class="help-block help-block-resource"></div>
+    </form>
+
+    {{ content|safe }}
+</div>
+
+<h4>Components</h4>
+<div class="child-container">
+    #{child_views}
+</div>
+<div class="btn-group resource-type-buttons">
+    <p class="btn" disabled="true">Add </p>
+    <button type="button" class="btn btn-default resource-type-button" data-resource-type="link">Link</button>
+    <button type="button" class="btn btn-default resource-type-button" data-resource-type="html">HTML</button>
+    <button type="button" class="btn btn-default resource-type-button" data-resource-type="video">Video</button>
+    <button type="button" class="btn btn-default resource-type-button" data-resource-type="multiplechoice">Multiple Choice</button>
+</div>

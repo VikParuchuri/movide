@@ -5,15 +5,19 @@ from django.templatetags.static import static
 from django.template import RequestContext
 import json
 import logging
+from models import UserResourceState
+from django.utils.html import mark_safe
 
 log = logging.getLogger(__name__)
+
+class ModuleException(Exception):
+    pass
 
 class ResourceScope(object):
     user = "user"
     author = "author"
 
 class ResourceForm(forms.Form):
-    name = forms.CharField(label="Resource Name", help_text="The name for this resource.")
 
     def __init__(self, *args, **kwargs):
         extra = kwargs.pop('extra')
@@ -94,6 +98,7 @@ class ResourceHTML(object):
         self.html = ""
         self.js = []
         self.css = []
+        self.child_html = ""
 
     def add_html(self, html):
         self.html = self.html + html
@@ -114,11 +119,19 @@ class ResourceHTML(object):
         js_text = "".join([self.js_template.format(js) for js in self.js])
         css_text = "".join([self.css_template.format(css) for css in self.css])
 
-        return js_text + css_text + self.html
+        if len(self.child_html) > 0:
+            html = self.html.replace("#{child_views}", self.child_html)
+        else:
+            html = self.html.replace("#{child_views}", '')
+
+        return js_text + css_text + html
+
+    def add_child(self, resource_html):
+        self.child_html += resource_html.html
+        self.js = list(set(self.js + resource_html.js))
+        self.css = list(set(self.css + resource_html.css))
 
 class ResourceRenderer(object):
-    user_template = "resources/user_view.html"
-    author_template = "resources/author_view.html"
 
     def __init__(self, resource, user_resource_state=None, static_data=None):
         self.resource = resource
@@ -140,25 +153,58 @@ class ResourceRenderer(object):
         if static_data is None:
             static_data = {}
 
+        self.static_data = static_data
+
+        static_data['resource_id'] = self.resource.id
+        static_data['resource_type'] = self.resource.resource_type
+        static_data['resource_name'] = self.resource.display_name
+        static_data['class_name'] = self.resource.classgroup.name
+        static_data['resource'] = self.resource
+
         self.module = RESOURCE_MODULES[self.resource.resource_type](
             resource_data,
             user_data,
             static_data,
         )
 
+    def get_children(self):
+        return self.resource.children.all()
+
+    def child_author_views(self):
+        child_views = []
+        children = self.get_children()
+        for child in children:
+            renderer = ResourceRenderer(child, static_data=self.static_data)
+            child_views.append(renderer.author_view())
+        return child_views
+
+    def child_user_views(self):
+        child_views = []
+        children = self.get_children()
+        for child in children:
+            user_state, created = UserResourceState.objects.get_or_create(
+                user=self.static_data['request'].user,
+                resource=child
+            )
+            renderer = ResourceRenderer(child, user_resource_state=user_state, static_data=self.static_data)
+            child_views.append(renderer.user_view())
+        return child_views
+
     def user_view(self):
-        response = self.module.user_view()
+        resource_html = self.module.user_view()
+        child_views = self.child_user_views()
+        for child in child_views:
+            resource_html.add_child(child)
+
         self.save_module_data()
-        return render_to_string(self.user_template, {
-            'content': response,
-            'resource_id': self.resource.id
-            })
+        return resource_html
 
     def author_view(self):
-        response = self.module.author_view()
-        return render_to_string(self.author_template, {
-            'content': response
-        })
+        resource_html = self.module.author_view()
+        child_views = self.child_author_views()
+        for child in child_views:
+            resource_html.add_child(child)
+        return resource_html
 
     def handle_ajax(self, action, post_data):
         post_data = json.loads(post_data)
@@ -180,18 +226,33 @@ class ResourceRenderer(object):
             self.user_resource_state.save()
 
 class ResourceModule(object):
-    resource_template = "resources/resource.html"
+    name = Field(
+        default=None,
+        label="Resource Name",
+        help_text="The name for this module.",
+        scope=ResourceScope.author,
+        editable=True
+    )
+
+    resource_template = "resources/user_view.html"
+    resource_author_template = "resources/author_view.html"
     js = []
     css = []
+    js_class_name = None
 
-    resource_author_template = "resources/author.html"
     author_js = []
     author_css = []
+    author_js_class_name = None
 
     def __init__(self, resource_data, user_data, static_data):
 
         # Set data from various scopes.
         self.static_data = static_data
+        self.resource_id = self.static_data['resource_id']
+        self.resource_type = self.static_data['resource_type']
+        self.class_name = self.static_data['class_name']
+        self.resource = self.static_data['resource']
+
         self.data = {
             ResourceScope.author: resource_data,
             ResourceScope.user: user_data,
@@ -199,25 +260,36 @@ class ResourceModule(object):
 
         self.fields = [attr for attr in dir(self.__class__) if not attr.startswith("__") and isinstance(getattr(self.__class__, attr), Field)]
         self.read_data()
-        self.form_field_dictionaries = []
+
+    @property
+    def form_field_dictionaries(self):
+        form_field_dictionaries = []
         for field in self.fields:
             class_field = getattr(self.__class__, field)
             if class_field.scope == ResourceScope.author and class_field.editable == True:
-                self.form_field_dictionaries.append({
+                form_field_dictionaries.append({
                     'label': class_field.label,
                     'help_text': class_field.help_text,
                     'name': field,
                     'value': getattr(self, field)
                 })
+        return form_field_dictionaries
 
     def user_view(self):
         resource_html = ResourceHTML()
-        resource_html.add_html(render_to_string(self.resource_template, {'content': self.render_module()}))
+        log.info(self.resource_template)
+        resource_html.add_html(render_to_string(self.resource_template, {
+            'content': self.render_module(),
+            'resource_id': self.resource_id,
+            'js_class_name': self.js_class_name,
+            'resource_type': self.resource_type,
+            'class_name': self.class_name
+        }))
         for js in self.js:
             resource_html.add_js(js)
         for css in self.css:
             resource_html.add_css(css)
-        return resource_html.get_html()
+        return resource_html
 
     def render_module(self):
         raise NotImplementedError
@@ -249,14 +321,20 @@ class ResourceModule(object):
 
     def author_view(self):
         resource_html = ResourceHTML()
-        resource_html.add_html(render_to_string(self.resource_author_template, {'content': self.render_module_author()}))
+        resource_html.add_html(render_to_string(self.resource_author_template, {
+            'content': self.render_module_author(),
+            'resource_id': self.resource_id,
+            'js_class_name': self.author_js_class_name,
+            'resource_type': self.resource_type,
+            'class_name': self.class_name
+        }))
         for js in self.author_js:
             resource_html.add_js(js)
         for css in self.author_css:
             resource_html.add_css(css)
-        return resource_html.get_html()
+        return resource_html
 
-    def handle_ajax(self, action, post_data):
+    def handle_ajax(self, action, post_data, **kwargs):
         raise NotImplementedError
 
     def get_data(self):
@@ -279,7 +357,9 @@ class SimpleAuthoringMixin(object):
             for (name, value) in form.extra_fields(self.fields):
                 setattr(self, name, value)
 
-    def handle_ajax(self, action, post_data):
+        return {'success': True}
+
+    def handle_ajax(self, action, post_data, **kwargs):
         actions = {
             'save_form_values': self.save_form_values
         }
@@ -298,7 +378,8 @@ class HTMLModule(SimpleAuthoringMixin, ResourceModule):
 
     def render_module(self):
         return render_to_string(self.template, {
-            'html': self.html
+            'html': self.html,
+            'name': self.name,
         })
 
 
@@ -314,8 +395,79 @@ class LinkModule(SimpleAuthoringMixin, ResourceModule):
 
     def render_module(self):
         return render_to_string(self.template, {
-            'link': self.link
+            'link': self.link,
+            'name': self.name,
         })
+
+class VideoModule(SimpleAuthoringMixin, ResourceModule):
+    video_id = Field(
+        default="",
+        label="Youtube video ID",
+        help_text="The Youtube video ID.",
+        scope=ResourceScope.author,
+        editable=True
+    )
+    template = "resources/video_module.html"
+
+    def render_module(self):
+        return render_to_string(self.template, {
+            'video_id': self.video_id,
+            'resource_id': self.resource_id,
+            'name': self.name,
+        })
+
+class VerticalModule(ResourceModule):
+    description = Field(
+        default=None,
+        label="Description",
+        help_text="The description for this module.",
+        scope=ResourceScope.author,
+        editable=True
+    )
+
+    template = "resources/vertical_module.html"
+    author_template = "resources/vertical_author.html"
+    author_css = ["css/resource/vertical.css"]
+    author_js = ["js/resource/vertical_author.js"]
+    author_js_class_name = "VerticalAuthor"
+    js = ["js/resource/vertical_module.js"]
+    css = ["css/resource/vertical.css"]
+    js_class_name = "VerticalUser"
+
+    def handle_ajax(self, action, post_data, **kwargs):
+        ajax_handlers = {
+            'reorder_modules': self.reorder_modules,
+            'save_form_values': self.save_form_values
+        }
+
+        return json.dumps(ajax_handlers[action](post_data))
+
+    def save_form_values(self, post_data):
+        form = ResourceForm(post_data, extra=self.form_field_dictionaries)
+        if form.is_valid():
+            for (name, value) in form.extra_fields(self.fields):
+                setattr(self, name, value)
+        return {'success': True}
+
+    def reorder_modules(self, post_data):
+        child_ids = post_data['child_ids']
+        log.info(child_ids)
+        self.resource.set_resource_order(child_ids)
+
+        return {'success': True}
+
+    def render_module(self):
+        return render_to_string(self.template, {
+            'description': self.description,
+        })
+
+    def render_module_author(self):
+        form = ResourceForm(extra=self.form_field_dictionaries)
+        return render_to_string(self.author_template, {
+            'form': form,
+            'action_link': self.static_data.get('author_post_link'),
+            'form_id': "resource-creation-form",
+            }, context_instance=RequestContext(self.static_data.get('request')))
 
 class MultipleChoiceProblemModule(ResourceModule):
     """
@@ -350,7 +502,7 @@ class MultipleChoiceProblemModule(ResourceModule):
     )
     answers = ListField(
         default=None,
-        label = "Student answers",
+        label="Student answers",
         help_text="List of which answer the student selected on each attempt.",
         scope=ResourceScope.user
     )
@@ -359,13 +511,17 @@ class MultipleChoiceProblemModule(ResourceModule):
     author_template = "resources/multiple_choice_author.html"
     author_css = ["css/resource/multiple_choice.css"]
     author_js = ["js/resource/multiple_choice_author.js"]
+    author_js_class_name = "MultipleChoiceAuthor"
     css = ["css/resource/multiple_choice.css"]
     js = ["js/resource/multiple_choice_module.js"]
+    js_class_name = "MultipleChoiceUser"
 
     def save_form_values(self, post_data):
         self.maximum_attempts = int(post_data['maximum_attempts'])
         options = {int(k.replace('option', '')): post_data[k] for k in post_data if k.startswith('option')}
 
+        self.name = post_data['name']
+        self.question = post_data['question']
         keys = options.keys()
         keys.sort()
 
@@ -383,7 +539,7 @@ class MultipleChoiceProblemModule(ResourceModule):
             if o[1] == True:
                 return i
 
-    def handle_ajax(self, action, post_data):
+    def handle_ajax(self, action, post_data, **kwargs):
         ajax_handlers = {
             'save_answer': self.save_answer,
             'try_again': self.try_again,
@@ -394,8 +550,12 @@ class MultipleChoiceProblemModule(ResourceModule):
 
     def save_answer(self, post_data):
         self.answers.append(post_data['answer'])
-        self.attempts += 1
-        return {'correct': self.find_correct(post_data['answer'])}
+        if self.attempts < self.maximum_attempts:
+            self.attempts += 1
+            return {'correct': self.find_correct(post_data['answer']), 'html': self.render_module()}
+        else:
+            error_msg = "Cannot attempt this problem again."
+            raise ModuleException(error_msg)
 
     def allow_retry(self):
         allow_retry = False
@@ -407,16 +567,17 @@ class MultipleChoiceProblemModule(ResourceModule):
         return {'allow_retry': self.allow_retry()}
 
     def render_module(self):
-        previous_answer = None
+        previous_answer = -1
         if len(self.answers) > 0:
             previous_answer = int(self.answers[-1])
-
         return render_to_string(self.template, {
             'options': [o[0] for o in self.options],
             'question': self.question,
             'previous_answer': previous_answer,
             'allow_retry': self.allow_retry(),
-            'correct_answer': self.correct_answer()
+            'correct_answer': self.correct_answer(),
+            'resource_id': self.resource_id,
+            'name': self.name,
         })
 
     def render_module_author(self):
@@ -425,10 +586,13 @@ class MultipleChoiceProblemModule(ResourceModule):
             'form': form,
             'action_link': self.static_data.get('author_post_link'),
             'form_id': "resource-creation-form",
+            'options': self.options,
             }, context_instance=RequestContext(self.static_data.get('request')))
 
 RESOURCE_MODULES = {
     'html': HTMLModule,
     'link': LinkModule,
-    'multiplechoice': MultipleChoiceProblemModule
+    'multiplechoice': MultipleChoiceProblemModule,
+    'vertical': VerticalModule,
+    'video': VideoModule,
 }

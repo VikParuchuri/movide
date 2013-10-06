@@ -1,18 +1,19 @@
 
 <div class="problem">
-    <h4>{{ question }}</h4>
+    <h4> {{ name }}</h4>
+    <p>{{ question }}</p>
     <ul class="multiple-choice-options">
         {% for option in options %}
             <li
-                {% if previous_answer %}
+                {% if previous_answer > -1 %}
                     {% if forloop.counter0 == correct_answer %}
                         class="correct"
                     {% else %}
                         class="incorrect"
                     {% endif %}
                 {% endif %}
-                    ><input type="radio" name="multiple_choice" value="{{ forloop.counter0 }}"
-                       {% if previous_answer %}
+                    ><input type="radio" name="multiple_choice-{{ resource_id }}" value="{{ forloop.counter0 }}"
+                       {% if previous_answer > -1 %}
                             disabled="true"
                            {% if forloop.counter0 == previous_answer %}
                                checked="true"
@@ -22,10 +23,10 @@
         {% endfor %}
     </ul>
 
-    {% if previous_answer and allow_retry %}
-        <button type="button" id="multiple-choice-retry" class="btn btn-default">Try again</button>
-    {%  elif not previous_answer %}
-        <button type="button" id="multiple-choice-submit" class="btn btn-default">Submit response</button>
+    {% if previous_answer > -1 and allow_retry %}
+        <button type="button" class="btn btn-default multiple-choice-retry">Try again</button>
+    {%  elif previous_answer == -1 %}
+        <button type="button" class="btn btn-default multiple-choice-submit">Submit response</button>
     {% endif %}
     <div class="help-block"></div>
 </div>

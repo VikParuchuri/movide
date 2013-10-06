@@ -41,7 +41,7 @@
             <div class='modal-content'>
                 <div class='modal-header'>
                     <button aria-hidden='true' class='close' data-dismiss='modal' type='button'>×</button>
-                    <h4 class='modal-title'>Resource</h4>
+                    <h4 class='modal-title'><%= display_name %></h4>
                 </div>
                 <div class="modal-body">
                     <div class="resource-view">
@@ -53,33 +53,31 @@
     </div>
 </script>
 
-
-<script id="resourceCreationModal" type="text/template">
-    <div aria-hidden='true' class='modal fade' id='create-a-resource-modal' role='dialog' tabindex='-1'>
+<script id="resourceAuthorModal" type="text/template">
+    <div aria-hidden='true' class='modal fade view-a-resource-modal' role='dialog' tabindex='-1'>
         <div class='modal-dialog'>
             <div class='modal-content'>
                 <div class='modal-header'>
                     <button aria-hidden='true' class='close' data-dismiss='modal' type='button'>×</button>
-                    <h4 class='modal-title'>Create a resource</h4>
+                    <h4 class='modal-title'><%= display_name %></h4>
                 </div>
                 <div class="modal-body">
-                    <div class="btn-group resource-type-buttons">
-                        <button type="button" class="btn btn-default resource-type-button" data-resource-type="link">Link</button>
-                        <button type="button" class="btn btn-default resource-type-button" data-resource-type="html">HTML</button>
-                        <button type="button" class="btn btn-default resource-type-button" data-resource-type="multiplechoice">Multiple Choice</button>
+                    <div class="alert alert-info">
+                        You can create a resource and add components here.  After you add components, you can reorder them by dragging them up or down.  Please remember to hit save on the basic settings and each component before you close the editor, or your changes will not be saved.
                     </div>
-                    <div id="resource-creation-form-container">
-
+                    <div class="resource-view">
+                        <%= html %>
                     </div>
                 </div>
-             </div>
-         </div>
+            </div>
+        </div>
     </div>
 </script>
 
+
 <script id="resourceDetailTemplate" type="text/template">
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-md-12">
             <button class="btn btn-small" id="create-a-resource-button"><i class="glyphicon glyphicon-plus"></i> Create a resource</button>
         </div>
     </div>
@@ -90,7 +88,7 @@
 <script id="messageDetailTemplate" type="text/template">
     <% if(is_owner == true || enable_posting == true) { %>
         <div class="row">
-            <div class="col-xs-12">
+            <div class="col-md-12">
                 <div id="start-a-discussion" data-start-discussion="true" class="message-reply">
                     <form role="form">
                         <div class="form-group reply-to-message-form ui-front">
@@ -114,7 +112,7 @@
         </div>
     <% } %>
     <div class="row">
-        <div class="col-xs-12">
+        <div class="col-md-12">
             <div id="messages-container">
             </div>
         </div>
@@ -287,14 +285,22 @@
 </script>
 
 <script id="resourceTemplate" type="text/template">
-    <div class="resource" data-resource-id="<%= pk %>">
+    <div class="resource" data-resource-id="<%= pk %>" data-display-name="<%= display_name %>">
         <div class="header">
             <% if (typeof(image_url) != "undefined") { %>
             <img src="<%= image_url %>" alt="<%= response_type %>" class="img-responsive img-rounded">
             <% } %>
         </div>
         <div class="resource-content">
-            <div><a href="#" class="show-resource-modal-link" data-resource-id="<%= pk %>"><%= display_name %></a> shared by <h4><%= user %></h4><span class="time"> <%= created_formatted %></span></div>
+                <div>
+                    <a href="#" class="show-resource-modal-link" data-resource-id="<%= pk %>"><%= display_name %></a> shared by <h4><%= user %></h4><span class="time"> <%= created_formatted %></span>
+                <% if (is_owner == true) { %>
+                    <div class="pull-right">
+                        <a type="button" class="btn edit-resource-button" data-toggle="tooltip" title="Edit this resource."><span class="glyphicon glyphicon-edit"></span></a>
+                        <a type="button" class="btn remove-resource-button" data-toggle="tooltip" title="Remove this resource."><span class="glyphicon glyphicon-remove"></span></a>
+                    </div>
+                <% } %>
+            </div>
         </div>
     </div>
 </script>

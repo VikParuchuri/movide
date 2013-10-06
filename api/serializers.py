@@ -262,7 +262,7 @@ class ResourceSerializer(serializers.Serializer):
     classgroup = serializers.SlugRelatedField(many=False, slug_field="name", read_only=True)
     approved = serializers.BooleanField()
     name = serializers.CharField()
-    display_name = serializers.CharField()
+    display_name = serializers.Field()
     created_timestamp = serializers.Field(source="created_timestamp")
 
     modified = serializers.Field()

@@ -31,6 +31,11 @@ TITLE_CHOICES = (
     ("Mrs.", "Mrs.")
 )
 
+GRADING_CHOICES = (
+    ("COM", "Completion."),
+    ("COR", "Correctness.")
+)
+
 DEFAULT_WELCOME_MESSAGE = "Welcome to your course.  Check the discussions view to get started!  The instructor can edit this message in the settings view."
 DEFAULT_CLASS_DESCRIPTION = "One of the finest courses ever made. (the instructor can change this in the settings view)"
 
@@ -62,8 +67,8 @@ class Classgroup(models.Model):
         names = ["@" + n['username'] for n in names]
         tags = self.tags.values('name')
         tags = ["#" + t['name'] for t in tags]
-        resources = self.resources.values('name')
-        resources = ["*" + r['name'] for r in resources]
+        resources = self.resources.values('name', 'resource_type')
+        resources = ["*" + r['name'] for r in resources if r['name'] is not None and r['resource_type'] == "vertical"]
         return names + tags + resources
 
     def link(self):
@@ -134,14 +139,28 @@ class Classgroup(models.Model):
                     edges.append({'start': u, 'end': k, 'strength': user_relations[u][k]})
         return {'nodes': nodes, 'edges': edges}
 
+class Skill(models.Model):
+    classgroup = models.ForeignKey(Classgroup, related_name="skills", blank=True, null=True, on_delete=models.SET_NULL)
+    name = models.CharField(max_length=MAX_NAME_LENGTH, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
+    display_name = models.CharField(max_length=MAX_NAME_LENGTH, blank=True, null=True)
+    grading_policy = models.CharField(max_length=3, choices=GRADING_CHOICES, default="COM")
+
+    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (("classgroup", "name"),)
+
 class Resource(models.Model):
     user = models.ForeignKey(User, related_name="resources")
     classgroup = models.ForeignKey(Classgroup, related_name="resources")
-    name = models.CharField(max_length=MAX_NAME_LENGTH, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
+    name = models.CharField(max_length=MAX_NAME_LENGTH, validators=[RegexValidator(regex=alphanumeric)], blank=True, null=True)
     display_name = models.CharField(max_length=MAX_NAME_LENGTH, blank=True, null=True)
     resource_type = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
     data = models.TextField(blank=True, null=True)
     approved = models.BooleanField(default=False)
+    parent = models.ForeignKey('self', related_name="children", blank=True, null=True, on_delete=models.SET_NULL)
+    skills = models.ManyToManyField(Skill, related_name="resources", blank=True, null=True)
 
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -155,7 +174,7 @@ class Resource(models.Model):
         return calendar.timegm(self.created.utctimetuple())
 
     class Meta:
-        unique_together = (("classgroup", "name"),)
+        order_with_respect_to = 'parent'
 
 class UserResourceState(models.Model):
     resource = models.ForeignKey(Resource, related_name="user_resource_states")
