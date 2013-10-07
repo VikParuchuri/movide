@@ -7,6 +7,7 @@ import json
 import logging
 from models import UserResourceState
 from django.utils.html import mark_safe
+from permissions import ClassGroupPermissions
 
 log = logging.getLogger(__name__)
 
@@ -182,12 +183,15 @@ class ResourceRenderer(object):
         child_views = []
         children = self.get_children()
         for child in children:
-            user_state, created = UserResourceState.objects.get_or_create(
-                user=self.static_data['request'].user,
-                resource=child
-            )
-            renderer = ResourceRenderer(child, user_resource_state=user_state, static_data=self.static_data)
-            child_views.append(renderer.user_view())
+            child_access_level = ClassGroupPermissions.get_permission_level(child.classgroup, child, "change_resource")
+            user_access_level = ClassGroupPermissions.access_level(child.classgroup, self.static_data['request'].user)
+            if ClassGroupPermissions.PERMISSION_LEVELS[user_access_level] >= ClassGroupPermissions.PERMISSION_LEVELS[child_access_level]:
+                user_state, created = UserResourceState.objects.get_or_create(
+                    user=self.static_data['request'].user,
+                    resource=child
+                )
+                renderer = ResourceRenderer(child, user_resource_state=user_state, static_data=self.static_data)
+                child_views.append(renderer.user_view())
         return child_views
 
     def user_view(self):
@@ -277,7 +281,6 @@ class ResourceModule(object):
 
     def user_view(self):
         resource_html = ResourceHTML()
-        log.info(self.resource_template)
         resource_html.add_html(render_to_string(self.resource_template, {
             'content': self.render_module(),
             'resource_id': self.resource_id,
@@ -298,6 +301,10 @@ class ResourceModule(object):
         class_field = getattr(self.__class__, field)
         scope = class_field.scope
         return class_field, scope
+
+    def change_visibility(self, post_data):
+        ClassGroupPermissions.assign_perms(self.resource.classgroup, self.resource, "change_resource", post_data.get("new_role"))
+        return {'success': True}
 
     def store_data(self):
         self.data = {}
@@ -321,12 +328,15 @@ class ResourceModule(object):
 
     def author_view(self):
         resource_html = ResourceHTML()
+        current_role = ClassGroupPermissions.get_permission_level(self.resource.classgroup, self.resource, "change_resource")
         resource_html.add_html(render_to_string(self.resource_author_template, {
             'content': self.render_module_author(),
             'resource_id': self.resource_id,
             'js_class_name': self.author_js_class_name,
             'resource_type': self.resource_type,
-            'class_name': self.class_name
+            'class_name': self.class_name,
+            'roles': [ClassGroupPermissions.student, ClassGroupPermissions.teacher],
+            'current_role': current_role,
         }))
         for js in self.author_js:
             resource_html.add_js(js)
@@ -361,7 +371,8 @@ class SimpleAuthoringMixin(object):
 
     def handle_ajax(self, action, post_data, **kwargs):
         actions = {
-            'save_form_values': self.save_form_values
+            'save_form_values': self.save_form_values,
+            'change_visibility': self.change_visibility,
         }
 
         return actions[action](post_data)
@@ -451,7 +462,6 @@ class VerticalModule(ResourceModule):
 
     def reorder_modules(self, post_data):
         child_ids = post_data['child_ids']
-        log.info(child_ids)
         self.resource.set_resource_order(child_ids)
 
         return {'success': True}
@@ -543,7 +553,8 @@ class MultipleChoiceProblemModule(ResourceModule):
         ajax_handlers = {
             'save_answer': self.save_answer,
             'try_again': self.try_again,
-            'save_form_values': self.save_form_values
+            'save_form_values': self.save_form_values,
+            'change_visibility': self.change_visibility,
         }
 
         return json.dumps(ajax_handlers[action](post_data))

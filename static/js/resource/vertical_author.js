@@ -49,14 +49,31 @@ window.VerticalAuthor= (function(el) {
         $('.child-container .component-removal-button', el).unbind();
         $('.child-container .component-removal-button', el).click(delete_item);
 
+        $('.component-visibility-selection a', el).unbind();
+        $('.component-visibility-selection a', el).click(change_visibility);
+
         rebind_creation();
     };
 
-    var delete_item = function(){
+    var delete_item = function(event){
         var resource_author_container = $(this).closest('.resource-author-container');
         var resource_id = resource_author_container.data('resource-id');
         resource_author_container.remove();
         window.csrf_delete("/api/resources/" + resource_id + "/", {}, null, null);
+    };
+
+    var change_visibility = function(event){
+        var resource_author_container = $(this).closest('.resource-author-container');
+        var resource_id = resource_author_container.data('resource-id');
+        var new_role = $(event.target).data('name');
+        var new_role_title = $(event.target).html();
+        window.csrf_post("/api/resources/" + resource_id + "/",
+            {action: 'change_visibility', new_role: new_role},
+            function(){
+                $('.component-visibility-button .current-role', resource_author_container).html(new_role_title);
+            },
+            null
+        );
     };
 
     var update_order = function(){

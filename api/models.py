@@ -139,6 +139,11 @@ class Classgroup(models.Model):
                     edges.append({'start': u, 'end': k, 'strength': user_relations[u][k]})
         return {'nodes': nodes, 'edges': edges}
 
+    class Meta:
+        permissions = (
+            ('view_classgroup', 'View class'),
+        )
+
 class Skill(models.Model):
     classgroup = models.ForeignKey(Classgroup, related_name="skills", blank=True, null=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=MAX_NAME_LENGTH, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
@@ -175,6 +180,9 @@ class Resource(models.Model):
 
     class Meta:
         order_with_respect_to = 'parent'
+        permissions = (
+            ('view_resource', 'View resource'),
+        )
 
 class UserResourceState(models.Model):
     resource = models.ForeignKey(Resource, related_name="user_resource_states")

@@ -11,6 +11,7 @@ from api.forms import StudentClassSettingsForm, ClassSettingsForm
 from django.contrib.auth.models import User
 import json
 from allauth.account.views import LoginView, SignupView
+from api.permissions import ClassGroupPermissions
 
 log=logging.getLogger(__name__)
 
@@ -71,6 +72,8 @@ def verify_code(request):
     if cg.class_settings.access_key == code:
         user.classgroups.add(cg)
         user.save()
+        cg_perm = ClassGroupPermissions(cg)
+        cg_perm.assign_access_level(user, cg_perm.student)
         return HttpResponse(status=200)
     else:
         return HttpResponse(status=400)
@@ -89,7 +92,7 @@ def verify_settings(request, classgroup):
     except Classgroup.DoesNotExist:
         raise Http404
 
-    if request.user.classgroups.filter(name=classgroup).count() == 0 and request.user != cg.owner:
+    if not ClassGroupPermissions.is_student(cg, request.user):
         raise Http404
 
     return cg
@@ -118,7 +121,7 @@ def student_settings(request, classgroup):
 def class_settings(request, classgroup):
     cg = verify_settings(request, classgroup)
 
-    if request.user != cg.owner:
+    if not ClassGroupPermissions.is_teacher(cg, request.user):
         raise Http404
 
     class_settings = ClassSettings.objects.get(classgroup=cg)
@@ -149,7 +152,7 @@ def classview(request, classgroup, **kwargs):
     except Classgroup.DoesNotExist:
         raise Http404
 
-    is_owner = str(cg.owner == request.user).lower()
+    is_owner = str(ClassGroupPermissions.is_teacher(cg, request.user)).lower()
     template_vars = {
         'name': cg.name,
         'display_name': cg.display_name,
@@ -182,7 +185,7 @@ def add_user(request, classgroup):
 
     cg = verify_settings(request, classgroup)
 
-    if request.user != cg.owner:
+    if not ClassGroupPermissions.is_teacher(cg, request.user):
         raise Http404
 
     username = request.POST.get('username')
@@ -190,6 +193,8 @@ def add_user(request, classgroup):
     user.classgroups.add(cg)
 
     user.save()
+    cg_perm = ClassGroupPermissions(cg)
+    cg_perm.assign_access_level(user, cg_perm.student)
 
     return HttpResponse(status=200)
 
@@ -200,13 +205,36 @@ def remove_user(request, classgroup):
 
     cg = verify_settings(request, classgroup)
 
-    if request.user != cg.owner:
+    if not ClassGroupPermissions.is_teacher(cg, request.user):
         raise Http404
 
     username = request.POST.get('username')
     user = User.objects.get(username=username)
     user.classgroups.remove(cg)
     user.save()
+    cg_perm = ClassGroupPermissions(cg)
+    cg_perm.assign_access_level(user, cg_perm.none)
+
+    return HttpResponse(status=200)
+
+@login_required()
+def user_role_toggle(request, classgroup):
+    if request.method != 'POST':
+        raise Http404
+
+    cg = verify_settings(request, classgroup)
+
+    if not ClassGroupPermissions.is_administrator(cg, request.user):
+        raise Http404
+
+    username = request.POST.get('username')
+    user = User.objects.get(username=username)
+    cg_perm = ClassGroupPermissions(cg)
+
+    if cg_perm.get_access_level(user) == cg_perm.teacher:
+        cg_perm.assign_access_level(user, cg_perm.student)
+    elif cg_perm.get_access_level(user) == cg_perm.student:
+        cg_perm.assign_access_level(user, cg_perm.teacher)
 
     return HttpResponse(status=200)
 

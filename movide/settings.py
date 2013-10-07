@@ -152,7 +152,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend"
+    "allauth.account.auth_backends.AuthenticationBackend",
+    'guardian.backends.ObjectPermissionBackend',
 )
 
 
@@ -181,6 +182,7 @@ INSTALLED_APPS = (
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.google',
     'avatar',
+    'guardian',
 )
 
 REST_FRAMEWORK = {
@@ -324,6 +326,8 @@ ACCESS_CODE_LENGTH = 6
 
 # Adds fields to signup form.  Remove for now.
 #ACCOUNT_SIGNUP_FORM_CLASS = 'api.forms.SignupForm'
+
+ANONYMOUS_USER_ID = -1
 
 try:
     from .private import *

@@ -180,6 +180,7 @@
                 <th>Name</th>
                 <th>Daily Messages</th>
                 <th>All Messages</th>
+                <th>Role</th>
                 <th></th>
             </tr>
         </thead>
@@ -231,9 +232,13 @@
         <td class="username" data-username="<%= username %>"><%= username %></td>
         <td><%= message_count_today %></td>
         <td><%= message_count %></td>
+        <td><%= window.capitalize(role) %></td>
         <td>
             <% if (is_owner == true) { %>
+            <div class="btn-group">
+                <a type="button" class="btn btn-xs user-role-toggle" data-toggle="tooltip" title="Change user role" data-role="<%= role %>"><span class="glyphicon glyphicon-user"></span></a>
                 <a type="button" class="btn btn-xs user-tag-delete" data-toggle="tooltip" title="Remove user from course"><span class="glyphicon glyphicon-remove"></span></a>
+            </div>
             <% } %>
         </td>
     </tr>

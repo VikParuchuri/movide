@@ -31,3 +31,4 @@ twython
 django-avatar
 factory_boy
 coverage
+django-guardian

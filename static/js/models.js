@@ -562,15 +562,17 @@ $(document).ready(function() {
         view_class: UserView,
         template_name: "#userTableTemplate",
         user_add_message: "#user-add-message",
+        user_role_toggle_tag: ".user-role-toggle",
         classgroup: undefined,
         active: undefined,
         events: {
             'click .user-tag-delete': 'user_tag_delete',
-            'click #user-add': 'user_add'
+            'click #user-add': 'user_add',
+            'click .user-role-toggle': 'user_role_toggle'
         },
         initialize: function (options) {
             _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table',
-                'destroy_view', 'user_tag_delete', 'rebind_events', 'user_add', 'display_message');
+                'destroy_view', 'user_tag_delete', 'rebind_events', 'user_add', 'display_message', 'user_role_toggle');
             this.collection = new this.collection_class();
             this.classgroup = options.classgroup;
             this.active = options.active;
@@ -578,6 +580,7 @@ $(document).ready(function() {
             this.link = window.location.host + class_link;
             this.user_add_link = class_link + "add_user/";
             this.user_remove_link = class_link + "remove_user/";
+            this.user_role_toggle_link = class_link + "user_role_toggle/";
             this.options={
                 classgroup: this.classgroup,
                 display_tag: this.display_tag
@@ -622,6 +625,8 @@ $(document).ready(function() {
             $('.user-tag-delete').click(this.user_tag_delete);
             $('#user-add').unbind();
             $('#user-add').click(this.user_add);
+            $(this.user_role_toggle_tag).unbind();
+            $(this.user_role_toggle_tag).click(this.user_role_toggle);
         },
         display_message: function(message, success){
             this.refresh(this.options);
@@ -663,13 +668,30 @@ $(document).ready(function() {
             this.display_tag = options.display_tag;
             var that=this;
             this.collection.fetch({
-                    data: {classgroup: this.classgroup,
+                    data: {classgroup: this.classgroup},
                     success: function(){
-                        that.setElement(this.el_name);
+                        that.setElement(that.el_name);
                         $(that.el).empty();
                         that.render_table();
                     }
-            }});
+            });
+        },
+        user_role_toggle: function(event){
+            event.preventDefault();
+            var username = $(event.target).closest('tr').find('td.username').data('username');
+            var that = this;
+            $.ajax({
+                type: "POST",
+                url: this.user_role_toggle_link,
+                data: {username: username},
+                success: function(response){
+                    that.refresh(that.options);
+                },
+                error: function(){
+                    that.refresh(that.options);
+                }
+            });
+            return false;
         },
         user_tag_delete: function(event){
             event.preventDefault();
@@ -682,10 +704,10 @@ $(document).ready(function() {
                         url: that.user_remove_link,
                         data: {username: username},
                         success: function(){
-                            that.display_message("User removed.", true);
+                            that.refresh(that.options);
                         },
                         error: function(){
-                            that.display_message("Failed to remove user.", false);
+                            that.refresh(that.options);
                         }
                     });
                 }
@@ -1425,7 +1447,7 @@ $(document).ready(function() {
             var that = this;
             return false;
         },
-        create_resource: function(){
+        create_resource: function(event){
             event.preventDefault();
             var resource = new Resource({resource_type: "vertical", classgroup: class_name});
             var that = this;
@@ -1479,4 +1501,5 @@ $(document).ready(function() {
     window.csrf_delete = csrf_delete;
     window.container_name = ".resource-view .resource-container";
     window.class_name = class_name;
+    window.capitalize = capitalize;
 });

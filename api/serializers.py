@@ -10,6 +10,7 @@ from django.conf import settings
 import re
 from rest_framework.pagination import PaginationSerializer
 from django.contrib.sites.models import get_current_site
+from permissions import ClassGroupPermissions
 
 
 log = logging.getLogger(__name__)
@@ -149,6 +150,10 @@ class ClassgroupSerializer(serializers.Serializer):
                 user.classgroups.add(instance)
                 user.save()
 
+                cg_perm = ClassGroupPermissions(instance)
+                cg_perm.setup()
+                cg_perm.assign_access_level(user, cg_perm.administrator)
+
                 try:
                     class_settings = ClassSettings(classgroup=instance, access_key=make_random_key())
                     class_settings.save()
@@ -176,7 +181,7 @@ class ClassgroupSerializer(serializers.Serializer):
                 log.exception(error_msg)
                 raise serializers.ValidationError(error_msg)
         else:
-            if instance.owner != user:
+            if not ClassGroupPermissions.is_teacher(instance, user):
                 raise serializers.ValidationError("Class name is already taken.")
             class_settings = instance.class_settings
 
@@ -223,7 +228,7 @@ class MessageSerializer(serializers.Serializer):
 
         if (classgroup.class_settings is not None and
             classgroup.class_settings.enable_posting is False and
-            user != classgroup.owner):
+            not ClassGroupPermissions.is_teacher(classgroup, user)):
             raise serializers.ValidationError("You are not allowed to make a post right now.")
 
 
@@ -234,7 +239,7 @@ class MessageSerializer(serializers.Serializer):
                 raise serializers.ValidationError("Attempting to edit a message that is not yours.")
 
         message_type = attrs.get('message_type')
-        if message_type == "A" and user != instance.classgroup.owner:
+        if message_type == "A" and not ClassGroupPermissions.is_teacher(classgroup, user):
             raise serializers.ValidationError("You cannot make an announcement unless you own a course.")
 
         instance.message_type = message_type

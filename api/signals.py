@@ -2,12 +2,26 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from django.contrib.auth.models import User
-from models import UserProfile, MessageNotification, Message, RatingNotification, Rating, Classgroup, make_random_key, ClassSettings
+from models import UserProfile, MessageNotification, Message, RatingNotification, Rating, Classgroup, make_random_key, ClassSettings, Resource
 from tasks import process_saved_message
 import logging
 from django.db import IntegrityError
+from permissions import ClassGroupPermissions
+from south.signals import post_migrate
 
 log = logging.getLogger(__name__)
+
+def update_permissions_after_migration(app, **kwargs):
+    """
+    Update app permission just after every migration.
+    """
+    from django.conf import settings
+    from django.db.models import get_app, get_models
+    from django.contrib.auth.management import create_permissions
+
+    create_permissions(get_app(app), get_models(), 2 if settings.DEBUG else 0)
+
+post_migrate.connect(update_permissions_after_migration)
 
 @receiver(post_save, sender=User, dispatch_uid="create_profile")
 def create_profile(sender, instance, **kwargs):
@@ -49,9 +63,9 @@ def create_message_notification(sender, instance, **kwargs):
                         )
                 except IntegrityError:
                     log.warn("MessageNotification already exists with receiver message {0} and origin message {1}".format(m.id, instance.id))
-    elif instance.reply_to is None and instance.classgroup is not None and instance.user == instance.classgroup.owner and instance.message_type == "A":
+    elif instance.reply_to is None and instance.classgroup is not None and ClassGroupPermissions.is_teacher(instance.classgroup, instance.user) and instance.message_type == "A":
         for user in instance.classgroup.users.all():
-            if user != instance.classgroup.owner:
+            if user != instance.user:
                 try:
                     MessageNotification.objects.get_or_create(
                         receiving_message=instance,

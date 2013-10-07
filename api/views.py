@@ -29,6 +29,7 @@ import pytz
 import json
 from django.forms.models import model_to_dict
 from resources import ResourceRenderer
+from permissions import ClassGroupPermissions
 log = logging.getLogger(__name__)
 
 RESULTS_PER_PAGE = 20
@@ -89,7 +90,7 @@ class QueryView(APIView):
     def verify_classgroup(self):
         if "classgroup" in self.query_dict:
             cg = Classgroup.objects.get(name=self.query_dict['classgroup'])
-            if cg.owner != self.request.user and self.request.user.classgroups.filter(name=self.query_dict['classgroup']).count()==0:
+            if not ClassGroupPermissions.is_student(cg, self.request.user):
                 error_msg = "Attempting to query a class that you are not part of."
                 log.error(error_msg)
                 raise PermissionDenied(error_msg)
@@ -102,14 +103,14 @@ class QueryView(APIView):
             log.error(error_msg)
             raise PermissionDenied(error_msg)
 
-        if self.request.user.classgroups.filter(id=self.cg.id).count()==0 and self.cg.owner != self.request.user:
+        if not ClassGroupPermissions.is_student(self.cg, self.request.user):
             error_msg = "User not authorized to see given class."
             log.error(error_msg)
             raise PermissionDenied(error_msg)
 
     def verify_ownership(self):
-        if self.cg.owner != self.request.user:
-            error_msg = "User is not the owner of the given class."
+        if not ClassGroupPermissions.is_teacher(self.cg, self.request.user):
+            error_msg = "User is not a teacher for the given class."
             log.error(error_msg)
             raise PermissionDenied(error_msg)
 
@@ -139,25 +140,18 @@ class RatingView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ClassgroupDetailView(APIView):
+class ClassgroupDetailView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
 
-    def get_object(self, classgroup):
-        try:
-            return Classgroup.objects.get(name=classgroup)
-        except Classgroup.DoesNotExist:
-            raise Http404
-
     def get(self, request, classgroup, format=None):
-        classgroup = self.get_object(classgroup)
-        if classgroup.owner != request.user and request.user.classgroups.filter(id=classgroup.id).count()==0:
-            error_msg = "You are not authorized to see this class."
-            log.error(error_msg)
-            return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
+        self.query_dict = {
+            'classgroup': classgroup
+        }
+        self.verify_membership()
 
-        serializer = ClassgroupSerializer(classgroup)
-        if classgroup.class_settings is not None:
-            serializer.data['class_settings'] = ClassSettingsSerializer(classgroup.class_settings).data
+        serializer = ClassgroupSerializer(self.cg)
+        if self.cg.class_settings is not None:
+            serializer.data['class_settings'] = ClassSettingsSerializer(self.cg.class_settings).data
         return Response(serializer.data)
 
 def add_likes_to_data(data, user):
@@ -291,7 +285,7 @@ class MessageDetailView(APIView):
     def delete(self, request, pk, format=None):
         message = self.get_object(pk)
 
-        if request.user != message.classgroup.owner:
+        if not ClassGroupPermissions.is_teacher(message.classgroup, request.user):
             error_msg = "User not authorized to delete this message."
             log.error(error_msg)
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
@@ -323,6 +317,7 @@ class UserView(QueryView):
         for user in serializer.data:
             user['message_count_today'] = Classgroup.objects.get(name=self.query_dict['classgroup']).messages.filter(user=user['pk'], modified__gt=now() - timedelta(days=1)).count()
             user['message_count'] = Classgroup.objects.get(name=self.query_dict['classgroup']).messages.filter(user=user['pk']).count()
+            user['role'] = ClassGroupPermissions.access_level(self.cg, User.objects.get(id=user['pk']))
         return serializer
 
     def post(self, request, format=None):
@@ -371,7 +366,7 @@ class UserDetail(APIView):
             log.error(error_msg)
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
 
-        if request.user != classgroup_model.owner:
+        if not ClassGroupPermissions.is_teacher(classgroup_model, request.user):
             error_msg = "User not authorized to delete others."
             log.error(error_msg)
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
@@ -423,8 +418,8 @@ class ClassSettingsView(QueryView):
         self.query_dict = {'classgroup': classgroup}
         self.verify_membership()
 
-        if self.cg.owner != request.user:
-            error_msg = "You are not the owner of this class, and cannot edit class settings."
+        if not ClassGroupPermissions.is_teacher(self.cg, request.user):
+            error_msg = "You are not a teacher in this class, and cannot edit class settings."
             return Response(error_msg, status=status.HTTP_400_BAD_REQUEST)
 
         settings = self.cg.class_settings
