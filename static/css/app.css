@@ -6475,7 +6475,7 @@ td.loupe.loupe-large {
   -ms-transform: translateY(-3px);
   -o-transform: translateY(-3px);
 }
-.skill {
+/*.skill {
   text-align: center;
   margin-bottom: 70px;
 }
@@ -6484,7 +6484,7 @@ td.loupe.loupe-large {
   margin-top: 20px;
   border-top: 1px solid #ddd;
   padding-top: 20px;
-}
+}*/
 .clients {
   text-align: center;
 }

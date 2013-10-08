@@ -1,14 +1,14 @@
 from __future__ import division
 from django.contrib.auth.models import User
 from models import (Tag, Message, UserProfile, Classgroup, MessageNotification,
-                    RatingNotification, StudentClassSettings, Resource, UserResourceState)
+                    RatingNotification, StudentClassSettings, Resource, UserResourceState, Skill)
 from rest_framework.views import APIView
 from serializers import (TagSerializer, MessageSerializer, UserSerializer,
                          EmailSubscriptionSerializer, ResourceSerializer,
                          ClassgroupSerializer, RatingSerializer, PaginatedMessageSerializer,
                          NotificationSerializer, PaginatedNotificationSerializer, StudentClassSettingsSerializer,
                          ClassSettingsSerializer, ClassgroupStatsSerializer, alphanumeric_name,
-                         PaginatedResourceSerializer)
+                         PaginatedResourceSerializer, SkillSerializer, PaginatedSkillSerializer)
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework import status, generics, permissions
@@ -603,8 +603,8 @@ class ResourceAuthorView(QueryView):
         }
         self.verify_membership()
 
-        data = {k:request.POST[k] for k in request.POST if k not in self.post_attributes}
-        data.update({k:request.FILES[k] for k in request.FILES if k not in self.post_attributes})
+        data = {k: request.POST[k] for k in request.POST if k not in self.post_attributes}
+        data.update({k: request.FILES[k] for k in request.FILES if k not in self.post_attributes})
 
         resource_id = self.post_dict.get('resource_id')
         if resource_id is None:
@@ -631,3 +631,85 @@ class ResourceAuthorView(QueryView):
         resource.save()
 
         return Response(response,status=status.HTTP_201_CREATED)
+
+
+class SkillView(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+    query_attributes = ["classgroup"]
+    required_attributes = [("classgroup",), ]
+
+    def filter_classgroup(self, queryset, classgroup):
+        return queryset.filter(classgroup__name=classgroup)
+
+    def get(self, request):
+        self.get_query_params()
+        self.verify_membership()
+        queryset = Skill.objects.all()
+        queryset = self.filter_query_params(queryset).all().order_by("-created")
+        paginator = Paginator(queryset, RESULTS_PER_PAGE)
+        page = request.QUERY_PARAMS.get("page")
+
+        try:
+            serializer = PaginatedSkillSerializer(paginator.page(page), context={'request' : request})
+        except PageNotAnInteger:
+            serializer = SkillSerializer(queryset, context={'request': request}, many=True)
+        except EmptyPage:
+            serializer = PaginatedSkillSerializer(paginator.page(paginator.num_pages), context={'request' : request})
+
+        return Response(serializer.data)
+
+    def post(self, request):
+        self.query_dict = {
+            'classgroup': request.DATA.get('classgroup')
+        }
+
+        self.verify_membership()
+        self.verify_ownership()
+
+        pk = request.DATA.get('pk')
+        instance = None
+        if pk is not None:
+            instance = Skill.objects.get(id=pk)
+
+        serializer = SkillSerializer(data=request.DATA, context={'request': request}, instance=instance)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SkillDetail(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+    query_attributes = ["classgroup"]
+    required_attributes = [("classgroup",), ]
+
+    def put(self, request, pk):
+        self.query_dict = {
+            'classgroup': request.DATA.get('classgroup')
+        }
+
+        self.verify_membership()
+        self.verify_ownership()
+
+        instance = Skill.objects.get(id=pk)
+        serializer = SkillSerializer(data=request.DATA, context={'request': request}, instance=instance)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+
+        instance = Skill.objects.get(id=pk)
+
+        self.query_dict = {
+            'classgroup': instance.classgroup.name
+        }
+
+        self.verify_membership()
+        self.verify_ownership()
+
+        instance.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

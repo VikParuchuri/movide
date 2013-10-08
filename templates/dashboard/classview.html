@@ -17,9 +17,12 @@
 {% block sidebar %}
     <ul class="nav nav-tabs" id="tag-sidebar">
         <li {% if active_page == "home" %}class="active current"{% endif %}><a href="{{ link }}" class="sidebar-item" data-name="home" data-toggle="tooltip" title="Home"><span class="glyphicon glyphicon-home"></span></a></li>
+        <li {% if active_page == "skills" %}class="active current"{% endif %}><a href="{{ link }}skills/" class="sidebar-item" data-name="skills" data-toggle="tooltip" title="Skills"><span class="glyphicon glyphicon-tree-conifer"></span></a></li>
         <li {% if active_page == "messages" %}class="active current"{% endif %}><a href="{{ link }}messages/" class="sidebar-item" data-name="messages" data-toggle="tooltip" title="Discussions"><span class="glyphicon glyphicon-envelope"></span></a></li>
         <li {% if active_page == "resources" %}class="active current"{% endif %}><a href="{{ link }}resources/" class="sidebar-item" data-name="resources" data-toggle="tooltip" title="Resources"><span class="glyphicon glyphicon-book"></span></a></li>
-        <li {% if active_page == "users" %}class="active current"{% endif %}><a href="{{ link }}users/" class="sidebar-item" data-name="users" data-toggle="tooltip" title="Users"><span class="glyphicon glyphicon-user"></span></a></li>
+        {% if is_owner == "true" %}
+            <li {% if active_page == "users" %}class="active current"{% endif %}><a href="{{ link }}users/" class="sidebar-item" data-name="users" data-toggle="tooltip" title="Users"><span class="glyphicon glyphicon-user"></span></a></li>
+        {% endif %}
         <li {% if active_page == "stats" %}class="active current"{% endif %}><a href="{{ link }}stats/" class="sidebar-item" data-name="stats" data-toggle="tooltip" title="Stats"><span class="glyphicon glyphicon-stats"></span></a></li>
         <li {% if active_page == "notifications" %}class="active current"{% endif %}>
             <a href="{{ link }}notifications/" class="sidebar-item" data-name="notifications" data-toggle="tooltip" title="Notifications">

@@ -67,8 +67,8 @@ class Classgroup(models.Model):
         names = ["@" + n['username'] for n in names]
         tags = self.tags.values('name')
         tags = ["#" + t['name'] for t in tags]
-        resources = self.resources.values('name', 'resource_type')
-        resources = ["*" + r['name'] for r in resources if r['name'] is not None and r['resource_type'] == "vertical"]
+        resources = self.resources.values('display_name', 'resource_type')
+        resources = ["*" + r['display_name'] for r in resources if r['display_name'] is not None and r['resource_type'] == "vertical"]
         return names + tags + resources
 
     def link(self):
@@ -153,8 +153,16 @@ class Skill(models.Model):
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
+    def created_timestamp(self):
+        return calendar.timegm(self.created.utctimetuple())
+
+    def resource_text(self):
+        resource_names = SkillResource.objects.filter(skill=self).order_by("priority").values("resource__display_name")
+        resource_names = ["*{0}".format(r['resource__display_name']) for r in resource_names]
+        return ", ".join(resource_names)
+
     class Meta:
-        unique_together = (("classgroup", "name"),)
+        unique_together = (("classgroup", "name"), )
 
 class Resource(models.Model):
     user = models.ForeignKey(User, related_name="resources")
@@ -165,7 +173,7 @@ class Resource(models.Model):
     data = models.TextField(blank=True, null=True)
     approved = models.BooleanField(default=False)
     parent = models.ForeignKey('self', related_name="children", blank=True, null=True, on_delete=models.SET_NULL)
-    skills = models.ManyToManyField(Skill, related_name="resources", blank=True, null=True)
+    skills = models.ManyToManyField(Skill, blank=True, null=True, through="SkillResource", related_name="resources")
 
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -178,11 +186,36 @@ class Resource(models.Model):
     def created_timestamp(self):
         return calendar.timegm(self.created.utctimetuple())
 
+    def save(self, *args, **kwargs):
+        """
+        Override save to ensure that names and classgroups are unique, but make sure that the null case is okay.
+        """
+        if self.name is not None and self.name != '':
+            conflicting_instance = Resource.objects.filter(name=self.name, classgroup=self.classgroup)
+            if self.id:
+                conflicting_instance = conflicting_instance.exclude(pk=self.id)
+
+            if conflicting_instance.exists():
+                raise Exception('Resource with this name and classgroup already exists.')
+
+        super(Resource, self).save(*args, **kwargs)
+
     class Meta:
         order_with_respect_to = 'parent'
         permissions = (
             ('view_resource', 'View resource'),
         )
+
+class SkillResource(models.Model):
+    skill = models.ForeignKey(Skill)
+    resource = models.ForeignKey(Resource)
+
+    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    priority = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('skill', 'resource')
 
 class UserResourceState(models.Model):
     resource = models.ForeignKey(Resource, related_name="user_resource_states")

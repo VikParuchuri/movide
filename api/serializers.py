@@ -2,7 +2,7 @@ from django.forms import widgets
 from rest_framework import serializers
 from models import (Tag, Message, UserProfile, EmailSubscription, Classgroup,
                     Rating, ClassSettings, Resource, StudentClassSettings,
-                    MESSAGE_TYPE_CHOICES, make_random_key)
+                    MESSAGE_TYPE_CHOICES, make_random_key, GRADING_CHOICES, Skill, SkillResource)
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 import logging
@@ -345,5 +345,61 @@ class ClassgroupStatsSerializer(serializers.Serializer):
     display_name = serializers.Field()
     name = serializers.CharField()
     modified = serializers.Field()
+
+
+class SkillSerializer(serializers.Serializer):
+    pk = serializers.Field()
+    classgroup = serializers.SlugRelatedField(many=False, slug_field="name", required=False, queryset=Classgroup.objects.all())
+    resource_text = serializers.Field(source="resource_text")
+    grading_policy = serializers.ChoiceField(choices=GRADING_CHOICES, default="COM")
+    name = serializers.CharField()
+    display_name = serializers.Field()
+    created_timestamp = serializers.Field(source="created_timestamp")
+
+    modified = serializers.Field()
+    created = serializers.Field()
+
+    def restore_object(self, attrs, instance=None):
+        classgroup = attrs.get('classgroup')
+        name = attrs.get('name')
+
+        attributes = ['grading_policy']
+        user = self.context['request'].user
+
+        if instance is None:
+            instance = Skill(classgroup=classgroup, name=alphanumeric_name(name), display_name=name)
+            instance.save()
+        else:
+            if not ClassGroupPermissions.is_teacher(classgroup, user):
+                raise serializers.ValidationError("You do not have permission to modify this skill.")
+
+        resources = self.context['request'].DATA.get('resources')
+        resources = resources.split(",")
+        resources = [r.strip().replace("*", "") for r in resources]
+
+        skill_resources = []
+        for (i, r) in enumerate(resources):
+            if len(r) < 2:
+                continue
+            log.info(r)
+            resource = Resource.objects.get(display_name=r, classgroup=classgroup)
+            skill_resource, created = SkillResource.objects.get_or_create(
+                resource=resource,
+                skill=instance
+            )
+            skill_resource.priority = i
+            skill_resource.save()
+            skill_resources.append(skill_resource)
+
+        for s in SkillResource.objects.filter(skill=instance):
+            if s not in skill_resources:
+                s.delete()
+
+        instance = set_attributes(attributes, attrs, instance)
+        return instance
+
+class PaginatedSkillSerializer(PaginationSerializer):
+    class Meta:
+        object_serializer_class = SkillSerializer
 
 

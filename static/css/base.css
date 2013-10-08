@@ -150,4 +150,22 @@ body {
     margin-bottom: 20px;
 }
 
+#create-a-skill-button{
+    margin-bottom: 20px;
+}
+
+.skill .skill-content div a{
+    display: inline-block;
+}
+
+.skill .skill-content div h4{
+    display: inline-block;
+}
+
+.skill .skill-content .time{
+    display: inline-block;
+    margin-left: 5px;
+}
+
+
 

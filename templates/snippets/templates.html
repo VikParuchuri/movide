@@ -30,6 +30,37 @@
     </div>
 </script>
 
+<script id="skillDetailTemplate" type="text/template">
+    <div class="row">
+        <div class="col-md-12">
+            <button class="btn btn-small" id="create-a-skill-button"><i class="glyphicon glyphicon-plus"></i> Create a skill</button>
+        </div>
+    </div>
+    <div id="skills-container">
+    </div>
+</script>
+
+<script id="editSkillTemplate" type="text/template">
+    <div id="edit-a-skill" data-skill-id="<%= skill_id %>">
+        <form role="form">
+            <div class="form-group ui-front">
+                <label for="skill-name-input">Skill Name</label>
+                <input type="text" class="form-control input-l" id="skill-name-input" placeholder="" value="<%= display_name %>">
+                <span class="help-block">The name of the skill.</span>
+            </div>
+            <div class="form-group ui-front">
+                <label  for="resource-name-input">Resource Names</label>
+                <textarea type="text" class="form-control input-lg autocomplete-enabled-input" id="resource-name-input" placeholder="Enter resources here..."><%= resources %></textarea>
+                <span class="help-block">Enter the names of the resources you wish to associate with this, beginning with a * (eg *Unit One), and separated by a comma (eg *Unit One, *Unit Two).</span>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-small"><%= save_text %></button>
+                <span class="help-block help-block-skill"></span>
+            </div>
+        </form>
+    </div>
+</script>
+
 <script id="notificationDetailTemplate" type="text/template">
     <div id="messages-container">
     </div>
@@ -206,6 +237,10 @@
     <div class="alert alert-info">You don't have any students for this tag yet.  Why not add some?</div>
 </script>
 
+<script id="noSkillsTemplate" type="text/template">
+    <div class="alert alert-info">There aren't any skills in this class yet. Why not add one now?</div>
+</script>
+
 <script id="noResourcesTemplate" type="text/template">
     <div class="alert alert-info">There aren't any resources in this class yet. Why not add one now?</div>
 </script>
@@ -280,6 +315,31 @@
     <div id="show-more-messages-container"></div>
     <div class="comments" data-tag-name="<%= classgroup %>" id="comments">
         <%= messages %>
+    </div>
+</script>
+
+<script id="skillsTemplate" type="text/template">
+    <div class="skills" data-tag-name="<%= classgroup %>" id="skills">
+        <%= skills %>
+    </div>
+</script>
+
+
+<script id="skillTemplate" type="text/template">
+    <div class="skill" data-skill-id="<%= pk %>" data-display-name="<%= display_name %>" data-name="<%= name %>" data-resources="<%= resource_text %>">
+        <div class="header">
+        </div>
+        <div class="skill-content">
+            <div>
+                <a href="#" class="show-skill-link" data-resource-id="<%= pk %>"><%= display_name %></a> <span class="time">created <%= created_formatted %></span><h4>.</h4>
+                <% if (is_owner == true) { %>
+                <div class="pull-right">
+                    <a type="button" class="btn edit-skill-button" data-toggle="tooltip" title="Edit this skill."><span class="glyphicon glyphicon-edit"></span></a>
+                    <a type="button" class="btn remove-skill-button" data-toggle="tooltip" title="Remove this skill."><span class="glyphicon glyphicon-remove"></span></a>
+                </div>
+                <% } %>
+            </div>
+        </div>
     </div>
 </script>
 

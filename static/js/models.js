@@ -200,6 +200,26 @@ $(document).ready(function() {
         }
     });
 
+    var Skill = methodModel.extend({
+        idAttribute: 'pk',
+        url: function () {
+            return '/api/skills/' + this.id + "/";
+        },
+        methodUrl: {
+            'create': '/api/skills/'
+        }
+    });
+
+    var Skills = PaginatedCollection.extend({
+        idAttribute: 'pk',
+        model: Skill,
+        baseUrl: '/api/skills/?page=1',
+        url: '/api/skills/?page=1',
+        comparator: function(m) {
+            return -parseInt(m.get('created_timestamp'));
+        }
+    });
+
     var EmailSubscription = methodModel.extend({
         idAttribute: 'pk',
         url: function () {
@@ -515,6 +535,11 @@ $(document).ready(function() {
             $(this.el).html(tmpl(this.class_model.toJSON()));
             this.announcements_view = new AnnouncementsView(this.options);
         },
+        render_skills: function(){
+            var tmpl = _.template($("#skillDetailTemplate").html());
+            $(this.el).html(tmpl(this.class_model.toJSON()));
+            this.skills_view = new SkillsView(this.options);
+        },
         render: function () {
             this.class_model = new Class({name : this.classgroup});
             var that = this;
@@ -542,6 +567,8 @@ $(document).ready(function() {
                 this.render_home();
             } else if(active_page == "resources"){
                 this.render_resources();
+            } else if(active_page == "skills"){
+                this.render_skills();
             }
         },
         refresh: function(){
@@ -1488,6 +1515,229 @@ $(document).ready(function() {
             return resourceView.render().el;
         }
     });
+
+    var SkillView = BaseView.extend({
+        tagName: "div",
+        className: "skills",
+        template_name: "#skillTemplate",
+        events: {
+        },
+        initialize: function(){
+            _.bindAll(this, 'render');
+            this.model.bind('change', this.render);
+            this.model.bind('remove', this.unrender);
+        },
+        get_model_json: function(){
+            var model_json = this.model.toJSON();
+            model_json.created_formatted = model_json.created.replace("Z","");
+            model_json.created_formatted = moment.utc(model_json.created_formatted).local().fromNow();
+            model_json.written_by_owner = (class_owner == model_json.user);
+            model_json.is_owner = is_owner;
+            return model_json;
+        },
+        render: function () {
+            var tmpl = _.template($(this.template_name).html());
+            var model_json = this.get_model_json();
+            var model_html = tmpl(model_json);
+
+            $(this.el).html(model_html);
+            return this;
+        },
+        destroy: function() {
+            this.model.trigger('destroy', this.model, this.model.collection, {});
+        },
+        remove_el: function(){
+            $(this.el).remove();
+        }
+    });
+
+    var SkillsView = BaseView.extend({
+        el: "#skills-container",
+        template_name: "#skillsTemplate",
+        create_a_skill_button: "#create-a-skill-button",
+        remove_skill_button: ".remove-skill-button",
+        edit_skill_button: ".edit-skill-button",
+        no_skills_template: '#noSkillsTemplate',
+        edit_skill_container: '#edit-a-skill',
+        edit_skill_template: '#editSkillTemplate',
+        autocomplete_enabled_input: '.autocomplete-enabled-input',
+        collection_class: Skills,
+        view_class: SkillView,
+        events: {
+            'click #create-a-skill-button': this.create_skill,
+            'click .remove-skill-button': this.delete_skill,
+            'click .edit-skill-button': this.edit_skill
+        },
+        initialize: function(options){
+            _.bindAll(this, 'render', 'rebind_events', 'delete_skill', 'edit_skill', 'create_skill', 'rebind_autocomplete', 'rebind_skill_save', 'save_skill');
+            this.classgroup = class_name;
+            this.collection = new this.collection_class();
+            this.fetch_data = {classgroup: this.classgroup};
+            this.autocomplete_list = JSON.parse($('#autocomplete-list').html());
+            var that = this;
+            this.collection.fetch({
+                data: this.fetch_data,
+                success: function(collection) {
+                    that.collection = collection;
+                    that.render();
+                }
+            });
+        },
+        refresh: function(){
+            $(this.el).empty();
+            var that = this;
+            this.collection.fetch({
+                data: this.fetch_data,
+                success: function() {
+                    that.render();
+                }
+            });
+        },
+        delete_skill: function(){
+            event.preventDefault();
+            var skill = $(event.target).closest('.skill');
+            var skill_id = $(skill).data('skill-id');
+            var skill_name = $(skill).data('display-name');
+            bootbox.confirm("Are you sure you want to delete the skill " + skill_name + "?  You will not be able to see it afterwards.", function(result) {
+                if(result==true){
+                    var skill_obj = new Skill({'pk' : skill_id});
+                    skill_obj.destroy();
+                    skill.remove();
+                }
+            });
+            return false;
+        },
+        rebind_events: function(){
+            $(this.create_a_skill_button).unbind();
+            $(this.create_a_skill_button).click(this.create_skill);
+            $(this.edit_skill_button).unbind();
+            $(this.edit_skill_button).click(this.edit_skill);
+            $(this.remove_skill_button).unbind();
+            $(this.remove_skill_button).click(this.delete_skill);
+        },
+        edit_skill: function(event){
+            event.preventDefault();
+            if($(this.edit_skill_container).length > 0 ){
+                $(this.edit_skill_container).remove();
+            } else {
+                var skill_container = $(event.target).closest('.skill');
+                var skill_id = skill_container.data('skill-id');
+                var display_name = skill_container.data('display-name');
+                var resource_text = skill_container.data('resources');
+                var tmpl = _.template($(this.edit_skill_template).html());
+                var skill_html = tmpl({
+                    display_name: display_name,
+                    resources: resource_text,
+                    skill_id: skill_id,
+                    save_text: "Save Skill"
+                });
+                $(skill_container).append(skill_html);
+                this.rebind_autocomplete();
+                this.rebind_skill_save();
+            }
+            return false;
+        },
+        save_skill: function(event){
+            event.preventDefault();
+            var edit_skill_container = $(event.target).closest(this.edit_skill_container);
+            var skill_name = $("#skill-name-input", edit_skill_container).val();
+            var resource_names = $("#resource-name-input", edit_skill_container).val();
+            var skill_id = edit_skill_container.data('skill-id');
+            var skill;
+            if(skill_id != ""){
+                skill = new Skill({pk: skill_id, name: skill_name, resources: resource_names, classgroup: this.classgroup});
+            } else {
+                skill = new Skill({name: skill_name, resources: resource_names, classgroup: this.classgroup});
+            }
+            var that = this;
+            skill.save(null, {
+                success: function(){
+                    $(edit_skill_container).remove();
+                    that.refresh();
+                },
+                error: function(){
+                    $(".help-block-skill", edit_skill_container).html("Could not save the skill.");
+                }
+            });
+            return false;
+        },
+        create_skill: function(event){
+            event.preventDefault();
+            if($(this.edit_skill_container).length > 0 ){
+                $(this.edit_skill_container).remove();
+            } else {
+                var tmpl = _.template($(this.edit_skill_template).html());
+                $(this.el).prepend(tmpl({
+                    display_name: "",
+                    resources: "",
+                    skill_id: "",
+                    save_text: "Create Skill"
+                }));
+                this.rebind_autocomplete();
+                this.rebind_skill_save();
+            }
+            return false;
+        },
+        render: function () {
+            var model_html = "";
+            var that = this;
+            if(this.collection.length > 0){
+                _.each(this.collection.models, function (item) {
+                    model_html = model_html + $(that.renderSkill(item)).html();
+                }, this);
+            } else {
+                model_html = $(this.no_skills_template).html();
+            }
+            var tmpl = _.template($(this.template_name).html());
+            var content_html = tmpl({skills: model_html, classgroup: this.classgroup});
+            $(this.el).html(content_html);
+            this.rebind_events();
+        },
+        rebind_skill_save: function(){
+          $(this.edit_skill_container + " button[type='submit']").unbind();
+          $(this.edit_skill_container + " button[type='submit']").click(this.save_skill);
+        },
+        rebind_autocomplete: function(){
+            $(this.autocomplete_enabled_input).autocomplete({ disabled: true });
+            var autocomplete_list = this.autocomplete_list;
+            $(this.autocomplete_enabled_input).autocomplete({
+                source:  function(request, response) {
+                    var results = $.ui.autocomplete.filter(autocomplete_list, extractLast(request.term));
+                    response(results.slice(0, 10));
+                },
+                disabled: false,
+                messages: {
+                    noResults: '',
+                    results: function() {}
+                },
+                minLength: 1,
+                focus: function() {
+                    return false;
+                },
+                select: function( event, ui ) {
+                    var terms = split( this.value );
+                    terms.pop();
+                    terms.push( ui.item.value );
+                    terms.push( "" );
+                    this.value = terms.join( ", " );
+                    return false;
+                }
+            });
+        },
+        renderSkill: function (item) {
+            var skillView = new this.view_class({
+                model: item
+            });
+            return skillView.render().el;
+        }
+    });
+
+    function extractLast( term ) {
+        return split( term ).pop();
+    }
+    function split( val ) {
+        return val.split( /,\s*/ );
+    }
 
     window.MessagesView = MessagesView;
     window.MessageView = MessageView;
