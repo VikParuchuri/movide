@@ -505,8 +505,7 @@ class ResourceDetail(QueryView):
                 data[k.replace("[]", "")] = request.POST.getlist(k)
             else:
                 data[k] = request.POST[k]
-
-        data = json.dumps(data)
+        data.update({k:request.FILES[k] for k in request.FILES if k not in self.post_attributes})
 
         renderer = ResourceRenderer(resource, user_state, static_data={
             'request': request,
@@ -604,7 +603,8 @@ class ResourceAuthorView(QueryView):
         }
         self.verify_membership()
 
-        data = json.dumps({k:request.POST[k] for k in request.POST if k not in self.post_attributes})
+        data = {k:request.POST[k] for k in request.POST if k not in self.post_attributes}
+        data.update({k:request.FILES[k] for k in request.FILES if k not in self.post_attributes})
 
         resource_id = self.post_dict.get('resource_id')
         if resource_id is None:

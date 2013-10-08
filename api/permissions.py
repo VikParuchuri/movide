@@ -136,7 +136,7 @@ class ClassGroupPermissions(object):
     @classmethod
     def is_student(cls, cg, user):
         cg_perm = cls(cg)
-        return cg_perm.check_is_student(user) or cg.owner == user
+        return cg_perm.check_is_student(user) or cg.owner == user or user in cg.users.all()
 
     @classmethod
     def assign_perms(cls, cg, obj, permission_name, level):

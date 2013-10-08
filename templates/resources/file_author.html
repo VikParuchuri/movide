@@ -1,0 +1,23 @@
+{% load bootstrap %}
+
+<form action="{{ action_link }}" method="POST" id="{{ form_id }}" class="resource-creation-form">
+    {% csrf_token %}
+    {{ form|bootstrap }}
+    <div class="form-group">
+        <label class="control-label " for="file">File</label>
+        {% if filename %}
+            <p>Current File: {{ filename }}</p>
+        {% endif %}
+        <div class="" style="position:relative;">
+            <input type="file" name="file" id="file">
+
+            <p class="help-block">
+                A file to upload.
+            </p>
+        </div>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Save Component" class="btn btn-default"/>
+    </div>
+    <div class="help-block help-block-resource"></div>
+</form>

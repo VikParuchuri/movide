@@ -8,6 +8,10 @@ import logging
 from models import UserResourceState
 from django.utils.html import mark_safe
 from permissions import ClassGroupPermissions
+from fs.s3fs import S3FS
+from django.conf import settings
+from boto.s3.connection import S3Connection
+from boto.s3.bucket import Bucket
 
 log = logging.getLogger(__name__)
 
@@ -211,7 +215,6 @@ class ResourceRenderer(object):
         return resource_html
 
     def handle_ajax(self, action, post_data):
-        post_data = json.loads(post_data)
         response = self.module.handle_ajax(action, post_data)
         self.save_module_data()
         return response
@@ -600,10 +603,75 @@ class MultipleChoiceProblemModule(ResourceModule):
             'options': self.options,
             }, context_instance=RequestContext(self.static_data.get('request')))
 
+
+
+class FileModule(ResourceModule):
+    """
+    The options data structure is a list of lists.
+    So: [[text, correct], [text, correct]], like [["The sun is yellow", True], ["The sun is blue", False]].
+    """
+    filename = Field(
+        default=None,
+        label="Filename",
+        help_text="Name of the uploaded file.",
+        scope=ResourceScope.author
+    )
+    file_url = Field(
+        default=None,
+        label="File S3 URL",
+        help_text="URL of uploaded file.",
+        scope=ResourceScope.author
+    )
+
+    template = "resources/file_module.html"
+    author_template = "resources/file_author.html"
+
+    def handle_ajax(self, action, post_data, **kwargs):
+        ajax_handlers = {
+            'save_form_values': self.save_form_values,
+            }
+
+        return json.dumps(ajax_handlers[action](post_data))
+
+    def save_form_values(self, post_data):
+        self.name = post_data['name']
+        file_obj = post_data['file']
+        self.filename = post_data['file'].name
+        s3 = S3FS(settings.S3_BUCKETNAME, prefix=self.resource.classgroup.name, aws_access_key=settings.AWS_ACCESS_KEY_ID, aws_secret_key=settings.AWS_SECRET_ACCESS_KEY)
+        with s3.open(self.filename, 'wb') as f:
+            for chunk in file_obj.chunks():
+                f.write(chunk)
+        self.file_url = s3.getpathurl(self.filename)
+        return {'success': True}
+
+    def render_module(self):
+        file_url = None
+        if self.filename is not None:
+            s3 = S3Connection(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY, is_secure=False)
+            b = Bucket(s3, settings.S3_BUCKETNAME)
+            key = "{0}/{1}".format(self.resource.classgroup.name, self.filename)
+            file_url = s3.generate_url(settings.S3_FILE_TIMEOUT, 'GET', bucket=settings.S3_BUCKETNAME, key=key)
+        return render_to_string(self.template, {
+            'filename': self.filename,
+            'file_url': file_url,
+            'resource_id': self.resource_id,
+            'name': self.name,
+            })
+
+    def render_module_author(self):
+        form = ResourceForm(extra=self.form_field_dictionaries)
+        return render_to_string(self.author_template, {
+            'form': form,
+            'action_link': self.static_data.get('author_post_link'),
+            'form_id': "resource-creation-form",
+            'filename': self.filename,
+            }, context_instance=RequestContext(self.static_data.get('request')))
+
 RESOURCE_MODULES = {
     'html': HTMLModule,
     'link': LinkModule,
     'multiplechoice': MultipleChoiceProblemModule,
     'vertical': VerticalModule,
     'video': VideoModule,
+    'file': FileModule,
 }

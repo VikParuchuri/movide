@@ -14,9 +14,16 @@ window.VerticalAuthor= (function(el) {
         resource_creation_form.unbind();
         resource_creation_form.each(function(){
             var resource_author_container = $(this).closest('.resource-author-container');
+            var help_block = $(resource_author_container).find('.help-block-resource');
+            var input_button = $(resource_author_container).find("input[type='submit']")
             $(this).ajaxForm({
                 success: function() {
-                    $(resource_author_container).find('.help-block-resource').html('Successfully saved the module.')
+                    $(help_block).html('Successfully saved the module.');
+                    $(input_button).attr('disabled', false);
+                },
+                beforeSubmit: function(){
+                    $(help_block).html('Saving...');
+                    $(input_button).attr('disabled', true);
                 },
                 data: {
                     classgroup: resource_author_container.data('class-name'),
@@ -25,7 +32,8 @@ window.VerticalAuthor= (function(el) {
                     vertical_id: $(el).data('resource-id')
                 },
                 error: function(){
-                    $(resource_author_container).find('.help-block-resource').html('Could not save the module.')
+                    $(help_block).html('Could not save the module.');
+                    $(input_button).attr('disabled', false);
                 }
 
             });
