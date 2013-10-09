@@ -181,6 +181,7 @@ INSTALLED_APPS = (
     'allauth.socialaccount',
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.google',
+    'django.contrib.sitemaps',
     'avatar',
     'guardian',
 )
@@ -294,6 +295,8 @@ TWITTER_STREAM_EVERY = 2 * 60 #Seconds
 CACHE_TIMEOUT = 10* 60 * 60 #seconds
 TWITTER_STREAM_CACHE_TIMEOUT = 10* 365 * 24 * 60 * 60 #seconds
 TWITTER_STREAM = True
+
+UPDATE_GRADES_EVERY = 15 * 60 #seconds
 
 #Email verification settings
 EMAIL_BACKEND = 'seacucumber.backend.SESBackend'

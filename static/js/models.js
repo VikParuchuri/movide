@@ -537,7 +537,9 @@ $(document).ready(function() {
         },
         render_skills: function(){
             var tmpl = _.template($("#skillDetailTemplate").html());
-            $(this.el).html(tmpl(this.class_model.toJSON()));
+            $(this.el).html(tmpl({
+                    is_owner: is_owner
+                }));
             this.skills_view = new SkillsView(this.options);
         },
         render: function () {
@@ -1446,7 +1448,7 @@ $(document).ready(function() {
             var resource_id = $(event.target).data('resource-id');
             var tmpl = _.template($(this.resource_modal_template).html());
             var resource = new Resource({pk: resource_id});
-            resource.fetch({async: false});
+            resource.fetch({async: false, data:{view_type: 'user'}});
             var modal_html = tmpl({
                 html: resource.get('html'),
                 display_name: resource.get('display_name')
@@ -1561,6 +1563,15 @@ $(document).ready(function() {
         edit_skill_container: '#edit-a-skill',
         edit_skill_template: '#editSkillTemplate',
         autocomplete_enabled_input: '.autocomplete-enabled-input',
+        added_resource_template: '#skillResourceAddTemplate',
+        remove_resource_button: '.resource-add-delete',
+        skill_resource_container: '.skill-resource-container',
+        skill_resource_template: '#skillResourceTemplate',
+        show_skill_link: '.show-skill-link',
+        skill_resource: '.skill-resource',
+        resource_modal_template: "#resourceModal",
+        view_a_resource_modal: '.view-a-resource-modal',
+        show_resource_modal_link: '.show-resource-modal-link',
         collection_class: Skills,
         view_class: SkillView,
         events: {
@@ -1569,7 +1580,9 @@ $(document).ready(function() {
             'click .edit-skill-button': this.edit_skill
         },
         initialize: function(options){
-            _.bindAll(this, 'render', 'rebind_events', 'delete_skill', 'edit_skill', 'create_skill', 'rebind_autocomplete', 'rebind_skill_save', 'save_skill');
+            _.bindAll(this, 'render', 'rebind_events', 'delete_skill', 'edit_skill',
+                'create_skill', 'rebind_autocomplete', 'rebind_skill_save', 'save_skill',
+                'add_resource', 'show_skill_display', 'show_resource_modal');
             this.classgroup = class_name;
             this.collection = new this.collection_class();
             this.fetch_data = {classgroup: this.classgroup};
@@ -1593,6 +1606,44 @@ $(document).ready(function() {
                 }
             });
         },
+        show_skill_display: function(event){
+            event.preventDefault();
+            var skill = $(event.target).closest('.skill');
+            var skill_resources = $(this.skill_resource);
+            if($(skill_resources).length > 0){
+                $(skill_resources).remove();
+            } else {
+                var skill_id = $(skill).data('skill-id');
+                var skill_resource_container = $(this.skill_resource_container, skill);
+                var resources = $(skill).data('resources');
+                var resource_ids = $(skill).data('resource-ids');
+                if(typeof(resource_ids) == "number"){
+                    resource_ids = [resource_ids];
+                } else {
+                    resource_ids = resource_ids.split(",,");
+                }
+
+                if(typeof(resources) == "number"){
+                    resources = [resources];
+                } else {
+                    resources = resources.split(",,");
+                }
+
+                if(typeof(resources) == "string"){
+                    resources = [resources];
+                }
+
+                var tmpl = _.template($(this.skill_resource_template).html());
+                var skill_html = "";
+                for(var i=0;i<resources.length;i++){
+                    skill_html = skill_html + tmpl({name: resources[i], id: resource_ids[i]});
+                }
+                $(skill_resource_container).append(skill_html);
+                $(this.show_resource_modal_link).unbind();
+                $(this.show_resource_modal_link).click(this.show_resource_modal);
+            }
+            return false;
+        },
         delete_skill: function(){
             event.preventDefault();
             var skill = $(event.target).closest('.skill');
@@ -1614,6 +1665,8 @@ $(document).ready(function() {
             $(this.edit_skill_button).click(this.edit_skill);
             $(this.remove_skill_button).unbind();
             $(this.remove_skill_button).click(this.delete_skill);
+            $(this.show_skill_link).unbind();
+            $(this.show_skill_link).click(this.show_skill_display);
         },
         edit_skill: function(event){
             event.preventDefault();
@@ -1622,14 +1675,29 @@ $(document).ready(function() {
             } else {
                 var skill_container = $(event.target).closest('.skill');
                 var skill_id = skill_container.data('skill-id');
+                var grading_policy = skill_container.data('grading-policy');
                 var display_name = skill_container.data('display-name');
                 var resource_text = skill_container.data('resources');
+                if(typeof(resource_text) == "number"){
+                    resource_text = [resource_text];
+                } else {
+                    resource_text = resource_text.split(",,");
+                }
+                var resources = "";
+                var r;
+                for(var i=0;i<resource_text.length;i++){
+                    r = resource_text[i].toString();
+                    if(r.length > 0){
+                        resources = resources + this.render_added_resource(r);
+                    }
+                }
                 var tmpl = _.template($(this.edit_skill_template).html());
                 var skill_html = tmpl({
                     display_name: display_name,
-                    resources: resource_text,
+                    resources: resources,
                     skill_id: skill_id,
-                    save_text: "Save Skill"
+                    save_text: "Save Skill",
+                    grading_policy: grading_policy
                 });
                 $(skill_container).append(skill_html);
                 this.rebind_autocomplete();
@@ -1641,11 +1709,16 @@ $(document).ready(function() {
             event.preventDefault();
             var edit_skill_container = $(event.target).closest(this.edit_skill_container);
             var skill_name = $("#skill-name-input", edit_skill_container).val();
-            var resource_names = $("#resource-name-input", edit_skill_container).val();
+            var grading_policy = $("#grading-policy-input :selected", edit_skill_container).attr('value');
+            var added_resources = $(".added-resource", edit_skill_container);
+            var resource_names = [];
+            for(var i=0;i<added_resources.length;i++){
+                resource_names.push($(added_resources[i]).data('name'));
+            }
             var skill_id = edit_skill_container.data('skill-id');
             var skill;
             if(skill_id != ""){
-                skill = new Skill({pk: skill_id, name: skill_name, resources: resource_names, classgroup: this.classgroup});
+                skill = new Skill({pk: skill_id, name: skill_name, resources: resource_names, classgroup: this.classgroup, grading_policy: grading_policy});
             } else {
                 skill = new Skill({name: skill_name, resources: resource_names, classgroup: this.classgroup});
             }
@@ -1671,7 +1744,8 @@ $(document).ready(function() {
                     display_name: "",
                     resources: "",
                     skill_id: "",
-                    save_text: "Create Skill"
+                    save_text: "Create Skill",
+                    grading_policy: "COM"
                 }));
                 this.rebind_autocomplete();
                 this.rebind_skill_save();
@@ -1694,15 +1768,63 @@ $(document).ready(function() {
             this.rebind_events();
         },
         rebind_skill_save: function(){
-          $(this.edit_skill_container + " button[type='submit']").unbind();
-          $(this.edit_skill_container + " button[type='submit']").click(this.save_skill);
+            $(this.edit_skill_container + " button[type='submit']").unbind();
+            $(this.edit_skill_container + " button[type='submit']").click(this.save_skill);
+            $(this.edit_skill_container + " .add-resource-button").unbind();
+            $(this.edit_skill_container + " .add-resource-button").click(this.add_resource);
+            $(this.remove_resource_button).unbind();
+            $(this.remove_resource_button).click(this.remove_resource);
+        },
+        add_resource: function(event){
+            event.preventDefault();
+            var form_group = $(event.target).closest('.form-group');
+            var name = $('#resource-name-input', form_group).val();
+            $(form_group).append(this.render_added_resource(name));
+            $(this.remove_resource_button).unbind();
+            $(this.remove_resource_button).click(this.remove_resource);
+            $('#resource-name-input', form_group).val('');
+            return false;
+        },
+        remove_resource: function(event){
+            event.preventDefault();
+            var added_resource = $(event.target).closest('.added-resource');
+            added_resource.remove();
+            return false;
+        },
+        render_added_resource: function(name){
+            var tmpl = _.template($(this.added_resource_template).html());
+            return tmpl({
+                name: name
+            })
+        },
+        show_resource_modal: function(event){
+            event.preventDefault();
+            var resource_id = $(event.target).closest('.skill-resource').data('id');
+            var tmpl = _.template($(this.resource_modal_template).html());
+            var resource = new Resource({pk: resource_id});
+            resource.fetch({async: false, data:{view_type: 'user'}});
+            var modal_html = tmpl({
+                html: resource.get('html'),
+                display_name: resource.get('display_name')
+            });
+            $(this.view_a_resource_modal).modal('hide');
+            $(this.view_a_resource_modal).remove();
+            $(this.el).append(modal_html);
+            $(this.view_a_resource_modal).modal('show');
+            return false;
         },
         rebind_autocomplete: function(){
             $(this.autocomplete_enabled_input).autocomplete({ disabled: true });
             var autocomplete_list = this.autocomplete_list;
+            var resource_names = [];
+            for (var i = 0; i < autocomplete_list.length; i++) {
+                if(autocomplete_list[i].charAt(0) == "*"){
+                    resource_names.push(autocomplete_list[i].replace("*",""));
+                }
+            }
             $(this.autocomplete_enabled_input).autocomplete({
                 source:  function(request, response) {
-                    var results = $.ui.autocomplete.filter(autocomplete_list, extractLast(request.term));
+                    var results = $.ui.autocomplete.filter(resource_names, request.term);
                     response(results.slice(0, 10));
                 },
                 disabled: false,
@@ -1710,18 +1832,7 @@ $(document).ready(function() {
                     noResults: '',
                     results: function() {}
                 },
-                minLength: 1,
-                focus: function() {
-                    return false;
-                },
-                select: function( event, ui ) {
-                    var terms = split( this.value );
-                    terms.pop();
-                    terms.push( ui.item.value );
-                    terms.push( "" );
-                    this.value = terms.join( ", " );
-                    return false;
-                }
+                minLength: 1
             });
         },
         renderSkill: function (item) {

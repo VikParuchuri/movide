@@ -1,4 +1,4 @@
-# ansible-playbook -vvv --user=ubuntu  ar_prod.yml -i ./ec2.py  -c ssh
+# ansible-playbook -vvv --user=ubuntu  mo_prod.yml -i ./ec2.py  -c ssh
 - hosts:
     - tag_Group_movide_prod
   vars_files:

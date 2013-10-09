@@ -32,26 +32,64 @@
 
 <script id="skillDetailTemplate" type="text/template">
     <div class="row">
-        <div class="col-md-12">
-            <button class="btn btn-small" id="create-a-skill-button"><i class="glyphicon glyphicon-plus"></i> Create a skill</button>
-        </div>
+        <% if(is_owner==true) { %>
+            <div class="col-md-12">
+                <button class="btn btn-small" id="create-a-skill-button"><i class="glyphicon glyphicon-plus"></i> Create a skill</button>
+            </div>
+        <% } %>
     </div>
     <div id="skills-container">
+    </div>
+</script>
+
+<script id="skillResourceAddTemplate" type="text/template">
+    <div class="added-resource sortable" data-name="<%= name %>">
+        <div>
+            <h4><%= name %></h4>
+        </div>
+        <div class="pull-right">
+            <a type="button" class="btn btn-xs resource-add-delete" data-toggle="tooltip" title="Remove this resource from the skill"><span class="glyphicon glyphicon-remove"></span></a>
+        </div>
+    </div>
+</script>
+
+<script id="skillResourceTemplate" type="text/template">
+    <div class="skill-resource" data-name="<%= name %>" data-id="<%= id %>">
+        <div>
+            <a href="#" type="button" class="show-resource-modal-link"><%= name %></a>
+        </div>
     </div>
 </script>
 
 <script id="editSkillTemplate" type="text/template">
     <div id="edit-a-skill" data-skill-id="<%= skill_id %>">
         <form role="form">
-            <div class="form-group ui-front">
+            <div class="form-group">
                 <label for="skill-name-input">Skill Name</label>
-                <input type="text" class="form-control input-l" id="skill-name-input" placeholder="" value="<%= display_name %>">
+                <input type="text" class="form-control" id="skill-name-input" placeholder="" value="<%= display_name %>">
                 <span class="help-block">The name of the skill.</span>
             </div>
+            <div class="form-group">
+                <label for="grading-policy-input">Grading Policy</label>
+                <select class="form-control" id="grading-policy-input">
+                    <option value="COM"
+                    <% if(grading_policy == "COM"){ %>
+                        selected="true"<%
+                    } %>
+                    >Completion</option>
+                    <option value="COR"
+                    <% if(grading_policy == "COR"){ %>
+                        selected="true"
+                    <% } %>
+                    >Correctness</option>
+                </select>
+                <span class="help-block">The type of grading policy.</span>
+            </div>
             <div class="form-group ui-front">
-                <label  for="resource-name-input">Resource Names</label>
-                <textarea type="text" class="form-control input-lg autocomplete-enabled-input" id="resource-name-input" placeholder="Enter resources here..."><%= resources %></textarea>
-                <span class="help-block">Enter the names of the resources you wish to associate with this, beginning with a * (eg *Unit One), and separated by a comma (eg *Unit One, *Unit Two).</span>
+                <label  for="resource-name-input">Resource Name</label>
+                <input type="text" class="form-control autocomplete-enabled-input" id="resource-name-input" placeholder="Enter resource name here..."><button type="save" class="btn btn-small add-resource-button">Add Resource</button>
+                <span class="help-block">Enter the name of a resource you wish to associate with this (eg Unit One), and hit add resource.</span>
+                <%= resources %>
             </div>
             <div class="form-group">
                 <button type="submit" class="btn btn-small"><%= save_text %></button>
@@ -211,6 +249,7 @@
                 <th>Name</th>
                 <th>Daily Messages</th>
                 <th>All Messages</th>
+                <th>Grade</th>
                 <th>Role</th>
                 <th></th>
             </tr>
@@ -231,6 +270,9 @@
             </div>
         </form>
     <% } %>
+    <div class="alert alert-info">
+        Grades are updated every 15 minutes.  If you see something inaccurate, please check back later.
+    </div>
 </script>
 
 <script id="noUserTemplate" type="text/template">
@@ -267,6 +309,13 @@
         <td class="username" data-username="<%= username %>"><%= username %></td>
         <td><%= message_count_today %></td>
         <td><%= message_count %></td>
+        <td>
+            <div class="progress progress-striped">
+                <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="<%= grade %>" aria-valuemin="0" aria-valuemax="100" style="width: <%= grade %>%">
+                    <span class="sr-only"><%= grade %>% Complete</span>
+                </div>
+            </div>
+        </td>
         <td><%= window.capitalize(role) %></td>
         <td>
             <% if (is_owner == true) { %>
@@ -326,7 +375,7 @@
 
 
 <script id="skillTemplate" type="text/template">
-    <div class="skill" data-skill-id="<%= pk %>" data-display-name="<%= display_name %>" data-name="<%= name %>" data-resources="<%= resource_text %>">
+    <div class="skill" data-skill-id="<%= pk %>" data-display-name="<%= display_name %>" data-name="<%= name %>" data-resources='<%= resource_text %>' data-resource-ids='<%= resource_ids %>' data-grading-policy="<%= grading_policy %>">
         <div class="header">
         </div>
         <div class="skill-content">
@@ -339,6 +388,14 @@
                 </div>
                 <% } %>
             </div>
+        </div>
+        <div class="progress progress-striped">
+            <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="<%= progress_percentage %>" aria-valuemin="0" aria-valuemax="100" style="width: <%= progress_percentage %>%">
+                <span class="sr-only"><%= progress_percentage %>% Complete</span>
+            </div>
+        </div>
+        <div class="skill-resource-container">
+
         </div>
     </div>
 </script>

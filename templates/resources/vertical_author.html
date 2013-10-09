@@ -18,11 +18,23 @@
 <div class="child-container">
     #{child_views}
 </div>
-<div class="btn-group resource-type-buttons">
+<div class="btn-group dropup">
     <p class="btn" disabled="true">Add </p>
-    <button type="button" class="btn btn-default resource-type-button" data-resource-type="link">Link</button>
-    <button type="button" class="btn btn-default resource-type-button" data-resource-type="html">HTML</button>
-    <button type="button" class="btn btn-default resource-type-button" data-resource-type="video">Video</button>
-    <button type="button" class="btn btn-default resource-type-button" data-resource-type="multiplechoice">Multiple Choice</button>
-    <button type="button" class="btn btn-default resource-type-button" data-resource-type="file">File</button>
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+        Content <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu" role="menu">
+        <li><a href="#" class="resource-type-button" data-resource-type="link">Link</a></li>
+        <li><a href="#" class="resource-type-button" data-resource-type="html">HTML</a></li>
+        <li><a href="#"class="resource-type-button" data-resource-type="video">Video</a></li>
+        <li><a href="#" class="resource-type-button" data-resource-type="file">File</a></li>
+    </ul>
+</div>
+<div class="btn-group dropup">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+        Problems <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu" role="menu">
+        <li><a href="#" class="resource-type-button" data-resource-type="multiplechoice">Multiple Choice</a></li>
+    </ul>
 </div>

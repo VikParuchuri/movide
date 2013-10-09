@@ -158,8 +158,13 @@ class Skill(models.Model):
 
     def resource_text(self):
         resource_names = SkillResource.objects.filter(skill=self).order_by("priority").values("resource__display_name")
-        resource_names = ["*{0}".format(r['resource__display_name']) for r in resource_names]
-        return ", ".join(resource_names)
+        resource_names = [r['resource__display_name'] for r in resource_names]
+        return ",,".join(resource_names)
+
+    def resource_ids(self):
+        resource_ids = SkillResource.objects.filter(skill=self).order_by("priority").values("resource__id")
+        resource_ids = [str(r['resource__id']) for r in resource_ids]
+        return ",,".join(resource_ids)
 
     class Meta:
         unique_together = (("classgroup", "name"), )
@@ -178,11 +183,6 @@ class Resource(models.Model):
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
-    def author_view(self):
-        from resources import ResourceRenderer
-        renderer = ResourceRenderer(self)
-        return renderer.author_view()
-
     def created_timestamp(self):
         return calendar.timegm(self.created.utctimetuple())
 
@@ -190,8 +190,12 @@ class Resource(models.Model):
         """
         Override save to ensure that names and classgroups are unique, but make sure that the null case is okay.
         """
-        if self.name is not None and self.name != '':
-            conflicting_instance = Resource.objects.filter(name=self.name, classgroup=self.classgroup)
+        if self.name is not None and self.name != '' and self.resource_type == "vertical":
+            conflicting_instance = Resource.objects.filter(
+                name=self.name,
+                classgroup=self.classgroup,
+                resource_type="vertical"
+            )
             if self.id:
                 conflicting_instance = conflicting_instance.exclude(pk=self.id)
 

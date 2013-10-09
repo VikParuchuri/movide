@@ -5,6 +5,7 @@ window.VerticalAuthor= (function(el) {
         var resource_type = $(event.target).data('resource-type');
         var author_html = $.getValues("/api/resources/author", {classgroup: $(el).data('class-name'), resource_type: resource_type, vertical_id: vertical_id}).html;
         $(el).find('.child-container').append(author_html);
+        $('.dropup.open').removeClass('open');
         rebind();
         return false;
     };
@@ -14,8 +15,8 @@ window.VerticalAuthor= (function(el) {
         resource_creation_form.unbind();
         resource_creation_form.each(function(){
             var resource_author_container = $(this).closest('.resource-author-container');
-            var help_block = $(resource_author_container).find('.help-block-resource');
-            var input_button = $(resource_author_container).find("input[type='submit']")
+            var help_block = $(resource_author_container).find('.help-block-resource').first();
+            var input_button = $(resource_author_container).find("input[type='submit']").first();
             $(this).ajaxForm({
                 success: function() {
                     $(help_block).html('Successfully saved the module.');

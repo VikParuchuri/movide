@@ -15,6 +15,10 @@ from permissions import ClassGroupPermissions
 
 log = logging.getLogger(__name__)
 
+WELCOME_MESSAGE2_TEMPLATE = """
+To get started, you might want to create some resources.  Resources are stacks of content and problems.  Teachers and students can both create resources.  Once you make resources, you can tie them to skills.  Skills are collections of resources that allow self-paced learning and track student progress.  Skills and resources can be discussed using the message function.
+"""
+
 WELCOME_MESSAGE_TEMPLATE = """
 Welcome to your class {class_name}!  You can remove this announcement by hitting the delete button at the bottom right of this.  To invite your students, simply tell them to visit the url {class_link} and use the access code {access_key}.  You can view these again in the settings view, as well as enable or disable student signup.  If you have any questions, please feel free to email info@movide.com.  Hope you enjoy using Movide!
 """
@@ -161,6 +165,14 @@ class ClassgroupSerializer(serializers.Serializer):
                     class_settings = ClassSettings.objects.get(classgroup=instance)
 
                 try:
+                    message = Message(
+                        user=user,
+                        classgroup=instance,
+                        source="welcome",
+                        text=WELCOME_MESSAGE2_TEMPLATE,
+                        message_type="A",
+                        )
+                    message.save()
                     message = Message(
                         user=user,
                         classgroup=instance,
@@ -351,6 +363,7 @@ class SkillSerializer(serializers.Serializer):
     pk = serializers.Field()
     classgroup = serializers.SlugRelatedField(many=False, slug_field="name", required=False, queryset=Classgroup.objects.all())
     resource_text = serializers.Field(source="resource_text")
+    resource_ids = serializers.Field(source="resource_ids")
     grading_policy = serializers.ChoiceField(choices=GRADING_CHOICES, default="COM")
     name = serializers.CharField()
     display_name = serializers.Field()
@@ -374,14 +387,12 @@ class SkillSerializer(serializers.Serializer):
                 raise serializers.ValidationError("You do not have permission to modify this skill.")
 
         resources = self.context['request'].DATA.get('resources')
-        resources = resources.split(",")
-        resources = [r.strip().replace("*", "") for r in resources]
+        resources = [str(r).strip() for r in resources]
 
         skill_resources = []
         for (i, r) in enumerate(resources):
-            if len(r) < 2:
+            if len(r) < 1:
                 continue
-            log.info(r)
             resource = Resource.objects.get(display_name=r, classgroup=classgroup)
             skill_resource, created = SkillResource.objects.get_or_create(
                 resource=resource,

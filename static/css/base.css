@@ -167,5 +167,22 @@ body {
     margin-left: 5px;
 }
 
+.added-resource div{
+    display: inline-block;
+}
+
+.skills .skill{
+    margin: 15px 0 15px 0;
+    border-bottom: 1px solid #D6D6D6;
+    padding: 10px;
+}
+
+.resources .resource{
+    margin: 15px 0 15px 0;
+    border-bottom: 1px solid #D6D6D6;
+    padding: 10px;
+}
+
+
 
 

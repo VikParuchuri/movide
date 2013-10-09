@@ -12,8 +12,10 @@ from django.db import transaction
 from nltk.tokenize import word_tokenize, sent_tokenize, RegexpTokenizer
 from itertools import chain
 from django.contrib.auth.models import User
-from models import Resource, Tag, MessageNotification
+from models import Resource, Tag, MessageNotification, Classgroup
 from django.db import IntegrityError
+from resources import get_resource_score
+from django.core.cache import cache
 
 log=logging.getLogger(__name__)
 
@@ -96,3 +98,35 @@ def process_saved_message(message_id):
     message = Message.objects.get(id=message_id)
     mention_finder = MentionFinder()
     mention_finder.process_message(message)
+
+@periodic_task(run_every=timedelta(seconds=settings.UPDATE_GRADES_EVERY))
+@single_instance_task(settings.CACHE_TIMEOUT)
+def update_grades():
+    transaction.commit_unless_managed()
+    classgroups = Classgroup.objects.all()
+    for cl in classgroups:
+        student_grade = StudentGrade(cl)
+        cache.set(cl.name + "_grades", student_grade.calculate_skill_grades())
+
+class StudentGrade(object):
+    def __init__(self, classgroup):
+        self.classgroup = classgroup
+
+    def calculate_skill_grade(self, user):
+        class_skills = self.classgroup.skills.all()
+        skill_grades = {}
+        for skill in class_skills:
+            resources = skill.resources.all()
+            scores = []
+            for r in resources:
+                if r.resource_type == "vertical":
+                    scores += get_resource_score(r, user, skill.grading_policy)
+            scores = [int(s) for s in scores]
+            skill_grades[skill.display_name] = scores
+        return skill_grades
+
+    def calculate_skill_grades(self):
+        skill_grades = {}
+        for user in self.classgroup.users.all():
+            skill_grades[user.username] = self.calculate_skill_grade(user)
+        return skill_grades

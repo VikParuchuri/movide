@@ -7,9 +7,9 @@ from django.conf import settings
 # admin.autodiscover()
 
 urlpatterns =patterns('frontend.views',
-                      url(r'^$', 'index'),
+                      url(r'^$', 'index', name="index"),
                       url(r'^dashboard/$', 'dashboard'),
-                      url(r'^about/$', 'about'),
+                      url(r'^about/$', 'about', name="about"),
                       url(r'^verify_code/$', 'verify_code'),
                       url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/class_settings/$', 'class_settings'),
                       url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/autocomplete_names/$', 'autocomplete_names'),

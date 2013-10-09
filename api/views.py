@@ -12,24 +12,21 @@ from serializers import (TagSerializer, MessageSerializer, UserSerializer,
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework import status, generics, permissions
-from django.db.models import Q, Count
 from django.http import Http404
 import logging
 from django.conf import settings
 from django.utils.timezone import now
 from datetime import timedelta
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-import re
-from django.views.generic.base import View
-from dateutil import parser
 from notifications import NotificationText
 import datetime
 import calendar
 import pytz
 import json
-from django.forms.models import model_to_dict
-from resources import ResourceRenderer
+from django.core.cache import cache
+from resources import ResourceRenderer, get_resource_score
 from permissions import ClassGroupPermissions
+from django.db.models import Count, Q
 log = logging.getLogger(__name__)
 
 RESULTS_PER_PAGE = 20
@@ -306,6 +303,7 @@ class UserView(QueryView):
     def get(self, request, format=None):
         self.get_query_params()
         self.verify_membership()
+        self.verify_ownership()
 
         queryset = User.objects.all()
         queryset = self.filter_query_params(queryset)
@@ -315,10 +313,27 @@ class UserView(QueryView):
 
     def add_user_data(self, serializer):
         for user in serializer.data:
+            user_obj = User.objects.get(id=user['pk'])
             user['message_count_today'] = Classgroup.objects.get(name=self.query_dict['classgroup']).messages.filter(user=user['pk'], modified__gt=now() - timedelta(days=1)).count()
             user['message_count'] = Classgroup.objects.get(name=self.query_dict['classgroup']).messages.filter(user=user['pk']).count()
-            user['role'] = ClassGroupPermissions.access_level(self.cg, User.objects.get(id=user['pk']))
+            user['role'] = ClassGroupPermissions.access_level(self.cg, user_obj)
+            user['grade'] = self.add_user_grades(user_obj)
         return serializer
+
+    def add_user_grades(self, user):
+        grades = cache.get(self.cg.name + "_grades", None)
+        if grades is None:
+            return 0
+        user_grades = grades.get(user.username, None)
+        if user_grades is None:
+            return 0
+        grade_list = []
+        for k in user_grades:
+            grade_list += user_grades[k]
+        if len(grade_list) > 0:
+            return (sum(grade_list) / float(len(grade_list))) * 100
+        else:
+            return 100
 
     def post(self, request, format=None):
         username = self.request.DATA.get('username', None)
@@ -458,14 +473,14 @@ class ResourceDetail(QueryView):
                 resource=resource
             )
 
-            renderer = ResourceRenderer(resource, user_state, static_data={
+            renderer = ResourceRenderer(resource, user_state, user=request.user, static_data={
                 'request': request,
             })
 
             html = renderer.user_view().get_html()
         else:
             self.verify_ownership()
-            renderer = ResourceRenderer(resource, static_data={
+            renderer = ResourceRenderer(resource, user=request.user, static_data={
                 'request': request,
                 'author_post_link': '/api/resources/author/'
                 })
@@ -507,7 +522,7 @@ class ResourceDetail(QueryView):
                 data[k] = request.POST[k]
         data.update({k:request.FILES[k] for k in request.FILES if k not in self.post_attributes})
 
-        renderer = ResourceRenderer(resource, user_state, static_data={
+        renderer = ResourceRenderer(resource, user_state, user=request.user, static_data={
             'request': request,
             })
         ajax_response = renderer.handle_ajax(self.post_dict['action'], data)
@@ -526,8 +541,11 @@ class ResourceView(QueryView):
         self.get_query_params()
         self.verify_membership()
         queryset = Resource.objects.all()
-        queryset = self.filter_query_params(queryset).filter(name__isnull=False, resource_type="vertical").order_by("-created")
-        paginator = Paginator(queryset, RESULTS_PER_PAGE)
+        queryset = self.filter_query_params(queryset).filter(resource_type="vertical").annotate(child_count=Count('children'))
+        queryset = queryset.filter(Q(name__isnull=False) | Q(child_count__gt=0)).order_by("-created")
+
+        #TODO: enable infinite scroll for resources.  Set limit high for now.
+        paginator = Paginator(queryset, 100)
         page = request.QUERY_PARAMS.get("page")
 
         try:
@@ -559,7 +577,7 @@ class ResourceView(QueryView):
         )
         resource.save()
 
-        renderer = ResourceRenderer(resource, static_data={
+        renderer = ResourceRenderer(resource, user=request.user, static_data={
             'request': request,
             'author_post_link': '/api/resources/author/'
         })
@@ -587,7 +605,7 @@ class ResourceAuthorView(QueryView):
         )
         resource.save()
 
-        renderer = ResourceRenderer(resource, static_data={
+        renderer = ResourceRenderer(resource, user=request.user, static_data={
             'request': request,
             'author_post_link': '/api/resources/author/'
         })
@@ -619,19 +637,20 @@ class ResourceAuthorView(QueryView):
                 pk=int(resource_id)
             )
 
-        renderer = ResourceRenderer(resource, static_data={
+        renderer = ResourceRenderer(resource, user=request.user, static_data={
             'request': request,
             'author_post_link': '/api/resources/author/'
         })
+
+        if 'name' in data:
+            resource.display_name = data['name']
+            resource.name = alphanumeric_name(data['name'])
+            resource.save()
+
         response = renderer.handle_ajax("save_form_values", data)
         renderer.save_module_data()
 
-        resource.display_name = renderer.module.name
-        resource.name = alphanumeric_name(renderer.module.name)
-        resource.save()
-
         return Response(response,status=status.HTTP_201_CREATED)
-
 
 class SkillView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -646,7 +665,9 @@ class SkillView(QueryView):
         self.verify_membership()
         queryset = Skill.objects.all()
         queryset = self.filter_query_params(queryset).all().order_by("-created")
-        paginator = Paginator(queryset, RESULTS_PER_PAGE)
+
+        #TODO: Enable infinite scroll for skills
+        paginator = Paginator(queryset, 100)
         page = request.QUERY_PARAMS.get("page")
 
         try:
@@ -656,7 +677,23 @@ class SkillView(QueryView):
         except EmptyPage:
             serializer = PaginatedSkillSerializer(paginator.page(paginator.num_pages), context={'request' : request})
 
+        serializer = self.add_skill_data(serializer, request)
         return Response(serializer.data)
+
+    def add_skill_data(self, serializer, request):
+        for skill in serializer.data['results']:
+            skill_obj = Skill.objects.get(id=skill['pk'])
+            resources = skill_obj.resources.all()
+            scores = []
+            for r in resources:
+                if r.resource_type == "vertical":
+                    scores += get_resource_score(r, request.user, skill['grading_policy'])
+            if len(scores) > 0:
+                skill['progress_percentage'] = (sum(scores)/float(len(scores))) * 100
+            else:
+                skill['progress_percentage'] = 100
+
+        return serializer
 
     def post(self, request):
         self.query_dict = {

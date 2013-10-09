@@ -12,8 +12,25 @@ from fs.s3fs import S3FS
 from django.conf import settings
 from boto.s3.connection import S3Connection
 from boto.s3.bucket import Bucket
+from django.core.files.uploadedfile import UploadedFile
 
 log = logging.getLogger(__name__)
+
+def get_resource_score(resource, user, grading_policy):
+    scores = []
+    if grading_policy == "COM":
+        for child in resource.children.all():
+            scores.append(UserResourceState.objects.filter(user=user, resource=child).exists())
+    else:
+        for child in resource.children.all():
+            try:
+                user_resource_state = UserResourceState.objects.get(user=user, resource=child)
+            except UserResourceState.DoesNotExist:
+                user_resource_state = None
+            renderer = ResourceRenderer(child, user_resource_state=user_resource_state, user=user)
+            if hasattr(renderer.module, "get_score"):
+                scores.append(renderer.module.get_score())
+    return scores
 
 class ModuleException(Exception):
     pass
@@ -138,7 +155,7 @@ class ResourceHTML(object):
 
 class ResourceRenderer(object):
 
-    def __init__(self, resource, user_resource_state=None, static_data=None):
+    def __init__(self, resource, user_resource_state=None, static_data=None, user=None):
         self.resource = resource
         self.user_resource_state = user_resource_state
 
@@ -159,16 +176,12 @@ class ResourceRenderer(object):
             static_data = {}
 
         self.static_data = static_data
-
-        static_data['resource_id'] = self.resource.id
-        static_data['resource_type'] = self.resource.resource_type
-        static_data['resource_name'] = self.resource.display_name
-        static_data['class_name'] = self.resource.classgroup.name
-        static_data['resource'] = self.resource
+        self.user = user
 
         self.module = RESOURCE_MODULES[self.resource.resource_type](
             resource_data,
             user_data,
+            self.resource,
             static_data,
         )
 
@@ -179,23 +192,29 @@ class ResourceRenderer(object):
         child_views = []
         children = self.get_children()
         for child in children:
-            renderer = ResourceRenderer(child, static_data=self.static_data)
+            renderer = ResourceRenderer(child, static_data=self.static_data, user=self.user)
             child_views.append(renderer.author_view())
         return child_views
 
     def child_user_views(self):
         child_views = []
         children = self.get_children()
+
+        # Store data to prevent descriptor overwrite by children.
+        self.module.store_data()
         for child in children:
             child_access_level = ClassGroupPermissions.get_permission_level(child.classgroup, child, "change_resource")
-            user_access_level = ClassGroupPermissions.access_level(child.classgroup, self.static_data['request'].user)
+            user_access_level = ClassGroupPermissions.access_level(child.classgroup, self.user)
             if ClassGroupPermissions.PERMISSION_LEVELS[user_access_level] >= ClassGroupPermissions.PERMISSION_LEVELS[child_access_level]:
                 user_state, created = UserResourceState.objects.get_or_create(
-                    user=self.static_data['request'].user,
+                    user=self.user,
                     resource=child
                 )
-                renderer = ResourceRenderer(child, user_resource_state=user_state, static_data=self.static_data)
+                renderer = ResourceRenderer(child, user_resource_state=user_state, static_data=self.static_data, user=self.user)
                 child_views.append(renderer.user_view())
+
+        # Read data back in.
+        self.module.read_data()
         return child_views
 
     def user_view(self):
@@ -236,7 +255,7 @@ class ResourceModule(object):
     name = Field(
         default=None,
         label="Resource Name",
-        help_text="The name for this module.",
+        help_text="The name for this module.  Must be unique (You cannot have two modules in the class with the same name).",
         scope=ResourceScope.author,
         editable=True
     )
@@ -251,14 +270,15 @@ class ResourceModule(object):
     author_css = []
     author_js_class_name = None
 
-    def __init__(self, resource_data, user_data, static_data):
+    def __init__(self, resource_data, user_data, resource, static_data):
 
         # Set data from various scopes.
         self.static_data = static_data
-        self.resource_id = self.static_data['resource_id']
-        self.resource_type = self.static_data['resource_type']
-        self.class_name = self.static_data['class_name']
-        self.resource = self.static_data['resource']
+        self.resource_id = resource.id
+        self.resource_type = resource.resource_type
+        self.class_name = resource.classgroup.name
+        self.resource = resource
+        self.resource_name = resource.display_name
 
         self.data = {
             ResourceScope.author: resource_data,
@@ -347,8 +367,18 @@ class ResourceModule(object):
             resource_html.add_css(css)
         return resource_html
 
-    def handle_ajax(self, action, post_data, **kwargs):
+    def handle_ajax_module(self, action, post_data, **kwargs):
         raise NotImplementedError
+
+    def handle_ajax(self, action, post_data, **kwargs):
+        actions = {
+            'change_visibility': self.change_visibility,
+            }
+
+        if action in actions:
+            return actions[action](post_data)
+        else:
+            return self.handle_ajax_module(action, post_data, **kwargs)
 
     def get_data(self):
         self.store_data()
@@ -365,17 +395,15 @@ class SimpleAuthoringMixin(object):
         }, context_instance=RequestContext(self.static_data.get('request')))
 
     def save_form_values(self, post_data):
-        form = ResourceForm(post_data, extra=self.form_field_dictionaries)
-        if form.is_valid():
-            for (name, value) in form.extra_fields(self.fields):
-                setattr(self, name, value)
+        for name in post_data:
+            if hasattr(self, name) and isinstance(getattr(self.__class__, name), Field):
+                setattr(self, name, post_data[name])
 
         return {'success': True}
 
-    def handle_ajax(self, action, post_data, **kwargs):
+    def handle_ajax_module(self, action, post_data, **kwargs):
         actions = {
-            'save_form_values': self.save_form_values,
-            'change_visibility': self.change_visibility,
+            'save_form_values': self.save_form_values
         }
 
         return actions[action](post_data)
@@ -448,7 +476,7 @@ class VerticalModule(ResourceModule):
     css = ["css/resource/vertical.css"]
     js_class_name = "VerticalUser"
 
-    def handle_ajax(self, action, post_data, **kwargs):
+    def handle_ajax_module(self, action, post_data, **kwargs):
         ajax_handlers = {
             'reorder_modules': self.reorder_modules,
             'save_form_values': self.save_form_values
@@ -457,10 +485,9 @@ class VerticalModule(ResourceModule):
         return json.dumps(ajax_handlers[action](post_data))
 
     def save_form_values(self, post_data):
-        form = ResourceForm(post_data, extra=self.form_field_dictionaries)
-        if form.is_valid():
-            for (name, value) in form.extra_fields(self.fields):
-                setattr(self, name, value)
+        for name in post_data:
+            if hasattr(self, name) and isinstance(getattr(self.__class__, name), Field):
+                setattr(self, name, post_data[name])
         return {'success': True}
 
     def reorder_modules(self, post_data):
@@ -534,6 +561,7 @@ class MultipleChoiceProblemModule(ResourceModule):
         options = {int(k.replace('option', '')): post_data[k] for k in post_data if k.startswith('option')}
 
         self.name = post_data['name']
+
         self.question = post_data['question']
         keys = options.keys()
         keys.sort()
@@ -552,12 +580,18 @@ class MultipleChoiceProblemModule(ResourceModule):
             if o[1] == True:
                 return i
 
-    def handle_ajax(self, action, post_data, **kwargs):
+    def get_score(self):
+        if len(self.answers) > 0:
+            previous_answer = int(self.answers[-1])
+            return int(self.correct_answer() == previous_answer)
+        else:
+            return 0
+
+    def handle_ajax_module(self, action, post_data, **kwargs):
         ajax_handlers = {
             'save_answer': self.save_answer,
             'try_again': self.try_again,
-            'save_form_values': self.save_form_values,
-            'change_visibility': self.change_visibility,
+            'save_form_values': self.save_form_values
         }
 
         return json.dumps(ajax_handlers[action](post_data))
@@ -603,8 +637,6 @@ class MultipleChoiceProblemModule(ResourceModule):
             'options': self.options,
             }, context_instance=RequestContext(self.static_data.get('request')))
 
-
-
 class FileModule(ResourceModule):
     """
     The options data structure is a list of lists.
@@ -626,7 +658,7 @@ class FileModule(ResourceModule):
     template = "resources/file_module.html"
     author_template = "resources/file_author.html"
 
-    def handle_ajax(self, action, post_data, **kwargs):
+    def handle_ajax_module(self, action, post_data, **kwargs):
         ajax_handlers = {
             'save_form_values': self.save_form_values,
             }
@@ -635,13 +667,15 @@ class FileModule(ResourceModule):
 
     def save_form_values(self, post_data):
         self.name = post_data['name']
-        file_obj = post_data['file']
-        self.filename = post_data['file'].name
-        s3 = S3FS(settings.S3_BUCKETNAME, prefix=self.resource.classgroup.name, aws_access_key=settings.AWS_ACCESS_KEY_ID, aws_secret_key=settings.AWS_SECRET_ACCESS_KEY)
-        with s3.open(self.filename, 'wb') as f:
-            for chunk in file_obj.chunks():
-                f.write(chunk)
-        self.file_url = s3.getpathurl(self.filename)
+
+        if 'file' in post_data and isinstance(post_data['file'], UploadedFile):
+            file_obj = post_data['file']
+            self.filename = post_data['file'].name
+            s3 = S3FS(settings.S3_BUCKETNAME, prefix=self.resource.classgroup.name, aws_access_key=settings.AWS_ACCESS_KEY_ID, aws_secret_key=settings.AWS_SECRET_ACCESS_KEY)
+            with s3.open(self.filename, 'wb') as f:
+                for chunk in file_obj.chunks():
+                    f.write(chunk)
+            self.file_url = s3.getpathurl(self.filename)
         return {'success': True}
 
     def render_module(self):
