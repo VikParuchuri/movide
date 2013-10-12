@@ -6,7 +6,8 @@ from rest_framework import viewsets, routers
 from views import (MessageView, MessageDetailView, ClassgroupView, ClassgroupDetailView,
                    UserView, UserDetail, EmailSubscription, MessageNotificationView, NotificationView,
                    ClassSettingsView, StudentClassSettingsView, ClassgroupStatsView, RatingView,
-                   ResourceAuthorView, ResourceView, ResourceDetail, SkillView, SkillDetail)
+                   ResourceAuthorView, ResourceView, ResourceDetail, SkillView, SkillDetail,
+                   SectionView, SectionDetail)
 
 
 urlpatterns = patterns('',
@@ -28,5 +29,7 @@ urlpatterns = patterns('',
                        url(r'^resources/(?P<pk>[0-9]+)/$', ResourceDetail.as_view()),
                        url(r'^skills/$', SkillView.as_view()),
                        url(r'^skills/(?P<pk>[0-9]+)/$', SkillDetail.as_view()),
+                       url(r'^sections/$', SectionView.as_view()),
+                       url(r'^sections/(?P<pk>[0-9]+)/$', SectionDetail.as_view()),
                        )
 

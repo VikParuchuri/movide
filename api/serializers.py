@@ -1,8 +1,10 @@
+from __future__ import unicode_literals
 from django.forms import widgets
 from rest_framework import serializers
 from models import (Tag, Message, UserProfile, EmailSubscription, Classgroup,
                     Rating, ClassSettings, Resource, StudentClassSettings,
-                    MESSAGE_TYPE_CHOICES, make_random_key, GRADING_CHOICES, Skill, SkillResource)
+                    MESSAGE_TYPE_CHOICES, make_random_key, GRADING_CHOICES, Skill, SkillResource,
+                    Section)
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 import logging
@@ -280,7 +282,9 @@ class ResourceSerializer(serializers.Serializer):
     approved = serializers.BooleanField()
     name = serializers.CharField()
     display_name = serializers.Field()
+    section = serializers.SlugRelatedField(many=False, slug_field="name", required=False, read_only=True)
     created_timestamp = serializers.Field(source="created_timestamp")
+    priority = serializers.Field()
 
     modified = serializers.Field()
     created = serializers.Field()
@@ -358,6 +362,30 @@ class ClassgroupStatsSerializer(serializers.Serializer):
     name = serializers.CharField()
     modified = serializers.Field()
 
+class SectionSerializer(serializers.Serializer):
+    pk = serializers.Field()
+    name = serializers.CharField()
+    display_name = serializers.CharField(required=False)
+    classgroup = serializers.SlugRelatedField(many=False, slug_field="name", required=False, queryset=Classgroup.objects.all())
+
+    modified = serializers.Field()
+    created = serializers.Field()
+
+    def restore_object(self, attrs, instance=None):
+        classgroup = attrs.get('classgroup')
+        name = attrs.get('name')
+
+        user = self.context['request'].user
+
+        if instance is None:
+            instance = Section(classgroup=classgroup, name=alphanumeric_name(name), display_name=name)
+            instance.save()
+        else:
+            if not ClassGroupPermissions.is_teacher(classgroup, user):
+                raise serializers.ValidationError("You do not have permission to modify this section.")
+            instance.name = alphanumeric_name(name)
+            instance.display_name = name
+        return instance
 
 class SkillSerializer(serializers.Serializer):
     pk = serializers.Field()

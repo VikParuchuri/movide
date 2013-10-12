@@ -146,10 +146,6 @@ body {
     margin-left: 5px;
 }
 
-#create-a-resource-button{
-    margin-bottom: 20px;
-}
-
 #create-a-skill-button{
     margin-bottom: 20px;
 }
@@ -183,6 +179,22 @@ body {
     padding: 10px;
 }
 
+.section .section-content div a{
+    display: inline-block;
+}
 
+.section .section-content div h4{
+    display: inline-block;
+}
+
+.resources .section{
+    margin: 15px 0 15px 0;
+    border-bottom: 1px solid #D6D6D6;
+    padding: 10px;
+}
+
+.nav-tabs li a.sidebar-item-help {
+    border: none;
+}
 
 

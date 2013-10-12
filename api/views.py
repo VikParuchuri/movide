@@ -1,14 +1,14 @@
-from __future__ import division
+from __future__ import division, unicode_literals
 from django.contrib.auth.models import User
 from models import (Tag, Message, UserProfile, Classgroup, MessageNotification,
-                    RatingNotification, StudentClassSettings, Resource, UserResourceState, Skill)
+                    RatingNotification, StudentClassSettings, Resource, UserResourceState, Skill, Section)
 from rest_framework.views import APIView
 from serializers import (TagSerializer, MessageSerializer, UserSerializer,
                          EmailSubscriptionSerializer, ResourceSerializer,
                          ClassgroupSerializer, RatingSerializer, PaginatedMessageSerializer,
                          NotificationSerializer, PaginatedNotificationSerializer, StudentClassSettingsSerializer,
                          ClassSettingsSerializer, ClassgroupStatsSerializer, alphanumeric_name,
-                         PaginatedResourceSerializer, SkillSerializer, PaginatedSkillSerializer)
+                         PaginatedResourceSerializer, SkillSerializer, PaginatedSkillSerializer, SectionSerializer)
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework import status, generics, permissions
@@ -26,7 +26,7 @@ import json
 from django.core.cache import cache
 from resources import ResourceRenderer, get_resource_score
 from permissions import ClassGroupPermissions
-from django.db.models import Count, Q
+from django.db.models import Q, Count
 log = logging.getLogger(__name__)
 
 RESULTS_PER_PAGE = 20
@@ -544,6 +544,7 @@ class ResourceView(QueryView):
         queryset = self.filter_query_params(queryset).filter(resource_type="vertical").annotate(child_count=Count('children'))
         queryset = queryset.filter(Q(name__isnull=False) | Q(child_count__gt=0)).order_by("-created")
 
+
         #TODO: enable infinite scroll for resources.  Set limit high for now.
         paginator = Paginator(queryset, 100)
         page = request.QUERY_PARAMS.get("page")
@@ -557,6 +558,32 @@ class ResourceView(QueryView):
 
         return Response(serializer.data)
 
+    def put(self, request):
+        data = request.DATA
+
+        for resource in data:
+            try:
+                resource_obj = Resource.objects.get(id=resource['pk'])
+            except Resource.DoesNotExist:
+                continue
+
+            self.cg = resource_obj.classgroup
+            self.verify_ownership()
+
+            resource_obj.priority = int(resource.get('priority', 0))
+            section_name = resource.get('section')
+            if section_name is not None:
+                try:
+                    section = Section.objects.get(name=section_name)
+                except Section.DoesNotExist:
+                    return Response("Invalid section specified.", status=status.HTTP_400_BAD_REQUEST)
+            else:
+                section = None
+
+            resource_obj.section = section
+            resource_obj.save()
+
+        return Response(status=status.HTTP_200_OK)
 
     def post(self, request):
         self.query_dict = {
@@ -650,7 +677,7 @@ class ResourceAuthorView(QueryView):
         response = renderer.handle_ajax("save_form_values", data)
         renderer.save_module_data()
 
-        return Response(response,status=status.HTTP_201_CREATED)
+        return Response(response, status=status.HTTP_201_CREATED)
 
 class SkillView(QueryView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -739,6 +766,80 @@ class SkillDetail(QueryView):
     def delete(self, request, pk):
 
         instance = Skill.objects.get(id=pk)
+
+        self.query_dict = {
+            'classgroup': instance.classgroup.name
+        }
+
+        self.verify_membership()
+        self.verify_ownership()
+
+        instance.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SectionView(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+    query_attributes = ["classgroup"]
+    required_attributes = [("classgroup",), ]
+
+    def filter_classgroup(self, queryset, classgroup):
+        return queryset.filter(classgroup__name=classgroup)
+
+    def get(self, request):
+        self.get_query_params()
+        self.verify_membership()
+        queryset = self.cg.sections.all()
+
+        serializer = SectionSerializer(queryset, context={'request': request}, many=True)
+
+        return Response(serializer.data)
+
+    def post(self, request):
+        self.query_dict = {
+            'classgroup': request.DATA.get('classgroup')
+        }
+
+        self.verify_membership()
+        self.verify_ownership()
+
+        pk = request.DATA.get('pk')
+        instance = None
+        if pk is not None:
+            instance = Skill.objects.get(id=pk)
+
+        serializer = SectionSerializer(data=request.DATA, context={'request': request}, instance=instance)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SectionDetail(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+    query_attributes = ["classgroup"]
+    required_attributes = [("classgroup",), ]
+
+    def put(self, request, pk):
+        self.query_dict = {
+            'classgroup': request.DATA.get('classgroup')
+        }
+
+        self.verify_membership()
+        self.verify_ownership()
+
+        instance = Section.objects.get(id=pk)
+        serializer = SectionSerializer(data=request.DATA, context={'request': request}, instance=instance)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+
+        instance = Section.objects.get(id=pk)
 
         self.query_dict = {
             'classgroup': instance.classgroup.name

@@ -169,6 +169,34 @@ class Skill(models.Model):
     class Meta:
         unique_together = (("classgroup", "name"), )
 
+class Section(models.Model):
+    name = models.CharField(max_length=MAX_NAME_LENGTH, validators=[RegexValidator(regex=alphanumeric)], blank=True, null=True)
+    display_name = models.CharField(max_length=MAX_NAME_LENGTH, blank=True, null=True)
+    classgroup = models.ForeignKey(Classgroup, related_name="sections")
+
+    modified = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to ensure that names and classgroups are unique, but make sure that the null case is okay.
+        """
+        if self.name is not None and self.name != '':
+            conflicting_instance = Section.objects.filter(
+                name=self.name,
+                classgroup=self.classgroup
+            )
+            if self.id:
+                conflicting_instance = conflicting_instance.exclude(pk=self.id)
+
+            if conflicting_instance.exists():
+                raise Exception('Section with this name and classgroup already exists.')
+
+        super(Section, self).save(*args, **kwargs)
+
+    class Meta:
+        order_with_respect_to = 'classgroup'
+
 class Resource(models.Model):
     user = models.ForeignKey(User, related_name="resources")
     classgroup = models.ForeignKey(Classgroup, related_name="resources")
@@ -179,6 +207,8 @@ class Resource(models.Model):
     approved = models.BooleanField(default=False)
     parent = models.ForeignKey('self', related_name="children", blank=True, null=True, on_delete=models.SET_NULL)
     skills = models.ManyToManyField(Skill, blank=True, null=True, through="SkillResource", related_name="resources")
+    section = models.ForeignKey(Section, related_name="resources", blank=True, null=True, on_delete=models.SET_NULL)
+    priority = models.IntegerField(default=0)
 
     modified = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)

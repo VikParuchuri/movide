@@ -30,11 +30,45 @@
     </div>
 </script>
 
+<script id="helpTemplate" type="text/template">
+    <div class="row">
+        <div class="col-md-12">
+            <% if(is_owner==true) { %>
+            <% } %>
+
+            <p>Movide is a skills-based way to administer classes.  Movide lets you create course content and problems, and share them with students.  Most of all, Movide lets you easily discuss and interact.  This help will go through each page in Movide and explain its purpose.</p>
+            <h3>Course Content</h3>
+            <p>The course content page contains all of the content and problems in the course.  You can created sections and resources.</p>
+            <h4>Sections</h4>
+            <p>Sections correspond to portions of the course, and contain multiple resources.  They can be edited by teachers by clicking on create new section.  After creating a section, you can drag resources into it in order to add them to the section.  You can delete and rename sections.</p>
+            <h4>Resources</h4>
+            <p>Resources deliver course content.  A new resource can be created by clicking on the create new resource button.  After creating a resource, it can be edited, deleted, and dragged into different sections.</p>
+            <p>Resources must have unique names so that they can be referred to by students easily.  Students can create components, and teachers can edit and delete them.</p>
+            <p>Each resource contains multiple components.  Components can be course content or problems.  Each component must be saved individually when edited.</p>
+            <h3>Skills</h3>
+            <p>Skills let you track student progress.</p>
+            <p>Skills can be created by clicking on the create skill button.  After creating a skill, resources can be added to it by name, and the grading policy can be changed.</p>
+            <p>After adding resources, clicking on the plus icon next to the skill will show you the resources associated with it.  The progress bar will show you your progress in the skill.</p>
+            <h3>Discussions</h3>
+            <p>Discussions allow students and teachers to communicate with each other.  Discussions can be started by anyone by default, but there is a setting to disable students from creating them.</p>
+            <p>People can be mentioned in discussions through @ tagging, and resources can be mentioned with * tagging.  Discussions can be liked and replied to.  Announcements can also be made by teachers through discussions.</p>
+            <h3>Users</h3>
+            <p>The users view allows teachers to manage the course.  It shows each student, along with their grade in the class and some basic statistics.  Students can be removed from the course, or given teacher access to the course.</p>
+            <h3>Stats</h3>
+            <p>The stats view shows how people in the course are communicating.</p>
+            <h3>Notifications</h3>
+            <p>Notifications are shown when someone is mentioned in a discussion, or when a course announcement is sent out.</p>
+            <h3>Settings</h3>
+            <p>Settings allow students to control how often they get email, or change their avatar.  Teachers can edit the course welcome message and other settings.</p>
+        </div>
+    </div>
+</script>
+
 <script id="skillDetailTemplate" type="text/template">
     <div class="row">
         <% if(is_owner==true) { %>
             <div class="col-md-12">
-                <button class="btn btn-small" id="create-a-skill-button"><i class="glyphicon glyphicon-plus"></i> Create a skill</button>
+                <button class="btn btn-small" id="create-a-skill-button"><i class="glyphicon glyphicon-pencil"></i> Create a skill</button>
             </div>
         <% } %>
     </div>
@@ -58,6 +92,22 @@
         <div>
             <a href="#" type="button" class="show-resource-modal-link"><%= name %></a>
         </div>
+    </div>
+</script>
+
+<script id="editSectionTemplate" type="text/template">
+    <div id="edit-a-section" data-section-id="<%= section_id %>">
+        <form role="form">
+            <div class="form-group">
+                <label for="section-name-input">Section Name</label>
+                <input type="text" class="form-control" id="section-name-input" placeholder="" value="<%= display_name %>">
+                <span class="help-block">The name of the section.</span>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-small"><%= save_text %></button>
+                <span class="help-block help-block-section"></span>
+            </div>
+        </form>
     </div>
 </script>
 
@@ -147,7 +197,10 @@
 <script id="resourceDetailTemplate" type="text/template">
     <div class="row">
         <div class="col-md-12">
-            <button class="btn btn-small" id="create-a-resource-button"><i class="glyphicon glyphicon-plus"></i> Create a resource</button>
+            <% if(is_owner==true) { %>
+                <button class="btn btn-small" id="create-a-section-button"><i class="glyphicon glyphicon-pencil"></i> Create a section</button>
+            <% } %>
+            <button class="btn btn-small" id="create-a-resource-button"><i class="glyphicon glyphicon-pencil"></i> Create a resource</button>
         </div>
     </div>
     <div id="resources-container">
@@ -287,6 +340,14 @@
     <div class="alert alert-info">There aren't any resources in this class yet. Why not add one now?</div>
 </script>
 
+<script id="noSectionsTemplate" type="text/template">
+    <div class="alert alert-info">There aren't any sections in this class yet. Why not add one now?</div>
+</script>
+
+<script id="noSectionResourcesTemplate" type="text/template">
+    <div class="alert alert-info resource">There aren't any resources in this section yet.</div>
+</script>
+
 <script id="noMessagesTemplate" type="text/template">
     <div class="alert alert-info">There aren't any discussions in this class yet. Why not start a discussion now?</div>
 </script>
@@ -380,7 +441,7 @@
         </div>
         <div class="skill-content">
             <div>
-                <a href="#" class="show-skill-link" data-resource-id="<%= pk %>"><%= display_name %></a> <span class="time">created <%= created_formatted %></span><h4>.</h4>
+                <a href="#" class="show-skill-link" data-resource-id="<%= pk %>"><span class="glyphicon glyphicon-plus-sign"></span> <%= display_name %></a> <span class="time">created <%= created_formatted %></span><h4>.</h4>
                 <% if (is_owner == true) { %>
                 <div class="pull-right">
                     <a type="button" class="btn edit-skill-button" data-toggle="tooltip" title="Edit this skill."><span class="glyphicon glyphicon-edit"></span></a>
@@ -402,9 +463,35 @@
 
 <script id="resourcesTemplate" type="text/template">
     <div class="resources" data-tag-name="<%= classgroup %>" id="resources">
-        <%= resources %>
+        <h3>Sections</h3>
+        <%= sections %>
+        <h3>Unorganized Resources</h3>
+        <div class="unorganized-resources sortable">
+            <%= resources %>
+        </div>
     </div>
 </script>
+
+<script id="sectionTemplate" type="text/template">
+    <div class="section" data-section-id="<%= pk %>" data-display-name="<%= display_name %>" data-name="<%= name %>">
+        <div class="header">
+        </div>
+        <div class="section-content">
+            <div>
+                <a href="#" class="show-section-resources"><h4><span class="glyphicon glyphicon-plus-sign"></span> <%= display_name %></h4></a>
+                <% if (is_owner == true) { %>
+                <div class="pull-right">
+                    <a type="button" class="btn edit-section-button" data-toggle="tooltip" title="Edit this section."><span class="glyphicon glyphicon-edit"></span></a>
+                    <a type="button" class="btn remove-section-button" data-toggle="tooltip" title="Remove this section."><span class="glyphicon glyphicon-remove"></span></a>
+                </div>
+                <% } %>
+            </div>
+        </div>
+        <div class="section-resources sortable">
+        </div>
+    </div>
+</script>
+
 
 <script id="resourceTemplate" type="text/template">
     <div class="resource" data-resource-id="<%= pk %>" data-display-name="<%= display_name %>">

@@ -17,9 +17,9 @@
 {% block sidebar %}
     <ul class="nav nav-tabs" id="tag-sidebar">
         <li {% if active_page == "home" %}class="active current"{% endif %}><a href="{{ link }}" class="sidebar-item" data-name="home" data-toggle="tooltip" title="Home"><span class="glyphicon glyphicon-home"></span></a></li>
+        <li {% if active_page == "resources" %}class="active current"{% endif %}><a href="{{ link }}resources/" class="sidebar-item" data-name="resources" data-toggle="tooltip" title="Course Content"><span class="glyphicon glyphicon-book"></span></a></li>
         <li {% if active_page == "skills" %}class="active current"{% endif %}><a href="{{ link }}skills/" class="sidebar-item" data-name="skills" data-toggle="tooltip" title="Skills"><span class="glyphicon glyphicon-tree-conifer"></span></a></li>
         <li {% if active_page == "messages" %}class="active current"{% endif %}><a href="{{ link }}messages/" class="sidebar-item" data-name="messages" data-toggle="tooltip" title="Discussions"><span class="glyphicon glyphicon-envelope"></span></a></li>
-        <li {% if active_page == "resources" %}class="active current"{% endif %}><a href="{{ link }}resources/" class="sidebar-item" data-name="resources" data-toggle="tooltip" title="Resources"><span class="glyphicon glyphicon-book"></span></a></li>
         {% if is_owner == "true" %}
             <li {% if active_page == "users" %}class="active current"{% endif %}><a href="{{ link }}users/" class="sidebar-item" data-name="users" data-toggle="tooltip" title="Users"><span class="glyphicon glyphicon-user"></span></a></li>
         {% endif %}
@@ -33,6 +33,7 @@
             </a>
         </li>
         <li {% if active_page == "settings" %}class="active current"{% endif %}><a href="{{ link }}settings/" class="sidebar-item" data-name="settings" data-toggle="tooltip" title="Settings"><span class="glyphicon glyphicon-wrench"></span></a></li>
+        <li class="pull-right {% if active_page == "help" %}active current{% endif %}"><a href="{{ link }}help/" class="sidebar-item sidebar-item-help" data-name="help" data-toggle="tooltip" title="Help"><span class="glyphicon glyphicon-question-sign"></span></a></li>
     </ul>
 {% endblock %}
 

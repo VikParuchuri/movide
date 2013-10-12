@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.shortcuts import get_perms
