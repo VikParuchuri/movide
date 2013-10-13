@@ -1,5 +1,4 @@
 python-pip
-python-scipy
 python-mysqldb
 ipython
 nginx

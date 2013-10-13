@@ -1,5 +1,7 @@
 {% load bootstrap %}
 
+{{ form.media }}
+
 <form action="{{ action_link }}" method="POST" id="{{ form_id }}" class="resource-creation-form">
     {% csrf_token %}
     {{ form|bootstrap }}

@@ -1601,8 +1601,9 @@ $(document).ready(function() {
                     update: function( event, ui ) {
                         that.update_order(event);
                     },
-                    items: ".resource"
-                }).disableSelection();
+                    items: ".resource",
+                    handle: ".drag-handle"
+                })
             }
             $(this.show_section_resources_link).unbind();
             $(this.show_section_resources_link).click(this.show_section_resources)
@@ -1663,6 +1664,10 @@ $(document).ready(function() {
             $(this.el).append(modal_html);
             $(this.view_a_resource_modal).modal('show');
             var that = this;
+            $(this.view_a_resource_modal).on('shown.bs.modal', function (e) {
+                $(document).off('focusin.bs.modal');
+                e.stopPropagation();
+            });
             $(this.view_a_resource_modal).on('hidden.bs.modal', function () {
                 that.refresh();
             });

@@ -1,20 +1,25 @@
 <div class="resource-author-container {% if resource_type != "vertical" %}sortable{% endif %}" data-resource-id="{{ resource_id }}" id="resource-author-container-{{ resource_id }}" data-resource-type="{{ resource_type }}" data-class-name="{{ class_name }}">
-    {% if resource_type != "vertical" %}
-        <div class="btn-group pull-right">
-            <a type="button" class='btn component-visibility-button dropdown-toggle' type='button' title="Change who can see this component." data-toggle="dropdown">
-                <span class="glyphicon glyphicon-eye-open"></span> <span class="current-role"> {{ current_role|title }}</span> <span class="caret"></span>
-            </a>
-            <ul class="dropdown-menu component-visibility-selection" role="menu">
-                {% for role in roles %}
-                    <li><a href="#" data-name="{{ role }}">{{ role|title }}</a></li>
-                {% endfor %}
-            </ul>
-            <a type="button" class='btn component-removal-button' type='button' data-toggle="tooltip" title="Remove this component.">
-                <span class="glyphicon glyphicon-remove"></span>
-            </a>
-        </div>
-    {% endif %}
-    {{ content|safe }}
+    <div class="content">
+        {% if resource_type != "vertical" %}
+            <div class="btn-group pull-right">
+                <a type="button" class='btn component-visibility-button dropdown-toggle' type='button' title="Change who can see this component." data-toggle="dropdown">
+                    <span class="glyphicon glyphicon-eye-open"></span> <span class="current-role"> {{ current_role|title }}</span> <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu component-visibility-selection" role="menu">
+                    {% for role in roles %}
+                        <li><a href="#" data-name="{{ role }}">{{ role|title }}</a></li>
+                    {% endfor %}
+                </ul>
+                <a type="button" class='btn drag-handle' type='button' data-toggle="tooltip" title="Click, hold, and drag to reorder this component.">
+                    <span class="glyphicon glyphicon-sort"></span>
+                </a>
+                <a type="button" class='btn component-removal-button' type='button' data-toggle="tooltip" title="Remove this component.">
+                    <span class="glyphicon glyphicon-remove"></span>
+                </a>
+            </div>
+        {% endif %}
+        {{ content|safe }}
+    </div>
 </div>
 
 {% if js_class_name %}

@@ -1,6 +1,7 @@
 server {
     listen {{nginx_listen_port}};
     server_name localhost;
+    client_max_body_size 10M;
 
     set $my_host $http_host;
     if ($host ~ "\d+\.\d+\.\d+\.\d+") {

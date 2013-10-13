@@ -1,19 +1,19 @@
 from django.shortcuts import render, render_to_response, redirect
-from django.conf import settings
 import logging
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponse
 from api.models import Classgroup, RatingNotification, MessageNotification, StudentClassSettings, ClassSettings
-from rest_framework.response import Response
-from rest_framework import status
 from api.forms import StudentClassSettingsForm, ClassSettingsForm
 from django.contrib.auth.models import User
 import json
 from allauth.account.views import LoginView, SignupView
 from api.permissions import ClassGroupPermissions
+from django.views.decorators.csrf import csrf_exempt
+from api.uploads import upload_to_s3
+from redactor.forms import ImageForm
 
-log=logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 def mock_login_form(request):
     login_view = LoginView()
@@ -246,6 +246,20 @@ def autocomplete_names(request, classgroup):
     cg = verify_settings(request, classgroup)
 
     return HttpResponse(json.dumps(cg.autocomplete_list()), status=200)
+
+@csrf_exempt
+@login_required
+def redactor_upload(request, classgroup, upload_to=None, form_class=ImageForm, response=lambda name, url: url):
+    form = form_class(request.POST, request.FILES)
+    cg = verify_settings(request, classgroup)
+    if form.is_valid():
+        file_obj = form.cleaned_data['file']
+        url, filename = upload_to_s3(file_obj, cg.name)
+
+        return HttpResponse(
+            response(file_obj.name, url)
+        )
+    return HttpResponse(status=403)
 
 
 

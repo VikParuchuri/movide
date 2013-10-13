@@ -131,10 +131,6 @@
 - name:  install movide apt packages
   command: xargs -a {{movide_dir}}/apt-packages.txt apt-get install -y
 
-#Numpy has to be a pre-requirement in order for scipy to build
-- name : install python pre-requirements for movide
-  pip: requirements="{{movide_dir}}/pre-requirements.txt" virtualenv="{{venv_dir}}" state=present
-
 - name : install python requirements for movide
   pip: requirements="{{movide_dir}}/requirements.txt" virtualenv="{{venv_dir}}" state=present
 

@@ -14,8 +14,89 @@ from django.conf import settings
 from boto.s3.connection import S3Connection
 from boto.s3.bucket import Bucket
 from django.core.files.uploadedfile import UploadedFile
+from redactor.widgets import RedactorEditor
+import time
+from datetime import datetime
+from django.core.urlresolvers import reverse
+from urlparse import urlparse
+import re
+from copy import deepcopy
+from uploads import upload_to_s3, get_temporary_s3_url
 
 log = logging.getLogger(__name__)
+
+class RichEditor(RedactorEditor):
+    init_js = """<script type="text/javascript">
+      jQuery(document).ready(function(){{
+        var resource_modal =  $(".view-a-resource-modal");
+        if(resource_modal.length > 0){{
+            resource_modal = resource_modal[0];
+            try{{
+                is_open = $(resource_modal).data()['bs.modal'].isShown;
+            }} catch(err){{
+                is_open = false;
+            }}
+            $("#{id}").data('redactor-options', {options});
+            $("#{id}").addClass('redactor-enabled');
+            if(is_open == true){{
+                $("#{id}").redactor({options});
+            }} else {{
+                $(".view-a-resource-modal").one('shown.bs.modal', function () {{
+                    $("#{id}").redactor({options});
+                }});
+            }}
+        }}
+      }});
+    </script>
+    """
+
+    class Media(RedactorEditor.Media):
+        extend = False
+        js = (
+            'redactor/jquery-migrate.min.js',
+            'redactor/redactor.min.js',
+        )
+        css = {
+            'all': (
+                'redactor/css/redactor.css',
+            )
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.upload_to = kwargs.pop('upload_to', '')
+        self.custom_options = kwargs.pop('redactor_options', {})
+        self.allow_file_upload = kwargs.pop('allow_file_upload', True)
+        self.allow_image_upload = kwargs.pop('allow_image_upload', True)
+        self.class_name = kwargs.pop('class_name')
+        super(RedactorEditor, self).__init__(*args, **kwargs)
+
+    def get_options(self):
+        options = getattr(settings, 'REDACTOR_OPTIONS', {})
+        options.update(self.custom_options)
+        if self.allow_file_upload:
+            options['fileUpload'] = reverse(
+                'redactor_upload_file',
+                kwargs={
+                    'classgroup': self.class_name,
+                    'upload_to': self.upload_to
+                }
+            )
+        if self.allow_image_upload:
+            options['imageUpload'] = reverse(
+                'redactor_upload_image',
+                kwargs={
+                    'classgroup': self.class_name,
+                    'upload_to': self.upload_to
+                }
+            )
+        return json.dumps(options)
+
+    def render(self, name, value, attrs=None):
+        html = super(RedactorEditor, self).render(name, value, attrs)
+        final_attrs = self.build_attrs(attrs)
+        id_ = final_attrs.get('id')
+        html += self.init_js.format(id=id_, options=self.get_options())
+        return mark_safe(html)
 
 def get_resource_score(resource, user, grading_policy):
     scores = []
@@ -46,12 +127,25 @@ class ResourceForm(forms.Form):
         extra = kwargs.pop('extra')
         super(ResourceForm, self).__init__(*args, **kwargs)
 
-        for i, values in enumerate(extra):
+        for k in extra:
+            values = extra[k]
             label = values['label']
             name = values['name']
             help_text = values['help_text']
             value = values['value']
-            self.fields[name] = forms.CharField(label=label, help_text=help_text, initial=value)
+            widget = values['widget']
+            widget_options = values['widget_options']
+            options_dict = {
+                'label': label,
+                'help_text': help_text,
+                'initial': value,
+            }
+            if widget is not None:
+                if widget_options is None:
+                    options_dict['widget'] = widget
+                else:
+                    options_dict['widget'] = widget(**widget_options)
+            self.fields[name] = forms.CharField(**options_dict)
 
     def extra_fields(self, fields):
         for name, value in self.cleaned_data.items():
@@ -59,7 +153,7 @@ class ResourceForm(forms.Form):
                 yield (name, value)
 
 class Field(object):
-    def __init__(self, default=None, label=None, help_text=None, scope=None, editable=False):
+    def __init__(self, default=None, label=None, help_text=None, scope=None, editable=False, widget=None, widget_options=None):
         if getattr(self, 'value', None) is None:
             self.value = default
         self.label = label
@@ -67,6 +161,8 @@ class Field(object):
         self.scope = scope
         self.default = default
         self.editable = editable
+        self.widget = widget
+        self.widget_options = widget_options
 
     def __get__(self, obj, obj_type):
         if obj is None:
@@ -280,6 +376,7 @@ class ResourceModule(object):
         self.class_name = resource.classgroup.name
         self.resource = resource
         self.resource_name = resource.display_name
+        self.widget_options = {}
 
         self.data = {
             ResourceScope.author: resource_data,
@@ -291,16 +388,18 @@ class ResourceModule(object):
 
     @property
     def form_field_dictionaries(self):
-        form_field_dictionaries = []
+        form_field_dictionaries = {}
         for field in self.fields:
             class_field = getattr(self.__class__, field)
-            if class_field.scope == ResourceScope.author and class_field.editable == True:
-                form_field_dictionaries.append({
+            if class_field.scope == ResourceScope.author and class_field.editable is True:
+                form_field_dictionaries[field] = {
                     'label': class_field.label,
                     'help_text': class_field.help_text,
                     'name': field,
-                    'value': getattr(self, field)
-                })
+                    'value': getattr(self, field),
+                    'widget': class_field.widget,
+                    'widget_options': self.widget_options.get(field),
+                }
         return form_field_dictionaries
 
     def user_view(self):
@@ -388,7 +487,7 @@ class ResourceModule(object):
 class SimpleAuthoringMixin(object):
 
     def render_module_author(self):
-        form = ResourceForm(extra=self.form_field_dictionaries)
+        form = ResourceForm(extra=self.form_field_dictionaries, auto_id='%s-in-{0}'.format(self.resource.id))
         return render_to_string("resources/form.html", {
             'form': form,
             'action_link': self.static_data.get('author_post_link'),
@@ -413,15 +512,65 @@ class HTMLModule(SimpleAuthoringMixin, ResourceModule):
     html = Field(
         default="",
         label="Post text",
-        help_text="The text of your post.  You can use HTML.",
+        help_text="The text of your post.",
         scope=ResourceScope.author,
-        editable=True
+        editable=True,
+        widget=RichEditor,
     )
     template = "resources/html_module.html"
 
+    def replace_html_links(self):
+        match_pattern = r'(\#\[\[.+\]\])'
+        regex = re.compile(match_pattern)
+
+        resource_pattern = r'\#\[\[(.+)\]\]'
+        resource_regex = re.compile(resource_pattern)
+
+        html = deepcopy(self.html)
+        matches = regex.findall(html)
+
+        for m in matches:
+            resource_name = resource_regex.findall(m)[0]
+            file_url = get_temporary_s3_url(resource_name)
+            html = html.replace(m, file_url)
+        return html
+
+    def save_form_values(self, post_data):
+        if 'html' in post_data:
+            url_search_pattern = r'(https:\/\/{0}.s3.amazonaws.com\/{1}\/.+)">'.format(settings.S3_BUCKETNAME.lower(), self.resource.classgroup.name)
+            regex = re.compile(url_search_pattern)
+            resource_pattern = r'https:\/\/{0}.s3.amazonaws.com\/({1}\/.+)\?Signature'.format(settings.S3_BUCKETNAME.lower(), self.resource.classgroup.name)
+            resource_regex = re.compile(resource_pattern)
+            matches = regex.findall(post_data['html'])
+            for m in matches:
+                resource_name = resource_regex.findall(m)[0]
+                resource_name = "#[[{0}]]".format(resource_name)
+                post_data['html'] = post_data['html'].replace(m, resource_name)
+
+        for name in post_data:
+            if hasattr(self, name) and isinstance(getattr(self.__class__, name), Field):
+                setattr(self, name, post_data[name])
+
+        return {'success': True}
+
+    def render_module_author(self):
+        self.widget_options['html'] = {
+            'class_name': self.class_name
+        }
+        form_field_dict = self.form_field_dictionaries
+        form_field_dict['html']['value'] = self.replace_html_links()
+        form = ResourceForm(extra=form_field_dict, auto_id='%s-in-{0}'.format(self.resource.id))
+        return render_to_string("resources/form.html", {
+            'form': form,
+            'action_link': self.static_data.get('author_post_link'),
+            'form_id': "resource-creation-form",
+            }, context_instance=RequestContext(self.static_data.get('request')))
+
+
     def render_module(self):
+
         return render_to_string(self.template, {
-            'html': self.html,
+            'html': self.replace_html_links(),
             'name': self.name,
         })
 
@@ -638,6 +787,9 @@ class MultipleChoiceProblemModule(ResourceModule):
             'options': self.options,
             }, context_instance=RequestContext(self.static_data.get('request')))
 
+def alphanumeric_name(string):
+    return re.sub(r'\W+', '', string.lower().encode("ascii", "ignore"))
+
 class FileModule(ResourceModule):
     """
     The options data structure is a list of lists.
@@ -649,7 +801,7 @@ class FileModule(ResourceModule):
         help_text="Name of the uploaded file.",
         scope=ResourceScope.author
     )
-    file_url = Field(
+    file_actual_name = Field(
         default=None,
         label="File S3 URL",
         help_text="URL of uploaded file.",
@@ -671,23 +823,18 @@ class FileModule(ResourceModule):
 
         if 'file' in post_data and isinstance(post_data['file'], UploadedFile):
             file_obj = post_data['file']
-            self.filename = post_data['file'].name
-            s3 = S3FS(settings.S3_BUCKETNAME, prefix=self.resource.classgroup.name, aws_access_key=settings.AWS_ACCESS_KEY_ID, aws_secret_key=settings.AWS_SECRET_ACCESS_KEY)
-            with s3.open(self.filename, 'wb') as f:
-                for chunk in file_obj.chunks():
-                    f.write(chunk)
-            self.file_url = s3.getpathurl(self.filename)
+            self.file_url, self.filename = upload_to_s3(file_obj, self.class_name)
+            self.file_actual_name = file_obj.name
         return {'success': True}
 
     def render_module(self):
         file_url = None
         if self.filename is not None:
-            s3 = S3Connection(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY, is_secure=False)
-            b = Bucket(s3, settings.S3_BUCKETNAME)
-            key = "{0}/{1}".format(self.resource.classgroup.name, self.filename)
-            file_url = s3.generate_url(settings.S3_FILE_TIMEOUT, 'GET', bucket=settings.S3_BUCKETNAME, key=key)
+            file_url = get_temporary_s3_url(self.filename)
+        if self.file_actual_name is None:
+            self.file_actual_name = self.filename
         return render_to_string(self.template, {
-            'filename': self.filename,
+            'file_actual_name': self.file_actual_name,
             'file_url': file_url,
             'resource_id': self.resource_id,
             'name': self.name,

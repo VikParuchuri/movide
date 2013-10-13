@@ -198,3 +198,18 @@ body {
 }
 
 
+.redactor_box ul.redactor_toolbar{
+    width: 100%;
+
+}
+
+ul.component-visibility-selection{
+    z-index: 5000;
+}
+
+@media screen and (min-width: 1200px) {
+    .view-a-resource-modal .modal-dialog{
+        width: 50%;
+    }
+}
+

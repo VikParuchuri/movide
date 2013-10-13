@@ -3,6 +3,12 @@
 {% load staticfiles %}
 
 {% block dashboard_js %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/morris.css' %}"/>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.4.2/morris.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+    <script src="{% static 'js/sigma.min.js' %}"></script>
+    <script src="{% static 'js/sigma.forceatlas2.js' %}"></script>
+
     <script type="text/javascript" src="{% static 'js/classview.js' %}" xmlns="http://www.w3.org/1999/html"></script>
 {% endblock %}
 

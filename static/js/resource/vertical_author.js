@@ -52,6 +52,19 @@ window.VerticalAuthor= (function(el) {
             delay: 150,
             update: function( event, ui ) {
                 update_order();
+            },
+            handle: ".drag-handle",
+            start: function( event, ui ) {
+                var redactor_enabled = $(ui.item).find('.redactor-enabled');
+                redactor_enabled.each(function(){
+                    $(this).destroyEditor();
+                })
+            },
+            stop: function( event, ui ) {
+                $(ui.item).find('.redactor-enabled').each(function(){
+                    var options = $(this).data('redactor-options');
+                    $(this).redactor(options);
+                });
             }
         });
 
