@@ -413,9 +413,16 @@ class SkillSerializer(serializers.Serializer):
         else:
             if not ClassGroupPermissions.is_teacher(classgroup, user):
                 raise serializers.ValidationError("You do not have permission to modify this skill.")
+            instance.name = alphanumeric_name(name)
+            instance.display_name = name
 
         resources = self.context['request'].DATA.get('resources')
-        resources = [str(r).strip() for r in resources]
+        if isinstance(resources, basestring):
+            resources = [resources]
+        if resources is not None:
+            resources = [str(r).strip() for r in resources]
+        else:
+            resources = []
 
         skill_resources = []
         for (i, r) in enumerate(resources):

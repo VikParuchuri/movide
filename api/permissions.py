@@ -67,13 +67,13 @@ class ClassGroupPermissions(object):
         assign_perm("delete_classgroup", group, self.cg)
 
     def check_is_student(self, user):
-        return self.get_student_group() in user.groups.all()
+        return self.get_student_group() in user.groups.all() or self.cg.owner == user or user in self.cg.users.all()
 
     def check_is_teacher(self, user):
-        return self.get_teacher_group() in user.groups.all()
+        return self.get_teacher_group() in user.groups.all() or self.cg.owner == user
 
     def check_is_administrator(self, user):
-        return self.get_administrator_group() in user.groups.all()
+        return self.get_administrator_group() in user.groups.all() or self.cg.owner == user
 
     def check_is_parent(self, user):
         return self.get_parent_group() in user.groups.all()
@@ -127,17 +127,17 @@ class ClassGroupPermissions(object):
     @classmethod
     def is_teacher(cls, cg, user):
         cg_perm = cls(cg)
-        return cg_perm.check_is_teacher(user) or cg.owner == user
+        return cg_perm.check_is_teacher(user)
 
     @classmethod
     def is_administrator(cls, cg, user):
         cg_perm = cls(cg)
-        return cg_perm.check_is_administrator(user) or cg.owner == user
+        return cg_perm.check_is_administrator(user)
 
     @classmethod
     def is_student(cls, cg, user):
         cg_perm = cls(cg)
-        return cg_perm.check_is_student(user) or cg.owner == user or user in cg.users.all()
+        return cg_perm.check_is_student(user)
 
     @classmethod
     def assign_perms(cls, cg, obj, permission_name, level):

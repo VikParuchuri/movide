@@ -2,14 +2,21 @@
 import datetime
 from south.db import db
 from south.v2 import SchemaMigration
+from django.db import DatabaseError
 from django.db import models
+import logging
+log = logging.getLogger(__name__)
 
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Removing index on 'Resource', fields ['name']
-        db.delete_index(u'api_resource', ['name'])
+        try:
+            db.delete_index(u'api_resource', ['name'])
+        except DatabaseError:
+            # This index may not exist, so ignore the error.
+            log.info("Ignore the fatal error above.  The index may not exist.")
         # Changing field 'Resource.name'
         db.alter_column(u'api_resource', 'name', self.gf('django.db.models.fields.CharField')(max_length=50, null=True))
 

@@ -5,8 +5,6 @@ import json
 import djcelery
 djcelery.setup_loader()
 
-# Django settings for article_site project.
-
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -14,7 +12,7 @@ ADMINS = (
 # ('Your Name', 'your_email@example.com'),
 )
 
-#Celery settings
+# Celery settings.
 BROKER_URL = 'redis://localhost:6379/0'
 BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
@@ -158,8 +156,6 @@ AUTHENTICATION_BACKENDS = (
     'guardian.backends.ObjectPermissionBackend',
 )
 
-
-
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -201,24 +197,7 @@ REST_FRAMEWORK = {
     }
 }
 
-SOCIALACCOUNT_PROVIDERS = {
-    'facebook': {
-        'SCOPE': ['email'],
-        'AUTH_PARAMS': { 'auth_type': 'reauthenticate' },
-        'METHOD': 'js_sdk'
-    },
-    'google': {
-        'SCOPE': ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
-        'AUTH_PARAMS': { 'access_type': 'online' }
-    }
-
-}
-
-# A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
-# the site admins on every HTTP 500 error when DEBUG=False.
-# See http://docs.djangoproject.com/en/dev/topics/logging for
-# more details on how to customize your logging configuration.
+# Logging.
 syslog_format = ("[%(name)s][env:{logging_env}] %(levelname)s "
                  "[{hostname}  %(process)d] [%(filename)s:%(lineno)d] "
                  "- %(message)s").format(
@@ -277,10 +256,7 @@ LOGGING = {
         }
 }
 
-SOCIALACCOUNT_PROVIDERS = {
-
-}
-
+# Redactor settings.
 REDACTOR_OPTIONS = {
     'lang': 'en',
     'autoresize': True,
@@ -291,29 +267,35 @@ REDACTOR_OPTIONS = {
 }
 REDACTOR_UPLOAD = 'uploads/'
 
-AUTH_PROFILE_MODULE = 'api.UserProfile'
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-#Authentication settings
+# Authentication settings.
+AUTH_PROFILE_MODULE = 'api.UserProfile'
 ACCOUNT_AUTHENTICATION_METHOD="username_email"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 LOGIN_REDIRECT_URL = "/dashboard/"
+LOGOUT_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+LOGIN_URL = "/accounts/login/"
+ACCESS_CODE_LENGTH = 6
+ANONYMOUS_USER_ID = -1
+SOCIALACCOUNT_PROVIDERS = {
+    'facebook': {
+        'SCOPE': ['email'],
+        'AUTH_PARAMS': { 'auth_type': 'reauthenticate' },
+        'METHOD': 'js_sdk'
+    },
+    'google': {
+        'SCOPE': ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
+        'AUTH_PARAMS': { 'access_type': 'online' }
+    }
 
-GOOGLE_ANALYTICS_KEY = None
+}
+# Adds fields to signup form.  Remove for now.
+#ACCOUNT_SIGNUP_FORM_CLASS = 'api.forms.SignupForm'
 
-TWITTER_STREAM_EVERY = 2 * 60 #Seconds
-CACHE_TIMEOUT = 10* 60 * 60 #seconds
-TWITTER_STREAM_CACHE_TIMEOUT = 10* 365 * 24 * 60 * 60 #seconds
-TWITTER_STREAM = True
-
-UPDATE_GRADES_EVERY = 15 * 60 #seconds
-
-#Email verification settings
+# Email verification settings.
 EMAIL_BACKEND = 'seacucumber.backend.SESBackend'
-AWS_ACCESS_KEY_ID = ''
-AWS_SECRET_ACCESS_KEY = ''
-S3_BUCKETNAME = "movide-uploads"
-S3_FILE_TIMEOUT = 30 * 60 # seconds.
 ACCOUNT_EMAIL_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Movide] "
@@ -323,27 +305,19 @@ SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = False
 SOCIALACCOUNT_AUTO_SIGNUP = False
 
-TWITTER_ACCESS_TOKEN = ""
-TWITTER_SECRET_ACCESS_TOKEN = ""
-TWITTER_APP_KEY = ""
-TWITTER_SECRET_APP_KEY = ""
-TWITTER_HASHTAG = "#movide"
+GOOGLE_ANALYTICS_KEY = None
 
-TWITTER_AUTH_APP_KEY = ""
-TWITTER_AUTH_SECRET_APP_KEY = ""
+# Task settings.
+CACHE_TIMEOUT = 10* 60 * 60 #seconds
+UPDATE_GRADES_EVERY = 15 * 60 #seconds
 
-LOGOUT_REDIRECT_URL = "/"
-LOGIN_REDIRECT_URL = "/dashboard/"
+# AWS settings.
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+S3_BUCKETNAME = "movide-uploads"
+S3_FILE_TIMEOUT = 30 * 60 # seconds.
 
-LOGIN_URL = "/accounts/login/"
-
-ACCESS_CODE_LENGTH = 6
-
-# Adds fields to signup form.  Remove for now.
-#ACCOUNT_SIGNUP_FORM_CLASS = 'api.forms.SignupForm'
-
-ANONYMOUS_USER_ID = -1
-
+# Used for private settings that shouldn't be checked into git.
 try:
     from .private import *
 except Exception:

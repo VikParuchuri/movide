@@ -13,3 +13,5 @@ movide/private.py
 cache/*
 staticfiles/*
 media/*
+.coverage
+nosetests.xml

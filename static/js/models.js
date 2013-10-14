@@ -567,18 +567,11 @@ $(document).ready(function() {
                 }));
             this.skills_view = new SkillsView(this.options);
         },
-        render_help: function(){
-            var tmpl = _.template($("#helpTemplate").html());
-            $(this.el).html(tmpl({
-                is_owner: is_owner
-            }));
-        },
         render: function () {
             this.class_model = new Class({name : this.classgroup});
             var that = this;
             this.class_model.fetch({
                 success: function(model){
-                    $(that.el).empty();
                     that.rebind_events();
                     that.class_model = model;
                     that.render_page();
@@ -602,8 +595,6 @@ $(document).ready(function() {
                 this.render_resources();
             } else if(active_page == "skills"){
                 this.render_skills();
-            } else if(active_page == "help"){
-                this.render_help();
             }
         },
         refresh: function(){

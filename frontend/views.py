@@ -140,18 +140,26 @@ def class_settings(request, classgroup):
         'save_button_value': 'Save Class Settings',
     })
 
-VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications', 'settings', 'home', 'resources', 'skills', 'help']
 @login_required()
-def classview(request, classgroup, **kwargs):
-    active_page = kwargs.get('active_page', 'home')
-    if active_page not in VALID_ACTIVE_PAGES:
-        raise Http404
-
+def help(request, classgroup, **kwargs):
     try:
         cg = Classgroup.objects.get(name=classgroup)
     except Classgroup.DoesNotExist:
         raise Http404
 
+    template_vars = get_template_vars(request, cg, 'help')
+
+    if request.user.classgroups.filter(name=classgroup).count() == 0:
+        if cg.class_settings.allow_signups:
+            return render_to_response("enter_class_code.html", template_vars, context_instance=RequestContext(request))
+        else:
+            return render_to_response("class_signup_closed.html", template_vars, context_instance=RequestContext(request))
+
+    return render_to_response("dashboard/help.html", template_vars,
+                              context_instance=RequestContext(request)
+    )
+
+def get_template_vars(request, cg, active_page):
     is_owner = str(ClassGroupPermissions.is_teacher(cg, request.user)).lower()
     template_vars = {
         'name': cg.name,
@@ -165,6 +173,21 @@ def classview(request, classgroup, **kwargs):
         'class_api_link': cg.api_link(),
         'autocomplete_list': json.dumps(cg.autocomplete_list()),
         }
+    return template_vars
+
+VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications', 'settings', 'home', 'resources', 'skills']
+@login_required()
+def classview(request, classgroup, **kwargs):
+    active_page = kwargs.get('active_page', 'home')
+    if active_page not in VALID_ACTIVE_PAGES:
+        raise Http404
+
+    try:
+        cg = Classgroup.objects.get(name=classgroup)
+    except Classgroup.DoesNotExist:
+        raise Http404
+
+    template_vars = get_template_vars(request, cg, active_page)
 
     if request.user.classgroups.filter(name=classgroup).count() == 0:
         if cg.class_settings.allow_signups:

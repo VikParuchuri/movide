@@ -1,0 +1,118 @@
+{% extends "dashboard/classview.html" %}
+
+{% block dashboard_content %}
+    <div class="row">
+        <div class="col-md-12">
+            <p>Movide is a skills-based way to administer classes.  Movide lets you create course content and problems, and share them with students.  Most of all, Movide lets you easily discuss and interact.  This help will go through each page in Movide and explain its purpose.</p>
+            <div class="panel-group" id="accordion">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#content">
+                                Course Content
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="content" class="panel-collapse collapse in">
+                        <div class="panel-body">
+                            <p>The course content page contains all of the content and problems in the course.  You can created sections and resources.</p>
+                            <h4>Sections</h4>
+                            <p>Sections correspond to portions of the course, and contain multiple resources.  They can be edited by teachers by clicking on create new section.  After creating a section, you can drag resources into it in order to add them to the section.  You can delete and rename sections.</p>
+                            <h4>Resources</h4>
+                            <p>Resources deliver course content.  A new resource can be created by clicking on the create new resource button.  After creating a resource, it can be edited, deleted, and dragged into different sections.</p>
+                            <p>Resources must have unique names so that they can be referred to by students easily.  Students can create components, and teachers can edit and delete them.</p>
+                            <p>Each resource contains multiple components.  Components can be course content or problems.  Each component must be saved individually when edited.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#skills">
+                                Skills
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="skills" class="panel-collapse collapse">
+                        <div class="panel-body">
+                            <p>Skills let you track student progress.</p>
+                            <p>Skills can be created by clicking on the create skill button.  After creating a skill, resources can be added to it by name, and the grading policy can be changed.</p>
+                            <p>After adding resources, clicking on the plus icon next to the skill will show you the resources associated with it.  The progress bar will show you your progress in the skill.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#discussions">
+                                Discussions
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="discussions" class="panel-collapse collapse">
+                        <div class="panel-body">
+                            <p>Discussions allow students and teachers to communicate with each other.  Discussions can be started by anyone by default, but there is a setting to disable students from creating them.</p>
+                            <p>People can be mentioned in discussions through @ tagging, and resources can be mentioned with * tagging.  Discussions can be liked and replied to.  Announcements can also be made by teachers through discussions.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#users">
+                                Users
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="users" class="panel-collapse collapse">
+                        <div class="panel-body">
+                            <p>The users view allows teachers to manage the course.  It shows each student, along with their grade in the class and some basic statistics.  Students can be removed from the course, or given teacher access to the course.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#stats">
+                                Stats
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="stats" class="panel-collapse collapse">
+                        <div class="panel-body">
+                            <p>The stats view shows how people in the course are communicating.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#notifications">
+                                Notifications
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="notifications" class="panel-collapse collapse">
+                        <div class="panel-body">
+                            <p>Notifications are shown when someone is mentioned in a discussion, or when a course announcement is sent out.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#settings">
+                                Settings
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="settings" class="panel-collapse collapse">
+                        <div class="panel-body">
+                            <p>Settings allow students to control how often they get email, or change their avatar.  Teachers can edit the course welcome message and other settings.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

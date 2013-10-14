@@ -6,6 +6,9 @@ from django.forms.extras import widgets
 title_choices = ["Mr.", "Ms.", "Mrs."]
 
 class SignupForm(forms.Form):
+    """
+    Adds additional fields to the standard signup form.
+    """
     first_name = forms.CharField(max_length=30, label='First Name')
     last_name = forms.CharField(max_length=30, label='Last Name')
     title = forms.ChoiceField(choices=TITLE_CHOICES)
@@ -18,6 +21,9 @@ class SignupForm(forms.Form):
         user.profile.save()
 
 class PlainTextWidget(forms.Widget):
+    """
+    Used to display plain text in form fields.
+    """
     input_type = 'text'
 
     def render(self, name, value, attrs=None):
@@ -27,12 +33,18 @@ class PlainTextWidget(forms.Widget):
         return False
 
 class StudentClassSettingsForm(forms.ModelForm):
+    """
+    Form that allows students to customize their class settings.
+    """
     email_frequency = forms.ChoiceField(choices=EMAIL_FREQUENCY_CHOICES, label="Email Frequency", help_text='Control how often we email you about this class.')
     class Meta:
         model = StudentClassSettings
         fields = ["email_frequency",]
 
 class ClassSettingsForm(forms.ModelForm):
+    """
+    Form to customize class settings on a course level.
+    """
     access_key = forms.CharField(widget=PlainTextWidget, required=False)
     description = forms.CharField()
     allow_signups = forms.BooleanField(help_text="Allow students to sign up for the course using the access.", label="Allow signups", required=False)

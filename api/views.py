@@ -111,6 +111,12 @@ class QueryView(APIView):
             log.error(error_msg)
             raise PermissionDenied(error_msg)
 
+    def verify_teacher_or_creator(self, user):
+        if not ClassGroupPermissions.is_teacher(self.cg, self.request.user) and user != self.request.user:
+            error_msg = "User is not a teacher for the given class or did not create the resource."
+            log.error(error_msg)
+            raise PermissionDenied(error_msg)
+
 class ClassgroupView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -479,7 +485,8 @@ class ResourceDetail(QueryView):
 
             html = renderer.user_view().get_html()
         else:
-            self.verify_ownership()
+            self.verify_teacher_or_creator(resource.user)
+
             renderer = ResourceRenderer(resource, user=request.user, static_data={
                 'request': request,
                 'author_post_link': '/api/resources/author/'
@@ -495,7 +502,7 @@ class ResourceDetail(QueryView):
             'classgroup': resource.classgroup.name
         }
         self.verify_membership()
-        self.verify_ownership()
+        self.verify_teacher_or_creator(resource.user)
 
         resource.delete()
 
@@ -520,12 +527,16 @@ class ResourceDetail(QueryView):
                 data[k.replace("[]", "")] = request.POST.getlist(k)
             else:
                 data[k] = request.POST[k]
-        data.update({k:request.FILES[k] for k in request.FILES if k not in self.post_attributes})
+        data.update({k: request.FILES[k] for k in request.FILES if k not in self.post_attributes})
 
         renderer = ResourceRenderer(resource, user_state, user=request.user, static_data={
             'request': request,
             })
-        ajax_response = renderer.handle_ajax(self.post_dict['action'], data)
+        action = self.post_dict['action']
+        if action == "save_form_values":
+            self.verify_teacher_or_creator(resource.user)
+
+        ajax_response = renderer.handle_ajax(action, data)
         return Response(ajax_response)
 
 class ResourceView(QueryView):
@@ -708,7 +719,11 @@ class SkillView(QueryView):
         return Response(serializer.data)
 
     def add_skill_data(self, serializer, request):
-        for skill in serializer.data['results']:
+        if isinstance(serializer.data, dict):
+            skill_data = serializer.data['results']
+        else:
+            skill_data = serializer.data
+        for skill in skill_data:
             skill_obj = Skill.objects.get(id=skill['pk'])
             resources = skill_obj.resources.all()
             scores = []

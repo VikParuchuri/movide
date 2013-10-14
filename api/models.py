@@ -14,34 +14,38 @@ import re
 import calendar
 import logging
 
+# Used by StudentClassSettings to define email frequency.
 EMAIL_FREQUENCY_CHOICES = (
     ('N', "Don't receive email."),
     ('D', "Receive a daily digest email."),
     ('A', "Receive emails as notifications happen."),
 )
 
+# Used by Message to define message type choices.
 MESSAGE_TYPE_CHOICES = (
     ('D', "Class discussion."),
     ('A', "Course announcement.")
 )
 
+# Used by UserProfile.
 TITLE_CHOICES = (
     ("Mr.", "Mr."),
     ("Ms.", "Ms."),
     ("Mrs.", "Mrs.")
 )
 
+# Used by Skill to define the type of grading.
 GRADING_CHOICES = (
     ("COM", "Completion."),
     ("COR", "Correctness.")
 )
 
+# Used by ClassSettings as default values.
 DEFAULT_WELCOME_MESSAGE = "Welcome to your course.  Check the discussions view to get started!  The instructor can edit this message in the settings view."
 DEFAULT_CLASS_DESCRIPTION = "One of the finest courses ever made. (the instructor can change this in the settings view)"
 
 log = logging.getLogger(__name__)
 alphanumeric = re.compile(r'[^a-zA-Z0-9]+')
-
 
 MAX_CHARFIELD_LENGTH = 255
 MAX_NAME_LENGTH = 50
