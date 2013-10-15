@@ -8,8 +8,34 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
     <script src="{% static 'js/sigma.min.js' %}"></script>
     <script src="{% static 'js/sigma.forceatlas2.js' %}"></script>
+    <script src="{% static 'redactor/jquery-migrate.min.js' %}"></script>
+    <script src="{% static 'redactor/redactor.min.js' %}"></script>
+    {% if active_page == "home" %}
+        <script src="{% static 'js/models/messages.js' %}"></script>
+        <script src="{% static 'js/models/announcements.js' %}"></script>
+    {% elif active_page == "resources"%}
+        <script src="{% static 'js/models/resources.js' %}"></script>
+    {% elif active_page == "skills"%}
+        <script src="{% static 'js/models/skills.js' %}"></script>
+    {% elif active_page == "messages"%}
+        <script src="{% static 'js/models/messages.js' %}"></script>
+    {% elif active_page == "users"%}
+        <script src="{% static 'js/models/users.js' %}"></script>
+    {% elif active_page == "stats"%}
+        <script src="{% static 'js/models/stats.js' %}"></script>
+    {% elif active_page == "notifications"%}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/ice.css' %}"/>
+        <script src="{% static 'js/ice.min.js' %}"></script>
+        <script src="{% static 'js/models/messages.js' %}"></script>
+        <script src="{% static 'js/models/notifications.js' %}"></script>
+        <script src="{% static 'js/models/gradings.js' %}"></script>
+    {% elif active_page == "settings"%}
+        <script src="{% static 'js/models/settings.js' %}"></script>
+    {% endif %}
+    <script src="{% static 'js/models/class.js' %}"></script>
+    <script src="{% static 'js/models/classview.js' %}"></script>
+    <script src="{% static 'js/classview.js' %}" ></script>
 
-    <script type="text/javascript" src="{% static 'js/classview.js' %}" xmlns="http://www.w3.org/1999/html"></script>
 {% endblock %}
 
 {% block title %}
@@ -33,6 +59,9 @@
         <li {% if active_page == "notifications" %}class="active current"{% endif %}>
             <a href="{{ link }}notifications/" class="sidebar-item" data-name="notifications" data-toggle="tooltip" title="Notifications">
                 <span class="glyphicon glyphicon-bell"></span>
+                {% if to_be_graded_count > 0 %}
+                    <span class="badge badge-info">{{ to_be_graded_count }}</span>
+                {% endif %}
                 {% if notification_count > 0 %}
                 <span class="badge">{{ notification_count }}</span>
                 {% endif %}
@@ -52,7 +81,7 @@
 {% endblock %}
 
 {% block class_info %}
-    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name="{{ display_name }}" data-is-owner="{{ is_owner }}" data-class-link="{{ link }}" data-access-key="{{ access_key }}" data-active-page="{{ active_page }}" data-class-api-link="{{ class_api_link }}" data-avatar-change-link="{% url 'avatar_change' %}" data-class-owner="{{ class_owner }}">
+    <input type="hidden" id="classinfo" data-name="{{ name }}" data-display-name="{{ display_name }}" data-is-owner="{{ is_owner }}" data-class-link="{{ link }}" data-access-key="{{ access_key }}" data-active-page="{{ active_page }}" data-class-api-link="{{ class_api_link }}" data-avatar-change-link="{% url 'avatar_change' %}" data-class-owner="{{ class_owner }}" data-current-user="{{ current_user }}">
     <script type="application/json" id="autocomplete-list">
         {{ autocomplete_list|safe }}
     </script>

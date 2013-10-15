@@ -16,6 +16,7 @@ from models import Resource, Tag, MessageNotification, Classgroup
 from django.db import IntegrityError
 from resources import get_resource_score
 from django.core.cache import cache
+from notifications import GradingQueue
 
 log=logging.getLogger(__name__)
 
@@ -98,6 +99,20 @@ def process_saved_message(message_id):
     message = Message.objects.get(id=message_id)
     mention_finder = MentionFinder()
     mention_finder.process_message(message)
+
+@periodic_task(run_every=timedelta(seconds=settings.UPDATE_GRADING_QUEUE_EVERY))
+@single_instance_task(settings.CACHE_TIMEOUT)
+def update_grading_queues():
+    transaction.commit_unless_managed()
+    classgroups = Classgroup.objects.all()
+    for cl in classgroups:
+        update_grading_queue(cl.id)
+
+@task()
+def update_grading_queue(cl_id):
+    cl = Classgroup.objects.get(id=cl_id)
+    grading_queue = GradingQueue(cl, cl.owner)
+    grading_queue.update()
 
 @periodic_task(run_every=timedelta(seconds=settings.UPDATE_GRADES_EVERY))
 @single_instance_task(settings.CACHE_TIMEOUT)

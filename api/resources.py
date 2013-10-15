@@ -21,11 +21,18 @@ from django.core.urlresolvers import reverse
 from urlparse import urlparse
 import re
 from copy import deepcopy
-from uploads import upload_to_s3, get_temporary_s3_url
+from uploads import upload_to_s3, get_temporary_s3_url, replace_internal_links, replace_aws_links
 
 log = logging.getLogger(__name__)
 
+class ResourceException(Exception):
+    pass
+
 class RichEditor(RedactorEditor):
+    """
+    Rich editor widget.
+    """
+
     init_js = """<script type="text/javascript">
       jQuery(document).ready(function(){{
         var resource_modal =  $(".view-a-resource-modal");
@@ -53,8 +60,6 @@ class RichEditor(RedactorEditor):
     class Media(RedactorEditor.Media):
         extend = False
         js = (
-            'redactor/jquery-migrate.min.js',
-            'redactor/redactor.min.js',
         )
         css = {
             'all': (
@@ -99,6 +104,9 @@ class RichEditor(RedactorEditor):
         return mark_safe(html)
 
 def get_resource_score(resource, user, grading_policy):
+    """
+    Get the score for a given resource, user, and grading policy.  Used when scoring.
+    """
     scores = []
     if grading_policy == "COM":
         for child in resource.children.all():
@@ -114,19 +122,40 @@ def get_resource_score(resource, user, grading_policy):
                 scores.append(renderer.module.get_score())
     return scores
 
+def get_grading_view(resource, user):
+    """
+    Get the grading view for a given resource and user.  The grading view will only exist when an assignment needs
+    to be graded.
+    """
+    try:
+        user_resource_state = UserResourceState.objects.get(user=user, resource=resource)
+    except UserResourceState.DoesNotExist:
+        user_resource_state = None
+    renderer = ResourceRenderer(resource, user_resource_state=user_resource_state, user=user)
+    grading_view = None
+    if hasattr(renderer.module, "grading_view") and renderer.module.grading_view().get('needs_grading') is True:
+        grading_view = renderer.module.grading_view()
+    return grading_view
+
 class ModuleException(Exception):
     pass
 
 class ResourceScope(object):
+    """
+    Define scopes for resource fields (who can edit and interact with them).
+    """
     user = "user"
     author = "author"
 
 class ResourceForm(forms.Form):
-
+    """
+    Generic form for resources.  Enable adding extra fields.
+    """
     def __init__(self, *args, **kwargs):
         extra = kwargs.pop('extra')
         super(ResourceForm, self).__init__(*args, **kwargs)
 
+        # Loop through the extra list and add fields.
         for k in extra:
             values = extra[k]
             label = values['label']
@@ -148,11 +177,17 @@ class ResourceForm(forms.Form):
             self.fields[name] = forms.CharField(**options_dict)
 
     def extra_fields(self, fields):
+        """
+        Return any extra fields in the cleaned form.
+        """
         for name, value in self.cleaned_data.items():
             if name in fields:
                 yield (name, value)
 
 class Field(object):
+    """
+    Basic field class.  Used to store values.
+    """
     def __init__(self, default=None, label=None, help_text=None, scope=None, editable=False, widget=None, widget_options=None):
         if getattr(self, 'value', None) is None:
             self.value = default
@@ -181,6 +216,9 @@ class Field(object):
         return value
 
 class ListField(Field):
+    """
+    A field that stores lists.
+    """
     def __init__(self, **kwargs):
         super(ListField, self).__init__(**kwargs)
         if self.default is None:
@@ -202,6 +240,9 @@ class ListField(Field):
         return len(self.value)
 
 class DictField(Field):
+    """
+    A field that stores dictionaries.
+    """
     def __init__(self, **kwargs):
         super(DictField, self).__init__(**kwargs)
         if self.default is None:
@@ -210,6 +251,10 @@ class DictField(Field):
             self.value = self.default
 
 class ResourceHTML(object):
+    """
+    Allows us to add in HTML, javascript, and css from multiple resources.
+    Avoids loading the same css or js twice.
+    """
     css_template = "<link rel='stylesheet' href='{0}'>"
     js_template = "<script src='{0}'></script>"
 
@@ -251,6 +296,9 @@ class ResourceHTML(object):
         self.css = list(set(self.css + resource_html.css))
 
 class ResourceRenderer(object):
+    """
+    Manage loading and rendering resources.  Given resource objects, and instantiates the right module to handle them.
+    """
 
     def __init__(self, resource, user_resource_state=None, static_data=None, user=None):
         self.resource = resource
@@ -279,13 +327,20 @@ class ResourceRenderer(object):
             resource_data,
             user_data,
             self.resource,
+            self.user,
             static_data,
         )
 
     def get_children(self):
+        """
+        Get any child resources of the resource.
+        """
         return self.resource.children.all()
 
     def child_author_views(self):
+        """
+        Gets the author views of the children of this module.  Used when rendering the vertical author view.
+        """
         child_views = []
         children = self.get_children()
         for child in children:
@@ -294,6 +349,9 @@ class ResourceRenderer(object):
         return child_views
 
     def child_user_views(self):
+        """
+        Gets the user views for the children of this module.  Used when rendering a vertical.
+        """
         child_views = []
         children = self.get_children()
 
@@ -315,6 +373,9 @@ class ResourceRenderer(object):
         return child_views
 
     def user_view(self):
+        """
+        Get the user view for the module, adding in any children.
+        """
         resource_html = self.module.user_view()
         child_views = self.child_user_views()
         for child in child_views:
@@ -324,6 +385,9 @@ class ResourceRenderer(object):
         return resource_html
 
     def author_view(self):
+        """
+        Get the author view for the module, adding in any children.
+        """
         resource_html = self.module.author_view()
         child_views = self.child_author_views()
         for child in child_views:
@@ -331,11 +395,17 @@ class ResourceRenderer(object):
         return resource_html
 
     def handle_ajax(self, action, post_data):
+        """
+        Pass any AJAX actions to the module.
+        """
         response = self.module.handle_ajax(action, post_data)
         self.save_module_data()
         return response
 
     def save_module_data(self):
+        """
+        Save all of the fields from the module.
+        """
         data = self.module.get_data()
 
         self.resource.data = json.dumps(data[ResourceScope.author])
@@ -349,6 +419,10 @@ class ResourceRenderer(object):
             self.user_resource_state.save()
 
 class ResourceModule(object):
+    """
+    Base class for modules.
+    """
+
     name = Field(
         default=None,
         label="Resource Name",
@@ -367,7 +441,7 @@ class ResourceModule(object):
     author_css = []
     author_js_class_name = None
 
-    def __init__(self, resource_data, user_data, resource, static_data):
+    def __init__(self, resource_data, user_data, resource, user, static_data):
 
         # Set data from various scopes.
         self.static_data = static_data
@@ -375,6 +449,7 @@ class ResourceModule(object):
         self.resource_type = resource.resource_type
         self.class_name = resource.classgroup.name
         self.resource = resource
+        self.user = user
         self.resource_name = resource.display_name
         self.widget_options = {}
 
@@ -520,32 +595,11 @@ class HTMLModule(SimpleAuthoringMixin, ResourceModule):
     template = "resources/html_module.html"
 
     def replace_html_links(self):
-        match_pattern = r'(\#\[\[.+\]\])'
-        regex = re.compile(match_pattern)
-
-        resource_pattern = r'\#\[\[(.+)\]\]'
-        resource_regex = re.compile(resource_pattern)
-
-        html = deepcopy(self.html)
-        matches = regex.findall(html)
-
-        for m in matches:
-            resource_name = resource_regex.findall(m)[0]
-            file_url = get_temporary_s3_url(resource_name)
-            html = html.replace(m, file_url)
-        return html
+        return replace_internal_links(deepcopy(self.html))
 
     def save_form_values(self, post_data):
         if 'html' in post_data:
-            url_search_pattern = r'(https:\/\/{0}.s3.amazonaws.com\/{1}\/.+)">'.format(settings.S3_BUCKETNAME.lower(), self.resource.classgroup.name)
-            regex = re.compile(url_search_pattern)
-            resource_pattern = r'https:\/\/{0}.s3.amazonaws.com\/({1}\/.+)\?Signature'.format(settings.S3_BUCKETNAME.lower(), self.resource.classgroup.name)
-            resource_regex = re.compile(resource_pattern)
-            matches = regex.findall(post_data['html'])
-            for m in matches:
-                resource_name = resource_regex.findall(m)[0]
-                resource_name = "#[[{0}]]".format(resource_name)
-                post_data['html'] = post_data['html'].replace(m, resource_name)
+            post_data['html'] = replace_aws_links(post_data['html'], self.class_name)
 
         for name in post_data:
             if hasattr(self, name) and isinstance(getattr(self.__class__, name), Field):
@@ -632,7 +686,7 @@ class VerticalModule(ResourceModule):
             'save_form_values': self.save_form_values
         }
 
-        return json.dumps(ajax_handlers[action](post_data))
+        return ajax_handlers[action](post_data)
 
     def save_form_values(self, post_data):
         for name in post_data:
@@ -659,17 +713,70 @@ class VerticalModule(ResourceModule):
             'form_id': "resource-creation-form",
             }, context_instance=RequestContext(self.static_data.get('request')))
 
-class MultipleChoiceProblemModule(ResourceModule):
+def alphanumeric_name(string):
+    return re.sub(r'\W+', '', string.lower().encode("ascii", "ignore"))
+
+class FileModule(ResourceModule):
     """
     The options data structure is a list of lists.
     So: [[text, correct], [text, correct]], like [["The sun is yellow", True], ["The sun is blue", False]].
     """
-    options = ListField(
+    filename = Field(
         default=None,
-        label="Multiple choice options",
-        help_text="Options for this multiple choice problem.",
+        label="Filename",
+        help_text="Name of the uploaded file.",
         scope=ResourceScope.author
     )
+    file_actual_name = Field(
+        default=None,
+        label="File S3 URL",
+        help_text="URL of uploaded file.",
+        scope=ResourceScope.author
+    )
+
+    template = "resources/file_module.html"
+    author_template = "resources/file_author.html"
+
+    def handle_ajax_module(self, action, post_data, **kwargs):
+        ajax_handlers = {
+            'save_form_values': self.save_form_values,
+            }
+
+        return ajax_handlers[action](post_data)
+
+    def save_form_values(self, post_data):
+        self.name = post_data['name']
+
+        if 'file' in post_data and isinstance(post_data['file'], UploadedFile):
+            file_obj = post_data['file']
+            self.file_url, self.filename = upload_to_s3(file_obj, self.class_name)
+            self.file_actual_name = file_obj.name
+        return {'success': True}
+
+    def render_module(self):
+        file_url = None
+        if self.filename is not None:
+            file_url = get_temporary_s3_url(self.filename)
+        if self.file_actual_name is None:
+            self.file_actual_name = self.filename
+        return render_to_string(self.template, {
+            'file_actual_name': self.file_actual_name,
+            'file_url': file_url,
+            'resource_id': self.resource_id,
+            'name': self.name,
+            })
+
+    def render_module_author(self):
+        form = ResourceForm(extra=self.form_field_dictionaries)
+        return render_to_string(self.author_template, {
+            'form': form,
+            'action_link': self.static_data.get('author_post_link'),
+            'form_id': "resource-creation-form",
+            'filename': self.filename,
+            }, context_instance=RequestContext(self.static_data.get('request')))
+
+
+class Problem(ResourceModule):
     question = Field(
         default=None,
         label="Question",
@@ -695,6 +802,28 @@ class MultipleChoiceProblemModule(ResourceModule):
         label="Student answers",
         help_text="List of which answer the student selected on each attempt.",
         scope=ResourceScope.user
+    )
+
+    def get_score(self):
+        raise NotImplementedError()
+
+    @property
+    def previous_answer(self):
+        if len(self.answers) > 0:
+            return self.answers[-1]
+        else:
+            return None
+
+class MultipleChoiceProblemModule(Problem):
+    """
+    The options data structure is a list of lists.
+    So: [[text, correct], [text, correct]], like [["The sun is yellow", True], ["The sun is blue", False]].
+    """
+    options = ListField(
+        default=None,
+        label="Multiple choice options",
+        help_text="Options for this multiple choice problem.",
+        scope=ResourceScope.author
     )
 
     template = "resources/multiple_choice_module.html"
@@ -731,9 +860,8 @@ class MultipleChoiceProblemModule(ResourceModule):
                 return i
 
     def get_score(self):
-        if len(self.answers) > 0:
-            previous_answer = int(self.answers[-1])
-            return int(self.correct_answer() == previous_answer)
+        if self.previous_answer is not None:
+            return int(self.correct_answer() == self.previous_answer)
         else:
             return 0
 
@@ -744,7 +872,7 @@ class MultipleChoiceProblemModule(ResourceModule):
             'save_form_values': self.save_form_values
         }
 
-        return json.dumps(ajax_handlers[action](post_data))
+        return ajax_handlers[action](post_data)
 
     def save_answer(self, post_data):
         self.answers.append(post_data['answer'])
@@ -776,7 +904,7 @@ class MultipleChoiceProblemModule(ResourceModule):
             'correct_answer': self.correct_answer(),
             'resource_id': self.resource_id,
             'name': self.name,
-        })
+            })
 
     def render_module_author(self):
         form = ResourceForm(extra=self.form_field_dictionaries)
@@ -787,67 +915,111 @@ class MultipleChoiceProblemModule(ResourceModule):
             'options': self.options,
             }, context_instance=RequestContext(self.static_data.get('request')))
 
-def alphanumeric_name(string):
-    return re.sub(r'\W+', '', string.lower().encode("ascii", "ignore"))
-
-class FileModule(ResourceModule):
-    """
-    The options data structure is a list of lists.
-    So: [[text, correct], [text, correct]], like [["The sun is yellow", True], ["The sun is blue", False]].
-    """
-    filename = Field(
+class AssignmentModule(SimpleAuthoringMixin, Problem):
+    saved_answer = Field(
         default=None,
-        label="Filename",
-        help_text="Name of the uploaded file.",
-        scope=ResourceScope.author
+        label="Saved answer",
+        help_text="A stored student answer.",
+        scope=ResourceScope.user
     )
-    file_actual_name = Field(
-        default=None,
-        label="File S3 URL",
-        help_text="URL of uploaded file.",
-        scope=ResourceScope.author
-    )
+    template = "resources/assignment_module.html"
+    js = ["js/resource/assignment_module.js",]
+    css = ['redactor/css/redactor.css', "css/resource/assignment.css"]
+    js_class_name = "AssignmentUser"
 
-    template = "resources/file_module.html"
-    author_template = "resources/file_author.html"
+    grading_template = "resources/assignment_module_grading.html"
 
     def handle_ajax_module(self, action, post_data, **kwargs):
-        ajax_handlers = {
+        actions = {
             'save_form_values': self.save_form_values,
-            }
+            'save_answer': self.save_answer,
+            'submit_answer': self.submit_answer,
+            'try_again': self.try_again,
+            'save_grading': self.save_grading,
+        }
 
-        return json.dumps(ajax_handlers[action](post_data))
+        return actions[action](post_data)
 
-    def save_form_values(self, post_data):
-        self.name = post_data['name']
+    def save_answer(self, data):
+        self.saved_answer = data['answer']
+        return {'success': True, 'message': "Saved your response."}
 
-        if 'file' in post_data and isinstance(post_data['file'], UploadedFile):
-            file_obj = post_data['file']
-            self.file_url, self.filename = upload_to_s3(file_obj, self.class_name)
-            self.file_actual_name = file_obj.name
-        return {'success': True}
+    def submit_answer(self, data):
+        if self.previous_answer is None or self.previous_answer['complete']:
+            self.attempts += 1
+            self.answers.append({
+                'answer': data['answer'],
+                'complete': False
+                })
+            return {'success': True, 'message': "Submitted your response.", 'html': self.render_module()}
+        else:
+            return {'success': False, 'message': "Could not save your response."}
 
-    def render_module(self):
-        file_url = None
-        if self.filename is not None:
-            file_url = get_temporary_s3_url(self.filename)
-        if self.file_actual_name is None:
-            self.file_actual_name = self.filename
+    def grading_view(self):
+        if self.previous_answer and not self.previous_answer['complete']:
+            grading_view = render_to_string(self.grading_template, {
+                'question': self.question,
+                'previous_answer': self.previous_answer,
+                'name': self.name,
+                'resource_id': self.resource_id,
+                'user_id': self.user.id,
+                'editor_options': self.get_editor_options(),
+                })
+            return {'needs_grading': True, 'grading_view': grading_view}
+        return {'needs_grading': False}
+
+    def grading_status(self):
+        if self.previous_answer is None:
+            return "You haven't submitted an answer yet."
+        elif self.previous_answer['complete']:
+            return "Grading has finished."
+        else:
+            return "Grading is in progress.  Please check back later."
+
+    def feedback(self):
+        if self.previous_answer is None:
+            return "You have to submit an answer before you can see feedback."
+        elif self.previous_answer['complete']:
+            return self.previous_answer['feedback']
+        else:
+            return "Grading is in progress.  Please check back later for feedback."
+
+    def get_editor_options(self):
+        rich_editor = RichEditor(class_name=self.resource.classgroup.name)
+        options = rich_editor.get_options()
+        return options
+
+    def try_again(self, data):
+        if self.previous_answer['complete'] and self.attempts < self.maximum_attempts:
+            return {'success': True, 'message': "", 'html': self.render_module(retry=True)}
+        else:
+            return {'success': False, 'message': "You cannot attempt this problem again."}
+
+    def render_module(self, retry=False):
+        options = self.get_editor_options()
         return render_to_string(self.template, {
-            'file_actual_name': self.file_actual_name,
-            'file_url': file_url,
-            'resource_id': self.resource_id,
+            'question': self.question,
+            'previous_answer': self.previous_answer,
             'name': self.name,
+            'resource_id': self.resource_id,
+            'editor_options': options,
+            'saved_answer': self.saved_answer,
+            'grading_status': self.grading_status(),
+            'feedback': self.feedback(),
+            'retry': retry,
             })
 
-    def render_module_author(self):
-        form = ResourceForm(extra=self.form_field_dictionaries)
-        return render_to_string(self.author_template, {
-            'form': form,
-            'action_link': self.static_data.get('author_post_link'),
-            'form_id': "resource-creation-form",
-            'filename': self.filename,
-            }, context_instance=RequestContext(self.static_data.get('request')))
+    def save_grading(self, post_data):
+        if self.previous_answer is None or self.previous_answer['complete']:
+            return {'success': False}
+        score = int(post_data['score'])
+        if score < 0 or score > 100:
+            raise ResourceException("Invalid score specified.")
+        self.previous_answer['annotated_answer'] = post_data['annotated_answer']
+        self.previous_answer['feedback'] = post_data['feedback']
+        self.previous_answer['score'] = post_data['score']
+        self.previous_answer['complete'] = True
+        return {'success': True}
 
 RESOURCE_MODULES = {
     'html': HTMLModule,
@@ -856,4 +1028,5 @@ RESOURCE_MODULES = {
     'vertical': VerticalModule,
     'video': VideoModule,
     'file': FileModule,
+    'assignment': AssignmentModule,
 }

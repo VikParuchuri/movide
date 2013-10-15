@@ -213,3 +213,17 @@ ul.component-visibility-selection{
     }
 }
 
+.gradings .grading {
+    margin: 15px 0 15px 0;
+    border: 1px solid #D6D6D6;
+    padding: 10px;
+    box-shadow: 0 1px 3px 0 rgba(56,61,72,0.21);
+}
+
+.badge-info {
+    background-color: #3a87ad;
+}
+.badge-info:hover {
+    background-color: #2d6987;
+}
+

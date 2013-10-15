@@ -7,7 +7,7 @@ from views import (MessageView, MessageDetailView, ClassgroupView, ClassgroupDet
                    UserView, UserDetail, EmailSubscription, MessageNotificationView, NotificationView,
                    ClassSettingsView, StudentClassSettingsView, ClassgroupStatsView, RatingView,
                    ResourceAuthorView, ResourceView, ResourceDetail, SkillView, SkillDetail,
-                   SectionView, SectionDetail)
+                   SectionView, SectionDetail, GradingQueueView)
 
 
 urlpatterns = patterns('',
@@ -18,6 +18,7 @@ urlpatterns = patterns('',
                        url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/settings/$', ClassSettingsView.as_view(), name="class_settings"),
                        url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/student_settings/$', StudentClassSettingsView.as_view(), name="student_class_settings"),
                        url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/stats/$', ClassgroupStatsView.as_view(), name="class_stats"),
+                       url(r'^classes/(?P<classgroup>[0-9A-Za-z]+)/grading_queue/$', GradingQueueView.as_view(), name="grading_queue"),
                        url(r'^messages/$', MessageView.as_view(), name="messages"),
                        url(r'^ratings/$', RatingView.as_view(), name="ratings"),
                        url(r'^messages/(?P<pk>[0-9]+)/$', MessageDetailView.as_view(), name="message_detail"),

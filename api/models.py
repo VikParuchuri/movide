@@ -51,6 +51,9 @@ MAX_CHARFIELD_LENGTH = 255
 MAX_NAME_LENGTH = 50
 
 class Classgroup(models.Model):
+    """
+    Classes are the highest model in movide, and encapsulate other resources.
+    """
     name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
     display_name = models.CharField(max_length=MAX_NAME_LENGTH)
     owner = models.ForeignKey(User, related_name="created_classgroups", blank=True, null=True, on_delete=models.SET_NULL)
@@ -60,6 +63,9 @@ class Classgroup(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def get_class_settings(self):
+        """
+        Return a class settings object if one is associated with this classgroup, else None.
+        """
         try:
             settings = self.class_settings
         except ClassSettings.DoesNotExist:
@@ -67,6 +73,9 @@ class Classgroup(models.Model):
         return settings
 
     def autocomplete_list(self):
+        """
+        Return a list of usernames, tags, and resources that can be used to generate a list of entities to autocomplete.
+        """
         names = self.users.values('username')
         names = ["@" + n['username'] for n in names]
         tags = self.tags.values('name')
@@ -76,39 +85,69 @@ class Classgroup(models.Model):
         return names + tags + resources
 
     def link(self):
+        """
+        Returns the frontend link to this classgroup.
+        """
         return "/classes/" + self.name + "/"
 
     def api_link(self):
+        """
+        Returns the API link to this classgroup.
+        """
         return "/api/classes/" + self.name + "/"
 
     def queryset(self, tag=None):
+        """
+        Return a queryset of messages for this classgroup.
+        """
         queryset = self.messages.all()
         if tag is not None and self.tags.filter(id=tag.id) > 0:
             queryset = queryset.filter(tags=tag)
         return queryset
 
     def message_count(self, tag=None):
+        """
+        Return the number of messages, optionally filtered.
+        """
         return self.queryset(tag).count()
 
     def user_count(self):
+        """
+        Return the count of users in this classgroup.
+        """
         return self.users.all().count()
 
     def user_count_today(self, tag=None):
+        """
+        Return the count of users who have been active in the discussions today.
+        """
         return self.queryset(tag).filter(created__gt=now() - timedelta(days=1)).values('user').distinct().count()
 
     def message_count_today(self, tag=None):
+        """
+        Number of messages sent today.
+        """
         return self.queryset(tag).filter(created__gt=now() - timedelta(days=1)).count()
 
     def message_count_by_day(self, tag=None):
+        """
+        Message count broken down by day.
+        """
         message_data = list(self.queryset(tag).extra({'created_date': "date(created)"}).values('created_date').annotate(created_count=Count('id')))
         day_counts = self.count_by_day(message_data)
         return day_counts
 
     def first_message_time(self, tag=None):
+        """
+        The time when the first message in the course was sent.
+        """
         first_message = self.queryset(tag).values('created').order_by("-created")[0]
         return min(self.modified.date(), first_message['created'].date()) - timedelta(days=2)
 
     def calculate_days(self, data, start, end):
+        """
+        Calculate the number of messages by day.
+        """
         for dt in rrule(DAILY, dtstart=start, until=end):
             date_found = False
             dt_str = str(dt).split(" ")[0]
@@ -122,12 +161,18 @@ class Classgroup(models.Model):
         return data
 
     def count_by_day(self, objects):
+        """
+        Count messages sent by day.
+        """
         if len(objects) == 0:
             return []
         end = now().date()
         return self.calculate_days(objects, self.first_message_time(), end)
 
     def network_info(self, tag=None):
+        """
+        Generate a network graph of students for display.
+        """
         users = self.users.all()
         user_relations = {}
         nodes = []
@@ -149,6 +194,9 @@ class Classgroup(models.Model):
         )
 
 class Skill(models.Model):
+    """
+    Skills are used to track student progress.  Resources are associated with skills.
+    """
     classgroup = models.ForeignKey(Classgroup, related_name="skills", blank=True, null=True, on_delete=models.SET_NULL)
     name = models.CharField(max_length=MAX_NAME_LENGTH, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
     display_name = models.CharField(max_length=MAX_NAME_LENGTH, blank=True, null=True)
@@ -161,11 +209,17 @@ class Skill(models.Model):
         return calendar.timegm(self.created.utctimetuple())
 
     def resource_text(self):
+        """
+        String of all resources associated with this skill.
+        """
         resource_names = SkillResource.objects.filter(skill=self).order_by("priority").values("resource__display_name")
         resource_names = [r['resource__display_name'] for r in resource_names]
         return ",,".join(resource_names)
 
     def resource_ids(self):
+        """
+        ids of all resources associated with this skill.
+        """
         resource_ids = SkillResource.objects.filter(skill=self).order_by("priority").values("resource__id")
         resource_ids = [str(r['resource__id']) for r in resource_ids]
         return ",,".join(resource_ids)
@@ -174,6 +228,9 @@ class Skill(models.Model):
         unique_together = (("classgroup", "name"), )
 
 class Section(models.Model):
+    """
+    A section allows the course to be organized better, by grouping resources.
+    """
     name = models.CharField(max_length=MAX_NAME_LENGTH, validators=[RegexValidator(regex=alphanumeric)], blank=True, null=True)
     display_name = models.CharField(max_length=MAX_NAME_LENGTH, blank=True, null=True)
     classgroup = models.ForeignKey(Classgroup, related_name="sections")
@@ -202,6 +259,9 @@ class Section(models.Model):
         order_with_respect_to = 'classgroup'
 
 class Resource(models.Model):
+    """
+    Resources are the building blocks for content and problems.  Each resource can contain other resources.
+    """
     user = models.ForeignKey(User, related_name="resources")
     classgroup = models.ForeignKey(Classgroup, related_name="resources")
     name = models.CharField(max_length=MAX_NAME_LENGTH, validators=[RegexValidator(regex=alphanumeric)], blank=True, null=True)
@@ -245,6 +305,9 @@ class Resource(models.Model):
         )
 
 class SkillResource(models.Model):
+    """
+    Associate a skill with a resource.  Extra field for ordering.
+    """
     skill = models.ForeignKey(Skill)
     resource = models.ForeignKey(Resource)
 
@@ -256,6 +319,9 @@ class SkillResource(models.Model):
         unique_together = ('skill', 'resource')
 
 class UserResourceState(models.Model):
+    """
+    Tracks a user's state in a resource (ie, a student response to a question).
+    """
     resource = models.ForeignKey(Resource, related_name="user_resource_states")
     user = models.ForeignKey(User, related_name="user_resource_states")
     data = models.TextField()
@@ -267,6 +333,9 @@ class UserResourceState(models.Model):
         unique_together = (("resource", "user"),)
 
 class Message(models.Model):
+    """
+    Messages are sent by students and teachers.
+    """
     text = models.TextField()
     source = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
     reply_to = models.ForeignKey('self', related_name="replies", blank=True, null=True, on_delete=models.SET_NULL)
@@ -282,15 +351,24 @@ class Message(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def reply_count(self):
+        """
+        Number of replies to this message.
+        """
         return self.replies.count()
 
     def profile_image(self):
+        """
+        The profile image of the user who sent the message.
+        """
         try:
             return self.user.profile.image
         except UserProfile.DoesNotExist:
             return None
 
     def depth(self):
+        """
+        The depth of the message (a reply to a message has depth 1, a reply to a reply has depth 2)
+        """
         depth = 0
         reply_to = self.reply_to
         while depth < 3 and reply_to is not None:
@@ -305,9 +383,15 @@ class Message(models.Model):
         return avatar_url(self.user)
 
     def total_rating(self):
+        """
+        Total rating of the message.
+        """
         return sum([r['rating'] for r in self.ratings.values('rating')])
 
 class Rating(models.Model):
+    """
+    Users can rate messages.
+    """
     rating = models.IntegerField(default=0)
     message = models.ForeignKey(Message, related_name="ratings")
     user = models.ForeignKey(User, related_name="ratings", blank=True, null=True, on_delete=models.SET_NULL)
@@ -319,6 +403,9 @@ class Rating(models.Model):
         unique_together = (("message", "user"),)
 
 class ClassSettings(models.Model):
+    """
+    Defines the course settings for a classgroup.
+    """
     classgroup = models.OneToOneField(Classgroup, related_name="class_settings", blank=True, null=True)
     is_public = models.BooleanField(default=False)
     moderate_posts = models.BooleanField(default=True)
@@ -334,6 +421,9 @@ class ClassSettings(models.Model):
         return "/classes/" + self.classgroup.name + "/class_settings/"
 
 class StudentClassSettings(models.Model):
+    """
+    Students can also have their own classgroup settings.
+    """
     classgroup = models.ForeignKey(Classgroup, related_name="student_class_settings")
     user = models.ForeignKey(User, related_name="student_class_settings")
     email_frequency = models.CharField(max_length=3, choices=EMAIL_FREQUENCY_CHOICES, default="A")
@@ -348,6 +438,9 @@ class StudentClassSettings(models.Model):
         return "/classes/" + self.classgroup.name + "/student_settings/"
 
 class Tag(models.Model):
+    """
+    Tags can categorize discussions.  Currently not used.
+    """
     name = models.CharField(max_length=MAX_NAME_LENGTH, unique=True, db_index=True, validators=[RegexValidator(regex=alphanumeric)])
     display_name = models.CharField(max_length=MAX_NAME_LENGTH)
     messages = models.ManyToManyField(Message, related_name="tags", blank=True, null=True)
@@ -357,16 +450,25 @@ class Tag(models.Model):
     modified = models.DateTimeField(auto_now=True)
 
 class UserProfile(models.Model):
+    """
+    Stores some additional user information.
+    """
     user = models.OneToOneField(User, related_name="profile", unique=True, blank=True, null=True)
     image = models.CharField(max_length=MAX_CHARFIELD_LENGTH, blank=True, null=True, unique=True)
     title = models.CharField(choices=TITLE_CHOICES, max_length=3, blank=True, null=True)
     modified = models.DateTimeField(auto_now=True)
 
 class EmailSubscription(models.Model):
+    """
+    Allow for email subscriptions to be stored.  Not used currently.
+    """
     email_address = models.EmailField(max_length=MAX_CHARFIELD_LENGTH, unique=True, db_index=True)
     modified = models.DateTimeField(auto_now=True)
 
 class Notification(models.Model):
+    """
+    Abstract class to allow for notifications to be stored.
+    """
     cleared = models.BooleanField(default=False)
     notification_type = models.CharField(max_length=MAX_CHARFIELD_LENGTH)
     modified = models.DateTimeField(auto_now=True)
@@ -376,6 +478,9 @@ class Notification(models.Model):
         abstract = True
 
 class MessageNotification(Notification):
+    """
+    Notifications for messages are sent when an action a user needs to know about occurs, for example, a message is replied to.
+    """
     receiving_message = models.ForeignKey(Message, related_name="received_message_notifications")
     receiving_user = models.ForeignKey(User, related_name="message_notifications")
     origin_message = models.ForeignKey(Message)
@@ -384,6 +489,9 @@ class MessageNotification(Notification):
         unique_together = (("receiving_message", "origin_message"),)
 
 class RatingNotification(Notification):
+    """
+    Rating notifications are sent when a student rates the message of another.
+    """
     receiving_message = models.ForeignKey(Message, related_name="received_rating_notifications")
     receiving_user = models.ForeignKey(User, related_name="rating_notifications")
     origin_rating = models.ForeignKey(Rating)
@@ -392,6 +500,9 @@ class RatingNotification(Notification):
         unique_together = (("receiving_message", "origin_rating"),)
 
 def make_random_key():
+    """
+    Make a random access key for a classgroup.
+    """
     existing_keys = [t['access_key'] for t in ClassSettings.objects.all().values('access_key')]
     access_key = User.objects.make_random_password(settings.ACCESS_CODE_LENGTH)
     while access_key in existing_keys:

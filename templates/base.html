@@ -30,7 +30,7 @@
     <script src="{% static 'js/colorbrewer.js' %}"></script>
     <script src="{% static 'js/respond.min.js' %}"></script>
     <script src="{% static 'js/bootbox.min.js' %}"></script>
-    <script src="{% static 'js/models.js' %}"></script>
+    <script src="{% static 'js/models/models.js' %}"></script>
     <script src="{% static 'js/base.js' %}"></script>
     <script src='{% static 'js/jquery.visible.min.js' %}'></script>
     <script src='{% static 'js/jquery.knob.js' %}'></script>
@@ -97,6 +97,9 @@
                     <ul class='nav navbar-nav navbar-right'>
                     <li {% if request.path == "/" %}class="current active"{% endif %}><a href="/">Home</a></li>
                     <li {% if request.path == "/about/" %}class="current active"{% endif %}><a href="/about/">About</a></li>
+                    {% if request.path == "/" %}
+                        <li><a href="http://github.com/equirio/movide">Movide on Github</a></li>
+                    {% endif %}
                     {% if user.is_authenticated %}
                         <li {% if request.path == "/dashboard/" %}class="current active"{% endif %}><a href="/dashboard/">Dashboard</a></li>
                         {% block additional_nav %}

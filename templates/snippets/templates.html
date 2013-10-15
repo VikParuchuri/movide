@@ -1,482 +1,518 @@
-<script id="classTemplate" type="text/template">
-    <td>
-        <a href="<%= link %>"> <%= display_name %></a>
-    </td>
-    <td>
-        <%= role %>
-    </td>
-    <td>
-        <%= modified %>
-    </td>
-</script>
+<div class="templates">
+    <script id="classTemplate" type="text/template">
+        <td>
+            <a href="<%= link %>"> <%= display_name %></a>
+        </td>
+        <td>
+            <%= role %>
+        </td>
+        <td>
+            <%= modified %>
+        </td>
+    </script>
 
-<script id="addClassPromptTemplate" type="text/template">
-    <p>Looks like you don't have any classes yet.  Why not add one?</p>
-</script>
+    <script id="addClassPromptTemplate" type="text/template">
+        <p>Looks like you don't have any classes yet.  Why not add one?</p>
+    </script>
 
-<script id="noNetworkChartTemplate" type="text/template">
-    <div class="alert alert-info">We can't display the student network chart until you have some interactions between users, such as message replies.</div>
-</script>
+    <script id="noNetworkChartTemplate" type="text/template">
+        <div class="alert alert-info">We can't display the student network chart until you have some interactions between users, such as message replies.</div>
+    </script>
 
-<script id="noDailyActivityChartTemplate" type="text/template">
-    <div class="alert alert-info">We can't display the daily activity chart until you start some discussions.</div>
-</script>
+    <script id="noDailyActivityChartTemplate" type="text/template">
+        <div class="alert alert-info">We can't display the daily activity chart until you start some discussions.</div>
+    </script>
 
-<script id="homeDetailTemplate" type="text/template">
-    <p class="lead"><%= display_name %> -- <%= class_settings.description %></p>
-    <div class="welcome-message"><%= class_settings.welcome_message %></div>
-    <h4>Recent Class Announcements</h4>
-    <div id="messages-container">
-    </div>
-</script>
+    <script id="homeDetailTemplate" type="text/template">
+        <p class="lead"><%= display_name %> -- <%= class_settings.description %></p>
+        <div class="welcome-message"><%= class_settings.welcome_message %></div>
+        <h4>Recent Class Announcements</h4>
+        <div id="messages-container">
+        </div>
+    </script>
 
-<script id="skillDetailTemplate" type="text/template">
-    <div class="row">
-        <% if(is_owner==true) { %>
+    <script id="skillDetailTemplate" type="text/template">
+        <div class="row">
+            <% if(is_owner==true) { %>
+                <div class="col-md-12">
+                    <button class="btn btn-small" id="create-a-skill-button"><i class="glyphicon glyphicon-pencil"></i> Create a skill</button>
+                </div>
+            <% } %>
+        </div>
+        <div id="skills-container">
+        </div>
+    </script>
+
+    <script id="skillResourceAddTemplate" type="text/template">
+        <div class="added-resource sortable" data-name="<%= name %>">
+            <div>
+                <h4><%= name %></h4>
+            </div>
+            <div class="pull-right">
+                <a type="button" class="btn btn-xs resource-add-delete" data-toggle="tooltip" title="Remove this resource from the skill"><span class="glyphicon glyphicon-remove"></span></a>
+            </div>
+        </div>
+    </script>
+
+    <script id="skillResourceTemplate" type="text/template">
+        <div class="skill-resource" data-name="<%= name %>" data-id="<%= id %>">
+            <div>
+                <a href="#" type="button" class="show-resource-modal-link"><%= name %></a>
+            </div>
+        </div>
+    </script>
+
+    <script id="editSectionTemplate" type="text/template">
+        <div id="edit-a-section" data-section-id="<%= section_id %>">
+            <form role="form">
+                <div class="form-group">
+                    <label for="section-name-input">Section Name</label>
+                    <input type="text" class="form-control" id="section-name-input" placeholder="" value="<%= display_name %>">
+                    <span class="help-block">The name of the section.</span>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-small"><%= save_text %></button>
+                    <span class="help-block help-block-section"></span>
+                </div>
+            </form>
+        </div>
+    </script>
+
+    <script id="editSkillTemplate" type="text/template">
+        <div id="edit-a-skill" data-skill-id="<%= skill_id %>">
+            <form role="form">
+                <div class="form-group">
+                    <label for="skill-name-input">Skill Name</label>
+                    <input type="text" class="form-control" id="skill-name-input" placeholder="" value="<%= display_name %>">
+                    <span class="help-block">The name of the skill.</span>
+                </div>
+                <div class="form-group">
+                    <label for="grading-policy-input">Grading Policy</label>
+                    <select class="form-control" id="grading-policy-input">
+                        <option value="COM"
+                        <% if(grading_policy == "COM"){ %>
+                            selected="true"<%
+                        } %>
+                        >Completion</option>
+                        <option value="COR"
+                        <% if(grading_policy == "COR"){ %>
+                            selected="true"
+                        <% } %>
+                        >Correctness</option>
+                    </select>
+                    <span class="help-block">The type of grading policy.</span>
+                </div>
+                <div class="form-group ui-front">
+                    <label  for="resource-name-input">Resource Name</label>
+                    <input type="text" class="form-control autocomplete-enabled-input" id="resource-name-input" placeholder="Enter resource name here..."><button type="save" class="btn btn-small add-resource-button">Add Resource</button>
+                    <span class="help-block">Enter the name of a resource you wish to associate with this (eg Unit One), and hit add resource.</span>
+                    <%= resources %>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-small"><%= save_text %></button>
+                    <span class="help-block help-block-skill"></span>
+                </div>
+            </form>
+        </div>
+    </script>
+
+    <script id="notificationDetailTemplate" type="text/template">
+        <% if(to_be_graded > 0) { %>
             <div class="col-md-12">
-                <button class="btn btn-small" id="create-a-skill-button"><i class="glyphicon glyphicon-pencil"></i> Create a skill</button>
+                <h4>Grading To Do</h4>
+                <div id="grading-queue-container">
+                </div>
             </div>
         <% } %>
-    </div>
-    <div id="skills-container">
-    </div>
-</script>
-
-<script id="skillResourceAddTemplate" type="text/template">
-    <div class="added-resource sortable" data-name="<%= name %>">
-        <div>
-            <h4><%= name %></h4>
-        </div>
-        <div class="pull-right">
-            <a type="button" class="btn btn-xs resource-add-delete" data-toggle="tooltip" title="Remove this resource from the skill"><span class="glyphicon glyphicon-remove"></span></a>
-        </div>
-    </div>
-</script>
-
-<script id="skillResourceTemplate" type="text/template">
-    <div class="skill-resource" data-name="<%= name %>" data-id="<%= id %>">
-        <div>
-            <a href="#" type="button" class="show-resource-modal-link"><%= name %></a>
-        </div>
-    </div>
-</script>
-
-<script id="editSectionTemplate" type="text/template">
-    <div id="edit-a-section" data-section-id="<%= section_id %>">
-        <form role="form">
-            <div class="form-group">
-                <label for="section-name-input">Section Name</label>
-                <input type="text" class="form-control" id="section-name-input" placeholder="" value="<%= display_name %>">
-                <span class="help-block">The name of the section.</span>
-            </div>
-            <div class="form-group">
-                <button type="submit" class="btn btn-small"><%= save_text %></button>
-                <span class="help-block help-block-section"></span>
-            </div>
-        </form>
-    </div>
-</script>
-
-<script id="editSkillTemplate" type="text/template">
-    <div id="edit-a-skill" data-skill-id="<%= skill_id %>">
-        <form role="form">
-            <div class="form-group">
-                <label for="skill-name-input">Skill Name</label>
-                <input type="text" class="form-control" id="skill-name-input" placeholder="" value="<%= display_name %>">
-                <span class="help-block">The name of the skill.</span>
-            </div>
-            <div class="form-group">
-                <label for="grading-policy-input">Grading Policy</label>
-                <select class="form-control" id="grading-policy-input">
-                    <option value="COM"
-                    <% if(grading_policy == "COM"){ %>
-                        selected="true"<%
-                    } %>
-                    >Completion</option>
-                    <option value="COR"
-                    <% if(grading_policy == "COR"){ %>
-                        selected="true"
-                    <% } %>
-                    >Correctness</option>
-                </select>
-                <span class="help-block">The type of grading policy.</span>
-            </div>
-            <div class="form-group ui-front">
-                <label  for="resource-name-input">Resource Name</label>
-                <input type="text" class="form-control autocomplete-enabled-input" id="resource-name-input" placeholder="Enter resource name here..."><button type="save" class="btn btn-small add-resource-button">Add Resource</button>
-                <span class="help-block">Enter the name of a resource you wish to associate with this (eg Unit One), and hit add resource.</span>
-                <%= resources %>
-            </div>
-            <div class="form-group">
-                <button type="submit" class="btn btn-small"><%= save_text %></button>
-                <span class="help-block help-block-skill"></span>
-            </div>
-        </form>
-    </div>
-</script>
-
-<script id="notificationDetailTemplate" type="text/template">
-    <div id="messages-container">
-    </div>
-</script>
-
-<script id="resourceModal" type="text/template">
-    <div aria-hidden='true' class='modal fade view-a-resource-modal' role='dialog' tabindex='-1'>
-        <div class='modal-dialog'>
-            <div class='modal-content'>
-                <div class='modal-header'>
-                    <button aria-hidden='true' class='close' data-dismiss='modal' type='button'>×</button>
-                    <h4 class='modal-title'><%= display_name %></h4>
-                </div>
-                <div class="modal-body">
-                    <div class="resource-view">
-                        <%= html %>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</script>
-
-<script id="resourceAuthorModal" type="text/template">
-    <div aria-hidden='true' class='modal fade view-a-resource-modal' role='dialog' tabindex='-1'>
-        <div class='modal-dialog'>
-            <div class='modal-content'>
-                <div class='modal-header'>
-                    <button aria-hidden='true' class='close' data-dismiss='modal' type='button'>×</button>
-                    <h4 class='modal-title'><%= display_name %></h4>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        You can create a resource and add components here.  After you add components, you can reorder them by dragging them up or down.  Please remember to hit save on the basic settings and each component before you close the editor, or your changes will not be saved.
-                    </div>
-                    <div class="resource-view">
-                        <%= html %>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</script>
-
-
-<script id="resourceDetailTemplate" type="text/template">
-    <div class="row">
         <div class="col-md-12">
-            <% if(is_owner==true) { %>
-                <button class="btn btn-small" id="create-a-section-button"><i class="glyphicon glyphicon-pencil"></i> Create a section</button>
-            <% } %>
-            <button class="btn btn-small" id="create-a-resource-button"><i class="glyphicon glyphicon-pencil"></i> Create a resource</button>
-        </div>
-    </div>
-    <div id="resources-container">
-    </div>
-</script>
-
-<script id="messageDetailTemplate" type="text/template">
-    <% if(is_owner == true || enable_posting == true) { %>
-        <div class="row">
-            <div class="col-md-12">
-                <div id="start-a-discussion" data-start-discussion="true" class="message-reply">
-                    <form role="form">
-                        <div class="form-group reply-to-message-form ui-front">
-                            <label class="sr-only" for="start-a-discussion-input">Tag</label>
-                            <textarea type="text" class="form-control input-lg autocomplete-enabled-input" id="start-a-discussion-input" placeholder="Enter message here..."></textarea>
-                            <span class="help-block"></span>
-                        </div>
-                        <% if(is_owner==true) { %>
-                            <div class="checkbox">
-                                <label>
-                                    <input type="checkbox" id="make-discussion-announcement-input"> Make this an announcement
-                                </label>
-                            </div>
-                        <% } %>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-small start-a-discussion-button">Start a new discussion</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    <% } %>
-    <div class="row">
-        <div class="col-md-12">
+            <h4>Notifications</h4>
             <div id="messages-container">
             </div>
         </div>
-    </div>
-</script>
+    </script>
 
-<script id="studentSettingsTemplate" type="text/template">
-    <h4>Basic Settings</h4>
-    <%= form_html %>
-</script>
-
-<script id="avatarChangeTemplate" type="text/template">
-    <h4>Profile Picture</h4>
-    <%= avatar_html %>
-</script>
-
-<script id="classSettingsTemplate" type="text/template">
-    <h4>Class Settings</h4>
-    <p>New students can enroll in this class by using the access key below and the link <%= class_link %> if signups are allowed.</p>
-    <%= form_html %>
-</script>
-
-<script id="statsDetailTemplate" type="text/template">
-    <div id="stats-container">
-        <h4>Message Activity</h4>
-        <div id="message-chart" style="height:250px;"></div>
-        <h4>Student Network</h4>
-        <p>Each point represents a student in the class.  A larger point means that the student has participated in more discussions. Each line between students shows how they interact with each other.  A larger line means that the two students have had more discussions with each other.</p>
-        <p>Click and drag to move around, and use the mousewheel to zoom in and out.  Hovering over a point shows you only the classmates with whom that student has has discussions.</p>
-        <div id="student-network-chart-container">
-            <div id="student-network-chart"></div>
-        </div>
-    </div>
-</script>
-
-<script id="usersDetailTemplate" type="text/template">
-    <div id="users-container">
-    </div>
-</script>
-
-<script id="settingsDetailTemplate" type="text/template">
-    <div id="settings-container">
-    </div>
-</script>
-
-<script id="userJoinTemplate" type="text/template">
-    <% if(is_owner){ %>
-        <p>In order to have students access this course, please tell them to visit <strong><%= link %></strong> and use the access code <strong><%= access_key %></strong>.  If they do not already have an account, they will be asked to sign up, and then enter their code.</p>
-        <p>You can enable and disable access code signup in the settings panel.</p>
-        <p><strong>Questions? Please contact info@movide.com .</strong></p>
-    <% } %>
-</script>
-
-<script id="showMoreMessagesTemplate" type="text/template">
-    <div class="alert alert-warning">
-        <p><%= message_count %> new messages.  <a href="#" id="show-more-messages-button">Click here</a> to show.</p>
-    </div>
-</script>
-
-<script id="userTableTemplate" type="text/template">
-    <table class="table table-hover table-condensed">
-        <thead>
-            <tr>
-                <th></th>
-                <th>Name</th>
-                <th>Daily Messages</th>
-                <th>All Messages</th>
-                <th>Grade</th>
-                <th>Role</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            <%= content %>
-        </tbody>
-    </table>
-    <% if(is_owner == true && false){ %>
-        <form class="form-inline" role="form">
-            <div class="form-group user-add-form">
-                <label class="sr-only" for="inputClass1">Username</label>
-                <input type="text" class="form-control input-lg" id="inputClass1" placeholder="Student username">
-                <span class="help-block" id="user-add-message"></span>
-            </div>
-            <div class="form-group">
-                <button type="submit" class="btn btn-lg" id="user-add">Add a student</button>
-            </div>
-        </form>
-    <% } %>
-    <div class="alert alert-info">
-        Grades are updated every 15 minutes.  If you see something inaccurate, please check back later.
-    </div>
-</script>
-
-<script id="noUserTemplate" type="text/template">
-    <div class="alert alert-info">You don't have any students for this tag yet.  Why not add some?</div>
-</script>
-
-<script id="noSkillsTemplate" type="text/template">
-    <div class="alert alert-info">There aren't any skills in this class yet. Why not add one now?</div>
-</script>
-
-<script id="noResourcesTemplate" type="text/template">
-    <div class="alert alert-info">There aren't any resources in this class yet. Why not add one now?</div>
-</script>
-
-<script id="noSectionsTemplate" type="text/template">
-    <div class="alert alert-info">There aren't any sections in this class yet. Why not add one now?</div>
-</script>
-
-<script id="noSectionResourcesTemplate" type="text/template">
-    <div class="alert alert-info resource">There aren't any resources in this section yet.</div>
-</script>
-
-<script id="noMessagesTemplate" type="text/template">
-    <div class="alert alert-info">There aren't any discussions in this class yet. Why not start a discussion now?</div>
-</script>
-
-<script id="noNotificationsTemplate" type="text/template">
-    <div class="alert alert-info">You don't have any notifications yet.  You will start to see notifications as people respond to or like your discussions, or mention you.</div>
-</script>
-
-<script id="noAnnouncementsTemplate" type="text/template">
-    <div class="alert alert-info">There aren't any course announcements yet.</div>
-</script>
-
-<script id="userTemplate" type="text/template">
-    <tr>
-        <td>
-            <% if (typeof(image) != "undefined") { %>
-                <img src="<%= image %>">
-            <% } %>
-        </td>
-        <td class="username" data-username="<%= username %>"><%= username %></td>
-        <td><%= message_count_today %></td>
-        <td><%= message_count %></td>
-        <td>
-            <div class="progress progress-striped">
-                <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="<%= grade %>" aria-valuemin="0" aria-valuemax="100" style="width: <%= grade %>%">
-                    <span class="sr-only"><%= grade %>% Complete</span>
-                </div>
-            </div>
-        </td>
-        <td><%= window.capitalize(role) %></td>
-        <td>
-            <% if (is_owner == true) { %>
-            <div class="btn-group">
-                <a type="button" class="btn btn-xs user-role-toggle" data-toggle="tooltip" title="Change user role" data-role="<%= role %>"><span class="glyphicon glyphicon-user"></span></a>
-                <a type="button" class="btn btn-xs user-tag-delete" data-toggle="tooltip" title="Remove user from course"><span class="glyphicon glyphicon-remove"></span></a>
-            </div>
-            <% } %>
-        </td>
-    </tr>
-</script>
-
-<script id="messageReplyTemplate" type="text/template">
-    <form role="form" class="form-inline">
-        <div class="form-group reply-to-message-form ui-front">
-            <label class="sr-only" for="reply-to-message-input-<%= pk %>">Tag</label>
-            <textarea type="text" class="form-control input-lg autocomplete-enabled-input" id="reply-to-message-input-<%= pk %>" placeholder="Enter reply here..." rows="1" cols="60"></textarea>
-            <span class="help-block" id="reply-to-message-message-<%= pk %>"></span>
-        </div>
-        <button type="submit" class="btn btn-small reply-to-message-button" id="reply-to-message-button-<%= pk %>" data-primary-key="<%= pk %>">Send Reply</button>
-    </form>
-</script>
-
-<script id="notificationTemplate" type="text/template">
-    <div class="notification-header">
-        <% if(typeof notification_text !== undefined && typeof notification_created_formatted !== undefined && notification_text.length > 1){ %>
-            <p><%= notification_text %> <span class="time"><%= notification_created_formatted %></span> </p>
-        <% } %>
-    </div>
-    <div class="notification-message">
-        {% include "snippets/message_template.html" %}
-    </div>
-</script>
-
-<script id="messageTemplate" type="text/template">
-    {% include "snippets/message_template.html" %}
-</script>
-
-<script id="noRepliesTemplate" type="text/template">
-    <div class="comment">
-        <p>Nobody has responded to this message yet.</p>
-    </div>
-</script>
-
-<script id="messagesTemplate" type="text/template">
-    <div id="show-more-messages-container"></div>
-    <div class="comments" data-tag-name="<%= classgroup %>" id="comments">
-        <%= messages %>
-    </div>
-</script>
-
-<script id="skillsTemplate" type="text/template">
-    <div class="skills" data-tag-name="<%= classgroup %>" id="skills">
-        <%= skills %>
-    </div>
-</script>
-
-
-<script id="skillTemplate" type="text/template">
-    <div class="skill" data-skill-id="<%= pk %>" data-display-name="<%= display_name %>" data-name="<%= name %>" data-resources='<%= resource_text %>' data-resource-ids='<%= resource_ids %>' data-grading-policy="<%= grading_policy %>">
-        <div class="header">
-        </div>
-        <div class="skill-content">
-            <div>
-                <a href="#" class="show-skill-link" data-resource-id="<%= pk %>"><span class="glyphicon glyphicon-plus-sign"></span> <%= display_name %></a> <span class="time">created <%= created_formatted %></span><h4>.</h4>
-                <% if (is_owner == true) { %>
-                <div class="pull-right">
-                    <a type="button" class="btn edit-skill-button" data-toggle="tooltip" title="Edit this skill."><span class="glyphicon glyphicon-edit"></span></a>
-                    <a type="button" class="btn remove-skill-button" data-toggle="tooltip" title="Remove this skill."><span class="glyphicon glyphicon-remove"></span></a>
-                </div>
-                <% } %>
-            </div>
-        </div>
-        <div class="progress progress-striped">
-            <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="<%= progress_percentage %>" aria-valuemin="0" aria-valuemax="100" style="width: <%= progress_percentage %>%">
-                <span class="sr-only"><%= progress_percentage %>% Complete</span>
-            </div>
-        </div>
-        <div class="skill-resource-container">
-
-        </div>
-    </div>
-</script>
-
-<script id="resourcesTemplate" type="text/template">
-    <div class="resources" data-tag-name="<%= classgroup %>" id="resources">
-        <h3>Sections</h3>
-        <%= sections %>
-        <h3>Unorganized Resources</h3>
-        <div class="unorganized-resources sortable">
-            <%= resources %>
-        </div>
-    </div>
-</script>
-
-<script id="sectionTemplate" type="text/template">
-    <div class="section" data-section-id="<%= pk %>" data-display-name="<%= display_name %>" data-name="<%= name %>">
-        <div class="header">
-        </div>
-        <div class="section-content">
-            <div>
-                <a href="#" class="show-section-resources"><h4><span class="glyphicon glyphicon-plus-sign"></span> <%= display_name %></h4></a>
-                <% if (is_owner == true) { %>
-                <div class="pull-right">
-                    <a type="button" class="btn edit-section-button" data-toggle="tooltip" title="Edit this section."><span class="glyphicon glyphicon-edit"></span></a>
-                    <a type="button" class="btn remove-section-button" data-toggle="tooltip" title="Remove this section."><span class="glyphicon glyphicon-remove"></span></a>
-                </div>
-                <% } %>
-            </div>
-        </div>
-        <div class="section-resources sortable">
-        </div>
-    </div>
-</script>
-
-
-<script id="resourceTemplate" type="text/template">
-    <div class="resource" data-resource-id="<%= pk %>" data-display-name="<%= display_name %>">
-        <div class="header">
-            <% if (typeof(image_url) != "undefined") { %>
-            <img src="<%= image_url %>" alt="<%= response_type %>" class="img-responsive img-rounded">
-            <% } %>
-        </div>
-        <div class="resource-content">
-                <div>
-                    <a href="#" class="show-resource-modal-link" data-resource-id="<%= pk %>"><%= display_name %></a> shared by <h4><%= user %></h4><span class="time"> <%= created_formatted %></span>
-                <% if (is_owner == true) { %>
-                    <div class="pull-right">
-                        <a type="button" class="btn edit-resource-button" data-toggle="tooltip" title="Edit this resource."><span class="glyphicon glyphicon-edit"></span></a>
-                        <a type="button" class="btn drag-handle" data-toggle="tooltip" title="Click, hold, and drag to reorder this resource or move it into a section."><span class="glyphicon glyphicon-sort"></span></a>
-                        <a type="button" class="btn remove-resource-button" data-toggle="tooltip" title="Remove this resource."><span class="glyphicon glyphicon-remove"></span></a>
+    <script id="resourceModal" type="text/template">
+        <div aria-hidden='true' class='modal fade view-a-resource-modal' role='dialog' tabindex='-1'>
+            <div class='modal-dialog'>
+                <div class='modal-content'>
+                    <div class='modal-header'>
+                        <button aria-hidden='true' class='close' data-dismiss='modal' type='button'>×</button>
+                        <h4 class='modal-title'><%= display_name %></h4>
                     </div>
-                <% } %>
+                    <div class="modal-body">
+                        <div class="resource-view">
+                            <%= html %>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</script>
+    </script>
+
+    <script id="resourceAuthorModal" type="text/template">
+        <div aria-hidden='true' class='modal fade view-a-resource-modal' role='dialog' tabindex='-1'>
+            <div class='modal-dialog'>
+                <div class='modal-content'>
+                    <div class='modal-header'>
+                        <button aria-hidden='true' class='close' data-dismiss='modal' type='button'>×</button>
+                        <h4 class='modal-title'><%= display_name %></h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            You can create a resource and add components here.  After you add components, you can reorder them by dragging them up or down.  Please remember to hit save on the basic settings and each component before you close the editor, or your changes will not be saved.
+                        </div>
+                        <div class="resource-view">
+                            <%= html %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+
+
+    <script id="resourceDetailTemplate" type="text/template">
+        <div class="row">
+            <div class="col-md-12">
+                <% if(is_owner==true) { %>
+                    <button class="btn btn-small" id="create-a-section-button"><i class="glyphicon glyphicon-pencil"></i> Create a section</button>
+                <% } %>
+                <button class="btn btn-small" id="create-a-resource-button"><i class="glyphicon glyphicon-pencil"></i> Create a resource</button>
+            </div>
+        </div>
+        <div id="resources-container">
+        </div>
+    </script>
+
+    <script id="messageDetailTemplate" type="text/template">
+        <% if(is_owner == true || enable_posting == true) { %>
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="start-a-discussion" data-start-discussion="true" class="message-reply">
+                        <form role="form">
+                            <div class="form-group reply-to-message-form ui-front">
+                                <label class="sr-only" for="start-a-discussion-input">Tag</label>
+                                <textarea type="text" class="form-control input-lg autocomplete-enabled-input" id="start-a-discussion-input" placeholder="Enter message here..."></textarea>
+                                <span class="help-block"></span>
+                            </div>
+                            <% if(is_owner==true) { %>
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" id="make-discussion-announcement-input"> Make this an announcement
+                                    </label>
+                                </div>
+                            <% } %>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-small start-a-discussion-button">Start a new discussion</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+        <div class="row">
+            <div class="col-md-12">
+                <div id="messages-container">
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <script id="studentSettingsTemplate" type="text/template">
+        <h4>Basic Settings</h4>
+        <%= form_html %>
+    </script>
+
+    <script id="avatarChangeTemplate" type="text/template">
+        <h4>Profile Picture</h4>
+        <%= avatar_html %>
+    </script>
+
+    <script id="classSettingsTemplate" type="text/template">
+        <h4>Class Settings</h4>
+        <p>New students can enroll in this class by using the access key below and the link <%= class_link %> if signups are allowed.</p>
+        <%= form_html %>
+    </script>
+
+    <script id="statsDetailTemplate" type="text/template">
+        <div id="stats-container">
+            <h4>Message Activity</h4>
+            <div id="message-chart" style="height:250px;"></div>
+            <h4>Student Network</h4>
+            <p>Each point represents a student in the class.  A larger point means that the student has participated in more discussions. Each line between students shows how they interact with each other.  A larger line means that the two students have had more discussions with each other.</p>
+            <p>Click and drag to move around, and use the mousewheel to zoom in and out.  Hovering over a point shows you only the classmates with whom that student has has discussions.</p>
+            <div id="student-network-chart-container">
+                <div id="student-network-chart"></div>
+            </div>
+        </div>
+    </script>
+
+    <script id="usersDetailTemplate" type="text/template">
+        <div id="users-container">
+        </div>
+    </script>
+
+    <script id="settingsDetailTemplate" type="text/template">
+        <div id="settings-container">
+        </div>
+    </script>
+
+    <script id="userJoinTemplate" type="text/template">
+        <% if(is_owner){ %>
+            <p>In order to have students access this course, please tell them to visit <strong><%= link %></strong> and use the access code <strong><%= access_key %></strong>.  If they do not already have an account, they will be asked to sign up, and then enter their code.</p>
+            <p>You can enable and disable access code signup in the settings panel.</p>
+            <p><strong>Questions? Please contact info@movide.com .</strong></p>
+        <% } %>
+    </script>
+
+    <script id="showMoreMessagesTemplate" type="text/template">
+        <div class="alert alert-warning">
+            <p><%= message_count %> new messages.  <a href="#" id="show-more-messages-button">Click here</a> to show.</p>
+        </div>
+    </script>
+
+    <script id="userTableTemplate" type="text/template">
+        <table class="table table-hover table-condensed">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Daily Messages</th>
+                    <th>All Messages</th>
+                    <th>Grade</th>
+                    <th>Role</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <%= content %>
+            </tbody>
+        </table>
+        <% if(is_owner == true && false){ %>
+            <form class="form-inline" role="form">
+                <div class="form-group user-add-form">
+                    <label class="sr-only" for="inputClass1">Username</label>
+                    <input type="text" class="form-control input-lg" id="inputClass1" placeholder="Student username">
+                    <span class="help-block" id="user-add-message"></span>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-lg" id="user-add">Add a student</button>
+                </div>
+            </form>
+        <% } %>
+        <div class="alert alert-info">
+            Grades are updated every 15 minutes.  If you see something inaccurate, please check back later.
+        </div>
+    </script>
+
+    <script id="noUserTemplate" type="text/template">
+        <div class="alert alert-info">You don't have any students for this tag yet.  Why not add some?</div>
+    </script>
+
+    <script id="noSkillsTemplate" type="text/template">
+        <div class="alert alert-info">There aren't any skills in this class yet. Why not add one now?</div>
+    </script>
+
+    <script id="noResourcesTemplate" type="text/template">
+        <div class="alert alert-info">There aren't any resources in this class yet. Why not add one now?</div>
+    </script>
+
+    <script id="noSectionsTemplate" type="text/template">
+        <div class="alert alert-info">There aren't any sections in this class yet. Why not add one now?</div>
+    </script>
+
+    <script id="noSectionResourcesTemplate" type="text/template">
+        <div class="alert alert-info resource">There aren't any resources in this section yet.</div>
+    </script>
+
+    <script id="noMessagesTemplate" type="text/template">
+        <div class="alert alert-info">There aren't any discussions in this class yet. Why not start a discussion now?</div>
+    </script>
+
+    <script id="noNotificationsTemplate" type="text/template">
+        <div class="alert alert-info">You don't have any notifications yet.  You will start to see notifications as people respond to or like your discussions, or mention you.</div>
+    </script>
+
+    <script id="noAnnouncementsTemplate" type="text/template">
+        <div class="alert alert-info">There aren't any course announcements yet.</div>
+    </script>
+
+    <script id="userTemplate" type="text/template">
+        <tr>
+            <td>
+                <% if (typeof(image) != "undefined") { %>
+                    <img src="<%= image %>">
+                <% } %>
+            </td>
+            <td class="username" data-username="<%= username %>"><%= username %></td>
+            <td><%= message_count_today %></td>
+            <td><%= message_count %></td>
+            <td>
+                <div class="progress progress-striped">
+                    <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="<%= grade %>" aria-valuemin="0" aria-valuemax="100" style="width: <%= grade %>%">
+                        <span class="sr-only"><%= grade %>% Complete</span>
+                    </div>
+                </div>
+            </td>
+            <td><%= window.capitalize(role) %></td>
+            <td>
+                <% if (is_owner == true) { %>
+                <div class="btn-group">
+                    <a type="button" class="btn btn-xs user-role-toggle" data-toggle="tooltip" title="Change user role" data-role="<%= role %>"><span class="glyphicon glyphicon-user"></span></a>
+                    <a type="button" class="btn btn-xs user-tag-delete" data-toggle="tooltip" title="Remove user from course"><span class="glyphicon glyphicon-remove"></span></a>
+                </div>
+                <% } %>
+            </td>
+        </tr>
+    </script>
+
+    <script id="messageReplyTemplate" type="text/template">
+        <form role="form" class="form-inline">
+            <div class="form-group reply-to-message-form ui-front">
+                <label class="sr-only" for="reply-to-message-input-<%= pk %>">Tag</label>
+                <textarea type="text" class="form-control input-lg autocomplete-enabled-input" id="reply-to-message-input-<%= pk %>" placeholder="Enter reply here..." rows="1" cols="60"></textarea>
+                <span class="help-block" id="reply-to-message-message-<%= pk %>"></span>
+            </div>
+            <button type="submit" class="btn btn-small reply-to-message-button" id="reply-to-message-button-<%= pk %>" data-primary-key="<%= pk %>">Send Reply</button>
+        </form>
+    </script>
+
+    <script id="notificationTemplate" type="text/template">
+        <div class="notification-header">
+            <% if(typeof notification_text !== undefined && typeof notification_created_formatted !== undefined && notification_text.length > 1){ %>
+                <p><%= notification_text %> <span class="time"><%= notification_created_formatted %></span> </p>
+            <% } %>
+        </div>
+        <div class="notification-message">
+            {% include "snippets/message_template.html" %}
+        </div>
+    </script>
+
+    <script id="messageTemplate" type="text/template">
+        {% include "snippets/message_template.html" %}
+    </script>
+
+    <script id="noRepliesTemplate" type="text/template">
+        <div class="comment">
+            <p>Nobody has responded to this message yet.</p>
+        </div>
+    </script>
+
+    <script id="messagesTemplate" type="text/template">
+        <div id="show-more-messages-container"></div>
+        <div class="comments" data-tag-name="<%= classgroup %>" id="comments">
+            <%= messages %>
+        </div>
+    </script>
+
+    <script id="skillsTemplate" type="text/template">
+        <div class="skills" data-tag-name="<%= classgroup %>" id="skills">
+            <%= skills %>
+        </div>
+    </script>
+
+
+    <script id="skillTemplate" type="text/template">
+        <div class="skill" data-skill-id="<%= pk %>" data-display-name="<%= display_name %>" data-name="<%= name %>" data-resources='<%= resource_text %>' data-resource-ids='<%= resource_ids %>' data-grading-policy="<%= grading_policy %>">
+            <div class="header">
+            </div>
+            <div class="skill-content">
+                <div>
+                    <a href="#" class="show-skill-link" data-resource-id="<%= pk %>"><span class="glyphicon glyphicon-plus-sign"></span> <%= display_name %></a> <span class="time">created <%= created_formatted %></span><h4>.</h4>
+                    <% if (is_owner == true) { %>
+                    <div class="pull-right">
+                        <a type="button" class="btn edit-skill-button" data-toggle="tooltip" title="Edit this skill."><span class="glyphicon glyphicon-edit"></span></a>
+                        <a type="button" class="btn remove-skill-button" data-toggle="tooltip" title="Remove this skill."><span class="glyphicon glyphicon-remove"></span></a>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+            <div class="progress progress-striped">
+                <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="<%= progress_percentage %>" aria-valuemin="0" aria-valuemax="100" style="width: <%= progress_percentage %>%">
+                    <span class="sr-only"><%= progress_percentage %>% Complete</span>
+                </div>
+            </div>
+            <div class="skill-resource-container">
+
+            </div>
+        </div>
+    </script>
+
+    <script id="gradingTemplate" type="text/template">
+        <% var grading_container_id = "grading-view-container-" + resource + "-" + user %>
+        <div class="grading">
+            <div class="grading-information">
+                <a type="button" data-toggle="collapse" data-target="#<%= grading_container_id %>">
+                    <span class="glyphicon glyphicon-plus-sign"></span>
+                    Assignment from <%= user %> for <%= resource %>.
+                </a>
+            </div>
+
+            <div class="grading-view-container collapse" id="<%= grading_container_id %>">
+                <%= grading_view %>
+            </div>
+        </div>
+    </script>
+
+    <script id="gradingsTemplate" type="text/template">
+        <div class="gradings" id="gradings">
+            <%= gradings %>
+        </div>
+    </script>
+
+    <script id="resourcesTemplate" type="text/template">
+        <div class="resources" data-tag-name="<%= classgroup %>" id="resources">
+            <h3>Sections</h3>
+            <%= sections %>
+            <h3>Unorganized Resources</h3>
+            <div class="unorganized-resources sortable">
+                <%= resources %>
+            </div>
+        </div>
+    </script>
+
+    <script id="sectionTemplate" type="text/template">
+        <div class="section" data-section-id="<%= pk %>" data-display-name="<%= display_name %>" data-name="<%= name %>">
+            <div class="header">
+            </div>
+            <div class="section-content">
+                <div>
+                    <a href="#" class="show-section-resources"><h4><span class="glyphicon glyphicon-plus-sign"></span> <%= display_name %></h4></a>
+                    <% if (is_owner == true) { %>
+                    <div class="pull-right">
+                        <a type="button" class="btn edit-section-button" data-toggle="tooltip" title="Edit this section."><span class="glyphicon glyphicon-edit"></span></a>
+                        <a type="button" class="btn remove-section-button" data-toggle="tooltip" title="Remove this section."><span class="glyphicon glyphicon-remove"></span></a>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+            <div class="section-resources sortable">
+            </div>
+        </div>
+    </script>
+
+
+    <script id="resourceTemplate" type="text/template">
+        <div class="resource" data-resource-id="<%= pk %>" data-display-name="<%= display_name %>">
+            <div class="header">
+                <% if (typeof(image_url) != "undefined") { %>
+                <img src="<%= image_url %>" alt="<%= response_type %>" class="img-responsive img-rounded">
+                <% } %>
+            </div>
+            <div class="resource-content">
+                    <div>
+                        <a href="#" class="show-resource-modal-link" data-resource-id="<%= pk %>"><%= display_name %></a> shared by <h4><%= user %></h4><span class="time"> <%= created_formatted %></span>
+                    <% if ((is_owner == true) || (user == current_user)) { %>
+                        <div class="pull-right">
+                            <a type="button" class="btn edit-resource-button" data-toggle="tooltip" title="Edit this resource."><span class="glyphicon glyphicon-edit"></span></a>
+                            <% if (is_owner == true){ %>
+                                <a type="button" class="btn drag-handle" data-toggle="tooltip" title="Click, hold, and drag to reorder this resource or move it into a section."><span class="glyphicon glyphicon-sort"></span></a>
+                            <% } %>
+                            <a type="button" class="btn remove-resource-button" data-toggle="tooltip" title="Remove this resource."><span class="glyphicon glyphicon-remove"></span></a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </script>
+</div>

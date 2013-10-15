@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block title %}
-    Think beyond the LMS.  Think SOLS.
+    The student-centric learning platform.
 {% endblock %}
 
 {% block meta_description %}
@@ -20,7 +20,7 @@
         <section class='leaderboard leaderboard-style-one'>
             <div class='container'>
                 <h1>Welcome to Movide</h1>
-                <h2>What if there was a better way to help students learn?</h2>
+                <h2>The student-centric learning platform.</h2>
                 <div class='relative-w'>
                 </div>
             </div>
@@ -37,19 +37,19 @@
                     <div class='col-md-4'>
                         <div class='iconed-feature' href='#'>
                             <div class='feature-icon-w'>
-                                <i class='icon-check'></i>
+                                <i class='icon-comments'></i>
                             </div>
-                            <h4>Skill based learning</h4>
-                            <p>Define concrete learning objectives, add content and problems, and monitor student progress.</p>
+                            <h4>Real Interaction</h4>
+                            <p>Students and teachers can both create and discuss content.  Make learning into a conversation.</p>
                         </div>
                     </div>
                     <div class='col-md-4'>
                         <div class='iconed-feature' href='#'>
                             <div class='feature-icon-w'>
-                                <i class='icon-comments'></i>
+                                <i class='icon-check'></i>
                             </div>
-                            <h4>Better discussions</h4>
-                            <p>Content is important, but so is interaction.  Forget discussion forums.  We enable continuous conversations that enhance learning.</p>
+                            <h4>Skill based learning</h4>
+                            <p>Give students something to work towards by defining concrete learning objectives and tracking progress.</p>
                         </div>
                     </div>
                     <div class='col-md-4'>
@@ -58,7 +58,7 @@
                                 <i class='icon-thumbs-up'></i>
                             </div>
                             <h4>Easy to use</h4>
-                            <p>Many LMS systems are overly complicated and unintuitive.  Movide focuses on the important part -- enabling students to learn.</p>
+                            <p>Movide has been designed from the ground up to be intuitive and easy to use.</p>
                             <div class='slogan-buttons'>
                                 <a class='btn btn-primary btn-cta' data-toggle='modal' href='#signupModal'>
                                     Add your class today!
@@ -76,9 +76,9 @@
                 <div class='col-md-5'>
                     <h2 class='header-lined'>Why Movide?</h2>
                     <ul class='list-checkmarked text-bigger'>
-                        <li>Define concrete skills for your students to learn.</li>
-                        <li>Create problems, share content, and make announcements.</li>
-                        <li>Monitor student progress, and have meaningful discussions.</li>
+                        <li>Define concrete skills for your students to master, and monitor progess.</li>
+                        <li>Create assignments, share content, and make announcements.</li>
+                        <li>Have meaningful discussions that incorporate your content.</li>
                         <li>New students can join your class with a  personalized link and access code.</li>
                         <li>Get started in minutes!</li>
                     </ul>
@@ -86,9 +86,6 @@
                 <div class='col-md-1'></div>
                 <div class='col-md-6'>
                     <div class='relative-w'>
-                        <div class='loupe loupe-left'>
-                            <img alt='' src='{% static 'img/movide_preview_large_cropped.png' %}'>
-                        </div>
                         <div class='frame-browser'>
                             <div class='frame-buttons'>
                                 <div class='frame-button-close'></div>
@@ -96,7 +93,7 @@
                                 <div class='frame-button-min'></div>
                             </div>
                             <div class='frame-browser-image'>
-                                <img alt='' src='{% static 'img/movide_preview_large_cropped.png' %}'>
+                                {% include "snippets/image_carousel.html" %}
                             </div>
                         </div>
                     </div>
@@ -165,6 +162,47 @@
                 </div>
             </div>
         </div>
+        <div class="highlight-content bottom-margin light">
+            <div class="carousel slide" id="carousel-testimonials">
+                <!-- Indicators -->
+                <ol class="carousel-indicators">
+                    <li class="" data-slide-to="0" data-target="#carousel-testimonials"></li>
+                    <li data-slide-to="1" data-target="#carousel-testimonials" class=""></li>
+                </ol>
+                <!-- Wrapper for slides -->
+                <div class="carousel-inner">
+                    <div class="item next left">
+                        <div class="container">
+                            <div class="testimonial">
+                                <div class="testimonial-icon">
+                                    <i class="icon-quote-left"></i>
+                                </div>
+                                <p>"Not only is Movide easy to use, it also enables me to create my class in a more natural way."</p>
+                                <div class="testimonial-by"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item active left">
+                        <div class="container">
+                            <div class="testimonial">
+                                <div class="testimonial-icon">
+                                    <i class="icon-quote-left"></i>
+                                </div>
+                                <p>"Movide is a great way to motivate students."</p>
+                                <div class="testimonial-by"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Controls -->
+                <a class="left carousel-control" data-slide="prev" href="#carousel-testimonials">
+                    <span class="icon-prev"></span>
+                </a>
+                <a class="right carousel-control" data-slide="next" href="#carousel-testimonials">
+                    <span class="icon-next"></span>
+                </a>
+            </div>
+        </div>
         <div class="container">
             <h2 class="header-lined has-sub-header text-center">Still not convinced?</h2>
             <h4 class="sub-lined-header text-center">Here are some more advantages of Movide.</h4>
@@ -209,8 +247,8 @@
                                     </div>
                                 </div>
                                 <div class="col-md-8">
-                                    <h4>Beyond the LMS</h4>
-                                    <p>Movide is the first Social Open Learning System (SOLS).  We enable you to shift the tenor of online learning.</p>
+                                    <h4>Open Source</h4>
+                                    <p>Movide can be found on <a href="http://github.com/equirio/movide">Github</a>, and we are happy to have contributions.</p>
                                 </div>
                             </div>
                         </div>

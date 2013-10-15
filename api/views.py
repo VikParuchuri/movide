@@ -27,9 +27,12 @@ from django.core.cache import cache
 from resources import ResourceRenderer, get_resource_score
 from permissions import ClassGroupPermissions
 from django.db.models import Q, Count
+from notifications import GradingQueue, get_to_be_graded_count
+from tasks import update_grading_queue
 log = logging.getLogger(__name__)
 
 RESULTS_PER_PAGE = 20
+API_OBJECT_LIMIT = 500
 
 class QueryView(APIView):
     query_attributes = []
@@ -155,6 +158,7 @@ class ClassgroupDetailView(QueryView):
         serializer = ClassgroupSerializer(self.cg)
         if self.cg.class_settings is not None:
             serializer.data['class_settings'] = ClassSettingsSerializer(self.cg.class_settings).data
+            serializer.data['to_be_graded'] = get_to_be_graded_count(request.user, self.cg)
         return Response(serializer.data)
 
 def add_likes_to_data(data, user):
@@ -557,7 +561,7 @@ class ResourceView(QueryView):
 
 
         #TODO: enable infinite scroll for resources.  Set limit high for now.
-        paginator = Paginator(queryset, 100)
+        paginator = Paginator(queryset, API_OBJECT_LIMIT)
         page = request.QUERY_PARAMS.get("page")
 
         try:
@@ -705,7 +709,7 @@ class SkillView(QueryView):
         queryset = self.filter_query_params(queryset).all().order_by("-created")
 
         #TODO: Enable infinite scroll for skills
-        paginator = Paginator(queryset, 100)
+        paginator = Paginator(queryset, API_OBJECT_LIMIT)
         page = request.QUERY_PARAMS.get("page")
 
         try:
@@ -866,3 +870,49 @@ class SectionDetail(QueryView):
         instance.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class GradingQueueView(QueryView):
+    permission_classes = (permissions.IsAuthenticated,)
+    post_attributes = ["resource_id", "user_id", "feedback", "annotated_answer"]
+
+    def get(self, request, classgroup, format=None):
+        self.query_dict = {'classgroup': classgroup}
+        self.verify_membership()
+        self.verify_ownership()
+
+        grading_queue = GradingQueue(self.cg, self.cg.owner)
+        queue = grading_queue.retrieve()
+        queue_list = []
+        if isinstance(queue, dict):
+            for k in queue:
+                queue_list.append(queue[k])
+        return Response(queue_list)
+
+    def post(self, request, classgroup, format=None):
+        self.query_dict = {'classgroup': classgroup}
+        self.verify_membership()
+        self.verify_ownership()
+        self.get_post_params()
+
+        data = request.DATA
+        resource = Resource.objects.get(id=data['resource_id'])
+        resource_user = User.objects.get(id=data['user_id'])
+        user_state = UserResourceState.objects.get(
+            user=resource_user,
+            resource=resource
+        )
+
+        data = {
+            'feedback': data['feedback'],
+            'annotated_answer': data['annotated_answer'],
+            'score': data['score'],
+        }
+
+        renderer = ResourceRenderer(resource, user_state, user=resource_user)
+
+        ajax_response = renderer.handle_ajax("save_grading", data)
+        grading_queue = GradingQueue(self.cg, self.cg.owner)
+        grading_queue.remove(resource_user, resource)
+
+        return Response(ajax_response)
+

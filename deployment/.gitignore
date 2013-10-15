@@ -37,7 +37,7 @@ nosetests.xml
 .project
 .pydevproject
 
-#Ansible secrets
+# Ansible secrets.
 !.vc
 !*.template
 secrets/vars/*

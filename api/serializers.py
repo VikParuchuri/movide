@@ -227,7 +227,7 @@ class MessageSerializer(serializers.Serializer):
     source = serializers.CharField()
     created = serializers.Field()
     reply_count = serializers.Field()
-    approved = serializers.BooleanField()
+    approved = serializers.Field()
     modified = serializers.Field()
     depth = serializers.Field(source="depth")
     avatar_url = serializers.Field(source="avatar_url")

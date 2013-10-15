@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 
 class UserFactory(factory.django.DjangoModelFactory):
+    """
+    Create User objects in tests.
+    """
     FACTORY_FOR = User
 
     username = factory.Sequence(lambda n: 'user{0}'.format(n))
@@ -13,6 +16,9 @@ class UserFactory(factory.django.DjangoModelFactory):
     password = make_password('password')
 
 class ClassGroupFactory(factory.django.DjangoModelFactory):
+    """
+    Create classgroup objects in tests.
+    """
     FACTORY_FOR = Classgroup
     owner = factory.SubFactory(UserFactory)
 
@@ -20,6 +26,9 @@ class ClassGroupFactory(factory.django.DjangoModelFactory):
     display_name = "Test Course"
 
 class MessageFactory(factory.django.DjangoModelFactory):
+    """
+    Create message objects in tests.
+    """
     FACTORY_FOR = Message
     classgroup = factory.SubFactory(ClassGroupFactory)
     user = factory.SubFactory(UserFactory)
@@ -28,6 +37,9 @@ class MessageFactory(factory.django.DjangoModelFactory):
     source = "Test"
 
 class ResourceFactory(factory.django.DjangoModelFactory):
+    """
+    Create Resource objects in tests.
+    """
     FACTORY_FOR = Resource
     user = factory.SubFactory(UserFactory)
     classgroup = factory.SubFactory(ClassGroupFactory)

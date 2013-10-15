@@ -1,6 +1,7 @@
 window.MultipleChoiceUser = (function(el) {
     var resource_id = $(el).data('resource-id');
-    var submit_answer = (function(){
+    var submit_answer = (function(event){
+        event.preventDefault();
         var selected = $(".multiple-choice-options input[type='radio']:checked", el);
         var selected_value;
         if(selected.length > 0){
@@ -9,7 +10,6 @@ window.MultipleChoiceUser = (function(el) {
                 "/api/resources/" + resource_id.toString() + "/",
                 {'action': 'save_answer', answer: selected_value},
                 function(response){
-                    response = JSON.parse(response);
                     var html = response.html;
                     $(el).html(html);
                     $('.multiple-choice-submit', el).click(submit_answer);

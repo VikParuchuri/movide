@@ -3,13 +3,22 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.shortcuts import get_perms
 
+class IsNotTeacher(Exception):
+    pass
+
 class ClassGroupPermissions(object):
+    """
+    Assign and retrieve user permissions in classes.
+    """
+
+    # Names of permissions.  Avoid using strings everywhere.
     administrator = "administrator"
     teacher = "teacher"
     student = "student"
     parent = "parent"
     none = "none"
 
+    # Set up permission levels so that they can be compared with > and <.
     PERMISSION_LEVELS = {
         administrator: 4,
         teacher: 3,
@@ -38,6 +47,9 @@ class ClassGroupPermissions(object):
         return self.get_group(self.parent)
 
     def setup(self):
+        """
+        Setup permissions for a course.  Create the right groups.
+        """
         admin_group = self.get_administrator_group()
         self.grant_administrator_permissions(admin_group)
 
@@ -51,6 +63,9 @@ class ClassGroupPermissions(object):
         self.grant_teacher_permissions(teacher_group)
 
     def delete(self):
+        """
+        Delete all permission groups for a course.
+        """
         groups = [self.get_administrator_group(), self.get_parent_group(), self.get_teacher_group(), self.get_student_group()]
         for g in groups:
             g.delete()

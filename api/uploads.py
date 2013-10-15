@@ -5,6 +5,7 @@ from django.conf import settings
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from boto.s3.bucket import Bucket
+from copy import deepcopy
 import os
 
 def upload_to_s3(file_obj, class_name):
@@ -40,4 +41,32 @@ def get_temporary_s3_url(key):
     else:
         file_url = os.path.abspath(os.path.join(settings.FILE_UPLOAD_URL, key))
     return file_url
+
+def replace_aws_links(html, class_name):
+    url_search_pattern = r'(https:\/\/{0}.s3.amazonaws.com\/{1}\/.+)">'.format(settings.S3_BUCKETNAME.lower(), class_name)
+    regex = re.compile(url_search_pattern)
+    resource_pattern = r'https:\/\/{0}.s3.amazonaws.com\/({1}\/.+)\?Signature'.format(settings.S3_BUCKETNAME.lower(), class_name)
+    resource_regex = re.compile(resource_pattern)
+    matches = regex.findall(html)
+    for m in matches:
+        resource_name = resource_regex.findall(m)[0]
+        resource_name = "#[[{0}]]".format(resource_name)
+        html = html.replace(m, resource_name)
+    return html
+
+def replace_internal_links(html_in):
+    html = deepcopy(html_in)
+    match_pattern = r'(\#\[\[.+\]\])'
+    regex = re.compile(match_pattern)
+
+    resource_pattern = r'\#\[\[(.+)\]\]'
+    resource_regex = re.compile(resource_pattern)
+
+    matches = regex.findall(html)
+
+    for m in matches:
+        resource_name = resource_regex.findall(m)[0]
+        file_url = get_temporary_s3_url(resource_name)
+        html = html.replace(m, file_url)
+    return html
 

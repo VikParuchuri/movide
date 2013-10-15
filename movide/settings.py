@@ -263,7 +263,8 @@ REDACTOR_OPTIONS = {
     'imageUpload': True,
     'linkFileUpload': True,
     'fileUpload': True,
-    'overlay': True
+    'overlay': True,
+    'focus': False
 }
 REDACTOR_UPLOAD = 'uploads/'
 
@@ -310,6 +311,7 @@ GOOGLE_ANALYTICS_KEY = None
 # Task settings.
 CACHE_TIMEOUT = 10* 60 * 60 #seconds
 UPDATE_GRADES_EVERY = 15 * 60 #seconds
+UPDATE_GRADING_QUEUE_EVERY = 1 * 60 #seconds
 
 # AWS settings.
 AWS_ACCESS_KEY_ID = ''

@@ -1,0 +1,57 @@
+<h4> {{ name }}</h4>
+<label class="control-label" for="question_{{ resource_id }}">Question</label>
+<div class="question_{{ resource_id }} question">{{ question }}</div>
+{% if previous_answer == None or retry == True %}
+    <form method="POST" class="assignment-submit-form">
+        <div class="form-group">
+            <label class="control-label" for="answer_{{ resource_id }}">Your Answer</label>
+            <div>
+                <div class="editor-options hidden">{{ editor_options }}</div>
+                <textarea class="form-control answer answer-input" id="answer_{{ resource_id }}" rows="10" cols="40" style="height: 100px;">
+                    {% if saved_answer != None %}
+                        {{ saved_answer }}
+                    {% elif previous_answer != None %}
+                        {{ previous_answer.answer }}
+                    {% endif %}
+                </textarea>
+                <span class="help-block">Enter your answer here.</span>
+            </div>
+        </div>
+        <input type="submit" value="Save Answer" class="btn btn-default submit" data-action="save_answer">
+        <input type="submit" value="Submit Answer" class="btn btn-default submit" data-action="submit_answer">
+    </form>
+{% else %}
+    <form method="POST" class="assignment-submit-form">
+        <div class="form-group">
+            <label class="control-label" for="answer_{{ resource_id }}">Your Answer</label>
+            <div>
+                <div id="answer_{{ resource_id }}" class="answer well">
+                    {% if previous_answer.complete %}
+                        {{ previous_answer.annotated_answer|safe }}
+                    {% else %}
+                        {{ previous_answer.answer|safe }}
+                    {% endif %}
+                </div>
+                <div class="help-block"></div>
+            </div>
+        </div>
+        {% if previous_answer.complete %}
+            <label class="control-label" for="feedback_{{ resource_id }}">Grader Feedback</label>
+            <div class="feedback well" id="feedback_{{ resource_id }}">
+                {{ previous_answer.feedback }}
+            </div>
+            <label class="control-label" for="score_{{ resource_id }}">Grader Score</label>
+            <div class="score" id="score_{{ resource_id }}">
+
+                <div class="progress progress-striped">
+                    <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{{ previous_answer.score }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ previous_answer.score }}%">
+                        <span class="sr-only">{{ previous_answer.score }}% Complete</span>
+                    </div>
+                </div>
+            </div>
+            <input type="submit" value="Try Again" class="btn btn-default submit" data-action="try_again">
+        {% else %}
+            <div class="grading-status">{{ grading_status }}</div>
+        {% endif %}
+    </form>
+{% endif %}

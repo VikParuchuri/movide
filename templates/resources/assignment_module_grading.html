@@ -1,0 +1,31 @@
+<h4> {{ name }}</h4>
+<label class="control-label" for="question_{{ resource_id }}">Question</label>
+<div class="question_{{ resource_id }} question">{{ question }}</div>
+<form method="POST" class="assignment-submit-form" data-user-id={{ user_id }} data-resource-id={{ resource_id }}>
+    <div class="form-group">
+        <label class="control-label" for="answer_{{ resource_id }}">Student Answer</label>
+        <div>
+            <div id="answer_{{ resource_id }}" class="answer well" contenteditable="true">
+                    {{ previous_answer.answer|safe }}
+            </div>
+            <span class="help-block">You can annotate this answer by deleting and typing above.  The annotated version will be shown to the person you are grading.</span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label" for="feedback_{{ resource_id }}">Your Feedback</label>
+        <div>
+            <div class="editor-options hidden">{{ editor_options }}</div>
+            <textarea class="form-control feedback" id="feedback_{{ resource_id }}" rows="5" cols="40">
+            </textarea>
+            <span class="help-block">Enter your feedback here.</span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label" for="score_{{ resource_id }}">Your Score</label>
+        <div>
+            <input type="text" class="score" value="50" id="score_{{ resource_id }}">
+            <span class="help-block">Enter the score here.  Must be between 0 and 100.</span>
+        </div>
+    </div>
+    <input type="submit" value="Submit Answer" class="btn btn-default submit" data-action="submit_response">
+</form>

@@ -12,6 +12,7 @@ from api.permissions import ClassGroupPermissions
 from django.views.decorators.csrf import csrf_exempt
 from api.uploads import upload_to_s3
 from redactor.forms import ImageForm
+from api.notifications import get_to_be_graded_count
 
 log = logging.getLogger(__name__)
 
@@ -34,12 +35,17 @@ def get_modals(request):
         'signup': mock_signup_form(request)
     }
 
+def get_carousel_images():
+    return ["img/demo_show/s{0}.png".format(i) for i in range(2, 17)]
+
 @login_required()
 def dashboard(request):
     return render_to_response("dashboard/main.html", context_instance=RequestContext(request))
 
 def index(request):
-    return render_to_response("index.html", get_modals(request),
+    data = get_modals(request)
+    data['image_list'] = get_carousel_images()
+    return render_to_response("index.html", data,
                               context_instance=RequestContext(request))
 
 def about(request):
@@ -148,6 +154,7 @@ def help(request, classgroup, **kwargs):
         raise Http404
 
     template_vars = get_template_vars(request, cg, 'help')
+    template_vars['image_list'] = get_carousel_images()
 
     if request.user.classgroups.filter(name=classgroup).count() == 0:
         if cg.class_settings.allow_signups:
@@ -172,6 +179,8 @@ def get_template_vars(request, cg, active_page):
         'class_owner': cg.owner.username,
         'class_api_link': cg.api_link(),
         'autocomplete_list': json.dumps(cg.autocomplete_list()),
+        'current_user': request.user.username,
+        'to_be_graded_count': get_to_be_graded_count(request.user, cg)
         }
     return template_vars
 
