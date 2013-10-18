@@ -1021,6 +1021,12 @@ class AssignmentModule(SimpleAuthoringMixin, Problem):
         self.previous_answer['complete'] = True
         return {'success': True}
 
+    def get_score(self):
+        if self.previous_answer is None or not self.previous_answer['complete']:
+            return 0
+        else:
+            return int(self.previous_answer['score'])
+
 RESOURCE_MODULES = {
     'html': HTMLModule,
     'link': LinkModule,
