@@ -13,9 +13,14 @@ $(document).ready(function() {
     var success_display = function(model, response, options){
         $(create_class_form).removeClass("has-error").addClass("has-success");
         $(message_class).html("Class created!  Click on the class name below to get started.  You may need to reload the page to see it.");
-        $("#refresh-sidebar").click();
-        classview.refresh();
-        $(create_class_button).attr('disabled', false);
+        window.setTimeout(
+            function(){
+                $("#refresh-sidebar").click();
+                classview.refresh();
+                $(create_class_button).attr('disabled', false);
+            },
+            1000
+        );
     };
     $(create_class_button).click( function(event){
         event.preventDefault();
