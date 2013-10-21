@@ -435,4 +435,6 @@ $(document).ready(function() {
 
     window.ResourceView = ResourceView;
     window.ResourcesView = ResourcesView;
+    window.Resource = Resource;
+    window.Resources = Resources;
 });
