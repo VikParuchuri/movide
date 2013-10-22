@@ -2,7 +2,8 @@ from django.shortcuts import render, render_to_response, redirect
 import logging
 from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.core.urlresolvers import reverse
 from api.models import Classgroup, RatingNotification, MessageNotification, StudentClassSettings, ClassSettings
 from api.forms import StudentClassSettingsForm, ClassSettingsForm
 from django.contrib.auth.models import User
@@ -13,6 +14,8 @@ from django.views.decorators.csrf import csrf_exempt
 from api.uploads import upload_to_s3
 from redactor.forms import ImageForm
 from api.notifications import get_to_be_graded_count
+from django.db import IntegrityError
+from django.contrib.auth import authenticate, login
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +55,29 @@ def about(request):
     return render_to_response("about.html", get_modals(request),
                               context_instance=RequestContext(request))
 
+def signup_and_class_code(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+
+    if len(password) < 6:
+        return HttpResponse("Password must be at least 6 characters.", status=403)
+
+    if len(username) < 3:
+        return HttpResponse("Username must be at least 3 characters.", status=403)
+
+    try:
+        new_user = User.objects.create_user(username, "", password)
+    except IntegrityError:
+        pass
+
+    user = authenticate(username=username, password=password)
+    if user is None:
+        return HttpResponse("Incorrect password for this user.", status=403)
+
+    login(request, user)
+
+    return HttpResponse(status=200)
+
 @login_required()
 def verify_code(request):
     code = request.POST.get('code')
@@ -63,9 +89,9 @@ def verify_code(request):
         class_name = class_name[0]
 
     if code is None:
-        return HttpResponse(status=400)
+        return HttpResponse("Please enter an access code.", status=400)
     if class_name is None:
-        return HttpResponse(status=400)
+        return HttpResponse("Please enter a class name.", status=400)
 
     try:
         cg = Classgroup.objects.get(name=class_name)
@@ -73,7 +99,7 @@ def verify_code(request):
         raise Http404
 
     if not cg.class_settings.allow_signups:
-        return HttpResponse(status=400)
+        return HttpResponse("Class is not currently allowing signups.", status=400)
 
     if cg.class_settings.access_key == code:
         user.classgroups.add(cg)
@@ -82,7 +108,7 @@ def verify_code(request):
         cg_perm.assign_access_level(user, cg_perm.student)
         return HttpResponse(status=200)
     else:
-        return HttpResponse(status=400)
+        return HttpResponse("Incorrect access code for the class.", status=400)
 
 def uncleared_notification_count(user, classgroup):
     rating_count = RatingNotification.objects.filter(receiving_user=user, receiving_message__classgroup=classgroup, cleared=False).count()
@@ -166,7 +192,7 @@ def help(request, classgroup, **kwargs):
                               context_instance=RequestContext(request)
     )
 
-def get_template_vars(request, cg, active_page):
+def get_base_template_vars(request, cg, active_page):
     is_owner = str(ClassGroupPermissions.is_teacher(cg, request.user)).lower()
     template_vars = {
         'name': cg.name,
@@ -175,17 +201,22 @@ def get_template_vars(request, cg, active_page):
         'is_owner': is_owner,
         'access_key': cg.class_settings.access_key,
         'active_page': active_page,
-        'notification_count': uncleared_notification_count(request.user, cg),
         'class_owner': cg.owner.username,
         'class_api_link': cg.api_link(),
         'autocomplete_list': json.dumps(cg.autocomplete_list()),
+    }
+    return template_vars
+
+def get_template_vars(request, cg, active_page):
+    template_vars = get_base_template_vars(request, cg, active_page)
+    template_vars.update({
+        'notification_count': uncleared_notification_count(request.user, cg),
         'current_user': request.user.username,
         'to_be_graded_count': get_to_be_graded_count(request.user, cg)
-        }
+        })
     return template_vars
 
 VALID_ACTIVE_PAGES = ['messages', 'stats', 'users', 'notifications', 'settings', 'home', 'resources', 'skills']
-@login_required()
 def classview(request, classgroup, **kwargs):
     active_page = kwargs.get('active_page', 'home')
     if active_page not in VALID_ACTIVE_PAGES:
@@ -195,6 +226,10 @@ def classview(request, classgroup, **kwargs):
         cg = Classgroup.objects.get(name=classgroup)
     except Classgroup.DoesNotExist:
         raise Http404
+
+    if not request.user.is_authenticated():
+        base_template_vars = get_base_template_vars(request, cg, active_page)
+        return render_to_response("signup_and_class_code.html", base_template_vars, context_instance=RequestContext(request))
 
     template_vars = get_template_vars(request, cg, active_page)
 

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block additional_js %}
+    <script type="text/javascript" src="{% static 'js/signup_with_code.js' %}"></script>
+{% endblock %}
+
+{% block title %}
+    Enter your class access code.
+{% endblock %}
+
+{% block meta_description %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <h1>Sign in to {{ display_name }}</h1>
+            <p>You need to enter a username and password for the class.  You will have to remember these, so pick carefully!</p>
+            <form class="access-code" role="form" action="/signup_and_class_code/" method="post">
+                {% csrf_token %}
+                <div class="form-group username-form">
+                    <label for="username">Username</label>
+                    <input type="text" class="form-control input-lg" id="username" placeholder="Enter username here..." name="username">
+                    <span class="help-block" id="username-message">Please enter your username here if you have one from another class, or a new one if you want to make one.</span>
+                </div>
+                <div class="form-group password-form">
+                    <label for="username">Password</label>
+                    <input type="password" class="form-control input-lg" id="password" placeholder="Enter password here..." name="password">
+                    <span class="help-block" id="password-message">Please enter your password here if you have one from another class, or a new one if you want to make one.</span>
+                </div>
+
+                <div class="form-group submit-form">
+                    <button type="submit" class="btn btn-lg" id="verify-code">Sign in</button>
+                    <span class="help-block" id="status-message"></span>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
