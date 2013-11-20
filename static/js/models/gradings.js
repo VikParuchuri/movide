@@ -97,8 +97,12 @@ $(document).ready(function() {
                     }
                     ]
                 });
-                tracker.startTracking();
-                that.trackers.push(tracker);
+                try{
+                    tracker.startTracking();
+                    that.trackers.push(tracker);
+                } catch (NotFoundError){
+                    console.log("Caught error where node was not found.");
+                }
             });
         },
         initialize_redactor: function() {

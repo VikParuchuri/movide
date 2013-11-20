@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="2678"
+   height="1515"
+   id="svg3007"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="banner.ps"
+   inkscape:export-filename="/home/vik/vikparuchuri/movide/data/banner.pdf.png"
+   inkscape:export-xdpi="268.85999"
+   inkscape:export-ydpi="268.85999">
+  <defs
+     id="defs3009">
+    <linearGradient
+       gradientUnits="userSpaceOnUse"
+       id="id0-1"
+       x1="1299.99"
+       x2="1299.99"
+       y1="1627.9"
+       y2="3503.1599">
+      <stop
+         offset="0"
+         stop-color="#FCFCFD"
+         id="stop9-6" />
+      <stop
+         offset="1"
+         stop-color="#fff"
+         id="stop11-5" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#id0-1"
+       id="linearGradient3153"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.05348479,0,0,0.05348479,778.06159,-488.97111)"
+       x1="1299.99"
+       y1="1627.9"
+       x2="1299.99"
+       y2="3503.1599" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.35"
+     inkscape:cx="1698.9066"
+     inkscape:cy="537.37302"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1855"
+     inkscape:window-height="1176"
+     inkscape:window-x="65"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata3012">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,462.63782)">
+    <g
+       id="g3144"
+       transform="translate(58.377261,40.000219)">
+      <text
+         sodipodi:linespacing="125%"
+         id="text3878"
+         y="-164.35457"
+         x="21.349184"
+         style="font-size:226.18716431px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#246ba5;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+         xml:space="preserve"><tspan
+           style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#70a4d2;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+           y="-164.35457"
+           x="21.349184"
+           id="tspan3880"
+           sodipodi:role="line">movide</tspan></text>
+      <path
+         class="fil0 str0"
+         d="m 850.26603,-434.71665 h 123.01498 c 24.9774,0 45.46199,20.48466 45.46199,45.46205 v 42.7878 c 0,25.03091 -20.48459,45.4621 -45.46199,45.4621 h -56.15904 l -53.48477,53.48479 c -2.78119,2.78121 -5.34847,2.62072 -5.34847,0 v -48.13634 c 0,-2.62075 -2.67421,-5.34845 -5.34845,-5.34845 h -2.67425 c -24.9774,0 -45.46206,-20.43119 -45.46206,-45.4621 v -42.7878 c 0,-24.97739 20.48466,-45.46205 45.46206,-45.46205 z"
+         id="path14"
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#434242;stroke-width:10.69695568" />
+      <path
+         class="fil1"
+         d="m 850.26603,-436.50253 h 123.01498 c 24.9774,0 45.46199,20.48466 45.46199,45.46205 v 42.7878 c 0,25.03091 -20.48459,45.4621 -45.46199,45.4621 h -56.15904 l -53.48477,53.48479 c -2.78119,2.78121 -5.34847,2.62072 -5.34847,0 v -48.13634 c 0,-2.62075 -2.67421,-5.34845 -5.34845,-5.34845 h -2.67425 c -24.9774,0 -45.46206,-20.43119 -45.46206,-45.4621 v -42.7878 c 0,-24.97739 20.48466,-45.46205 45.46206,-45.46205 z"
+         id="1"
+         style="fill:url(#linearGradient3153)"
+         inkscape:connector-curvature="0" />
+      <line
+         class="fil0 str1"
+         x1="847.59174"
+         x2="943.86444"
+         y1="-398.93542"
+         y2="-398.93542"
+         id="line17"
+         style="fill:#000000;fill-opacity:0;stroke:#c0c0c0;stroke-width:10.69695568;stroke-linecap:round;stroke-opacity:1" />
+      <line
+         class="fil0 str1"
+         x1="847.59174"
+         x2="967.93268"
+         y1="-372.19312"
+         y2="-372.19312"
+         id="line19"
+         style="fill:#000000;fill-opacity:0;stroke:#c0c0c0;stroke-width:10.69695568;stroke-linecap:round;stroke-opacity:1" />
+      <line
+         class="fil0 str1"
+         x1="847.59174"
+         x2="914.44781"
+         y1="-345.45068"
+         y2="-345.45068"
+         id="line21"
+         style="fill:#000000;fill-opacity:0;stroke:#c0c0c0;stroke-width:10.69695568;stroke-linecap:round;stroke-opacity:1" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716431px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#246ba5;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="90.128571"
+       y="21.845139"
+       id="text3878-9"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3880-4"
+         x="90.128571"
+         y="21.845139"
+         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#70a4d2;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"><tspan
+           style="font-size:100px"
+           id="tspan3103">The student-centric</tspan></tspan><tspan
+         sodipodi:role="line"
+         x="90.128571"
+         y="146.84514"
+         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#70a4d2;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3107"><tspan
+           style="font-size:100px"
+           id="tspan3109">learning platform.</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716431px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#246ba5;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="107.5164"
+       y="973.54791"
+       id="text3878-9-1"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="107.5164"
+         y="973.54791"
+         style="font-size:75px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#70a4d2;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3107-6">We are open source!  Check us out at www.github.com/equirio/movide.</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716431px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#666666;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="90.078575"
+       y="309.48938"
+       id="text3878-9-7"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="90.078575"
+         y="309.48938"
+         style="font-size:90px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#666666;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3107-4">www.movide.com</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716430999998579px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#70a4d2;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="1190.3029"
+       y="-296.20502"
+       id="text3878-9-7-2"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="1190.3029"
+         y="-296.20502"
+         style="font-size:120px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#70a4d2;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3107-4-0">Create</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716431px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#666666;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="1200.1571"
+       y="-191.94576"
+       id="text3878-9-7-2-5"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="1200.1571"
+         y="-191.94576"
+         style="font-size:90px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#666666;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3234">Students and teachers can create</tspan><tspan
+         sodipodi:role="line"
+         x="1200.1571"
+         y="-79.445763"
+         style="font-size:90px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#666666;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3312">rich content and assignments.</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716430999998579px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#70a4d2;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="1199.2572"
+       y="63.213486"
+       id="text3878-9-7-2-0"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="1199.2572"
+         y="63.213486"
+         style="font-size:120px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#70a4d2;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3107-4-0-6">Share</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716431px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#666666;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="1233.8958"
+       y="212.94789"
+       id="text3878-9-7-2-5-2"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="1233.8958"
+         y="212.94789"
+         style="font-size:90px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#666666;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3234-1" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="1251.4286"
+       y="652.14288"
+       id="text3276"
+       sodipodi:linespacing="125%"
+       transform="translate(0,-462.63782)"><tspan
+         sodipodi:role="line"
+         id="tspan3278"
+         x="1251.4286"
+         y="652.14288" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716431px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#666666;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="1200.1571"
+       y="167.47279"
+       id="text3878-9-7-2-5-28"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="1200.1571"
+         y="167.47279"
+         style="font-size:90px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#666666;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3306">Share content within your class.</tspan></text>
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3314"
+       style="fill:black;stroke:none;stroke-opacity:1;stroke-width:1px;stroke-linejoin:miter;stroke-linecap:butt;fill-opacity:1;font-family:Simpsonfont;font-style:normal;font-weight:bold;font-size:40px;line-height:125%;letter-spacing:0px;word-spacing:0px;-inkscape-font-specification:Simpsonfont Bold;font-stretch:normal;font-variant:normal"><flowRegion
+         id="flowRegion3316"><rect
+           id="rect3318"
+           width="1434.2858"
+           height="408.57144"
+           x="1128.5714"
+           y="469.28571" /></flowRegion><flowPara
+         id="flowPara3320"></flowPara></flowRoot>    <text
+       xml:space="preserve"
+       style="font-size:226.18716430999998579px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#70a4d2;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="1192.8971"
+       y="307.04211"
+       id="text3878-9-7-2-0-0"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="1192.8971"
+         y="307.04211"
+         style="font-size:120px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#70a4d2;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3107-4-0-6-4">Discuss</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716431px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#666666;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="1196.4672"
+       y="411.06143"
+       id="text3878-9-7-2-5-28-0"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="1196.4672"
+         y="411.06143"
+         style="font-size:90px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#666666;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3306-8">Use our modern discussion system</tspan><tspan
+         sodipodi:role="line"
+         x="1196.4672"
+         y="523.56146"
+         style="font-size:90px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#666666;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3349">to engage your students.</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716430999998579px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#70a4d2;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="1195.1771"
+       y="656.26074"
+       id="text3878-9-7-2-0-0-1"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="1195.1771"
+         y="656.26074"
+         style="font-size:120px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#70a4d2;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3107-4-0-6-4-6">Measure</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716431px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#666666;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="1199.2572"
+       y="760.28003"
+       id="text3878-9-7-2-5-28-0-8"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="1199.2572"
+         y="760.28003"
+         style="font-size:90px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#666666;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3391">Define concrete learning goals </tspan><tspan
+         sodipodi:role="line"
+         x="1199.2572"
+         y="872.78003"
+         style="font-size:90px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#666666;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3399">and measure student progress.</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:226.18716431px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#666666;fill-opacity:1;stroke:none;font-family:Simpsonfont;-inkscape-font-specification:Simpsonfont Bold"
+       x="93.25"
+       y="455.22366"
+       id="text3878-9-7-27"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="93.25"
+         y="455.22366"
+         style="font-size:90px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;fill:#666666;fill-opacity:1;font-family:Ubuntu;-inkscape-font-specification:Ubuntu"
+         id="tspan3107-4-06">(617) 520-4566</tspan></text>
+  </g>
+</svg>
