@@ -100,7 +100,7 @@ $(document).ready(function() {
                 try{
                     tracker.startTracking();
                     that.trackers.push(tracker);
-                } catch (NotFoundError){
+                } catch (err){
                     console.log("Caught error where node was not found.");
                 }
             });

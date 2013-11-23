@@ -16,6 +16,7 @@ from redactor.forms import ImageForm
 from api.notifications import get_to_be_graded_count
 from django.db import IntegrityError
 from django.contrib.auth import authenticate, login
+from api.uploads import get_temporary_s3_url
 
 log = logging.getLogger(__name__)
 
@@ -327,6 +328,17 @@ def redactor_upload(request, classgroup, upload_to=None, form_class=ImageForm, r
             response(file_obj.name, url)
         )
     return HttpResponse(status=403)
+
+def get_grade_download_link(request, classgroup):
+    cg = verify_settings(request, classgroup)
+
+    # Only teachers can see grades!
+    if not ClassGroupPermissions.is_teacher(cg, request.user):
+        raise Http404
+
+    return HttpResponse(get_temporary_s3_url("{0}/{1}".format(cg.name, "resource_grades_table.csv")))
+
+
 
 
 

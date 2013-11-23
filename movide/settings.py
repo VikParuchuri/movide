@@ -13,9 +13,9 @@ ADMINS = (
 )
 
 # Celery settings.
-BROKER_URL = 'redis://localhost:6379/0'
+BROKER_URL = 'redis://localhost:6379/2'
 BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/2'
 
 BASE_DIR = os.path.abspath(os.path.join(__file__, "..", "..", ".."))
 
@@ -310,8 +310,8 @@ GOOGLE_ANALYTICS_KEY = None
 
 # Task settings.
 CACHE_TIMEOUT = 10* 60 * 60 #seconds
-UPDATE_GRADES_EVERY = 15 * 60 #seconds
-UPDATE_GRADING_QUEUE_EVERY = 1 * 60 #seconds
+UPDATE_GRADES_EVERY = 30 * 60 #seconds
+UPDATE_GRADING_QUEUE_EVERY = 10 * 60 #seconds
 
 # AWS settings.
 AWS_ACCESS_KEY_ID = ''

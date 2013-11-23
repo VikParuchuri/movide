@@ -2,7 +2,7 @@ movide_source_repo: ssh://git@github.com/VikParuchuri/movide.git
 movide_dir: $app_base_dir/movide
 movide_settings: movide.aws
 nltk_data_dir: /usr/share/nltk_data
-movide_branch: master
+movide_branch: dev
 nginx_listen_port: 80
 gunicorn_port: 7999
 movide_user: movide

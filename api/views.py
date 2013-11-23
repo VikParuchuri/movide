@@ -24,7 +24,7 @@ import calendar
 import pytz
 import json
 from django.core.cache import cache
-from resources import ResourceRenderer, get_resource_score
+from resources import ResourceRenderer, get_vertical_score
 from permissions import ClassGroupPermissions
 from django.db.models import Q, Count
 from notifications import GradingQueue, get_to_be_graded_count
@@ -733,7 +733,7 @@ class SkillView(QueryView):
             scores = []
             for r in resources:
                 if r.resource_type == "vertical":
-                    scores += get_resource_score(r, request.user, skill['grading_policy'])
+                    scores += get_vertical_score(r, request.user, skill['grading_policy'])
             if len(scores) > 0:
                 skill['progress_percentage'] = (sum(scores)/float(len(scores))) * 100
             else:

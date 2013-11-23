@@ -103,9 +103,9 @@ class RichEditor(RedactorEditor):
         html += self.init_js.format(id=id_, options=self.get_options())
         return mark_safe(html)
 
-def get_resource_score(resource, user, grading_policy):
+def get_vertical_score(resource, user, grading_policy):
     """
-    Get the score for a given resource, user, and grading policy.  Used when scoring.
+    Get the score for a given vertical, user, and grading policy.  Used when scoring.
     """
     scores = []
     if grading_policy == "COM":
@@ -113,14 +113,24 @@ def get_resource_score(resource, user, grading_policy):
             scores.append(UserResourceState.objects.filter(user=user, resource=child).exists())
     else:
         for child in resource.children.all():
-            try:
-                user_resource_state = UserResourceState.objects.get(user=user, resource=child)
-            except UserResourceState.DoesNotExist:
-                user_resource_state = None
-            renderer = ResourceRenderer(child, user_resource_state=user_resource_state, user=user)
-            if hasattr(renderer.module, "get_score"):
-                scores.append(renderer.module.get_score())
+            score = get_resource_score(child, user)
+            if score is not None:
+                scores.append(score)
     return scores
+
+def get_resource_score(resource, user):
+    """
+    Get the score for a given resource, user, and grading policy.  Used when scoring.
+    """
+    score = None
+    try:
+        user_resource_state = UserResourceState.objects.get(user=user, resource=resource)
+    except UserResourceState.DoesNotExist:
+        user_resource_state = None
+    renderer = ResourceRenderer(resource, user_resource_state=user_resource_state, user=user)
+    if hasattr(renderer.module, "get_score"):
+        score = renderer.module.get_score()
+    return score
 
 def get_grading_view(resource, user):
     """
