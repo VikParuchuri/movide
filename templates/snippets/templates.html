@@ -247,7 +247,17 @@
         </div>
     </script>
 
+    <script id="gradeDownloadLinkTemplate" type="text/template">
+        <a href="<%= grade_download_link %>" data-name="home" data-toggle="tooltip" title="Click here to download">Download all grades <span class="glyphicon glyphicon-download"></span></a>
+    </script>
+
     <script id="usersDetailTemplate" type="text/template">
+        <% if(is_owner){ %>
+            <div class="pull-right">
+                <a href="#" data-name="home" data-toggle="tooltip" title="Get link" id="grade-download-button">Get link to download csv of all grades <span class="glyphicon glyphicon-link"></span></a>
+                <div id="grade-download-link-area"></div>
+            </div>
+        <% } %>
         <div id="users-container">
         </div>
     </script>

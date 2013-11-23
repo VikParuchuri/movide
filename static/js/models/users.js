@@ -56,8 +56,11 @@ $(document).ready(function() {
         collection_class : Users,
         view_class: UserView,
         template_name: "#userTableTemplate",
+        grade_download_template_name: "#gradeDownloadLinkTemplate",
         user_add_message: "#user-add-message",
         user_role_toggle_tag: ".user-role-toggle",
+        grade_download_tag: "#grade-download-button",
+        grade_download_link_tag: "#grade-download-link-area",
         classgroup: undefined,
         active: undefined,
         events: {
@@ -67,7 +70,8 @@ $(document).ready(function() {
         },
         initialize: function (options) {
             _.bindAll(this, 'render', 'renderUser', 'refresh', 'render_table',
-                'destroy_view', 'user_tag_delete', 'rebind_events', 'user_add', 'display_message', 'user_role_toggle');
+                'destroy_view', 'user_tag_delete', 'rebind_events', 'user_add', 'display_message', 'user_role_toggle',
+                'get_download_link');
             this.collection = new this.collection_class();
             this.classgroup = options.classgroup;
             this.active = options.active;
@@ -89,6 +93,15 @@ $(document).ready(function() {
                     that.render();
                 }
             });
+
+        },
+        get_download_link: function(){
+            var grade_link = $.getValues(window.class_link + "grade_download_link/", {});
+            var grade_html = _.template($(this.grade_download_template_name).html());
+
+            $(this.grade_download_link_tag).html(grade_html({
+                grade_download_link: grade_link
+            }));
         },
         render_table: function(){
             this.render();
@@ -122,6 +135,8 @@ $(document).ready(function() {
             $('#user-add').click(this.user_add);
             $(this.user_role_toggle_tag).unbind();
             $(this.user_role_toggle_tag).click(this.user_role_toggle);
+            $(this.grade_download_tag).unbind();
+            $(this.grade_download_tag).click(this.get_download_link);
         },
         display_message: function(message, success){
             this.refresh(this.options);

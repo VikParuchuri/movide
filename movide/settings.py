@@ -13,9 +13,9 @@ ADMINS = (
 )
 
 # Celery settings.
-BROKER_URL = 'redis://localhost:6379/0'
+BROKER_URL = 'redis://localhost:6379/2'
 BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/2'
 
 BASE_DIR = os.path.abspath(os.path.join(__file__, "..", "..", ".."))
 

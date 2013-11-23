@@ -14,9 +14,12 @@ from itertools import chain
 from django.contrib.auth.models import User
 from models import Resource, Tag, MessageNotification, Classgroup
 from django.db import IntegrityError
-from resources import get_resource_score
+from resources import get_vertical_score, get_resource_score
 from django.core.cache import cache
 from notifications import GradingQueue
+from uploads import upload_data_to_s3
+import csv
+import StringIO
 
 log=logging.getLogger(__name__)
 
@@ -121,7 +124,23 @@ def update_grades():
     classgroups = Classgroup.objects.all()
     for cl in classgroups:
         student_grade = StudentGrade(cl)
+
+        # Set per-skill grades.
         cache.set(cl.name + "_grades", student_grade.calculate_skill_grades())
+
+        # Set per-resource grades.
+        resource_grades = student_grade.calculate_resource_grades()
+        cache.set(cl.name + "_resource_grades", resource_grades)
+
+        # Generate a grades table and send it to S3.
+        string_write = StringIO.StringIO()
+        resource_grades_table = student_grade.parse_resource_grades(resource_grades)
+        writer = csv.writer(string_write)
+        for i in xrange(len(resource_grades_table)):
+            writer.writerow(resource_grades_table[i])
+        if len(resource_grades_table) > 1 and len(resource_grades_table[1]) > 1:
+            upload_data_to_s3(string_write, "{0}/{1}".format(cl.name, "resource_grades_table.csv"))
+        cache.set(cl.name + "_resource_grades_table", resource_grades_table)
 
 class StudentGrade(object):
     def __init__(self, classgroup):
@@ -135,13 +154,63 @@ class StudentGrade(object):
             scores = []
             for r in resources:
                 if r.resource_type == "vertical":
-                    scores += get_resource_score(r, user, skill.grading_policy)
+                    scores += get_vertical_score(r, user, skill.grading_policy)
             scores = [int(s) for s in scores]
             skill_grades[skill.display_name] = scores
         return skill_grades
 
     def calculate_skill_grades(self):
+        """
+        Calculate the grades for skills in a course.
+        """
         skill_grades = {}
         for user in self.classgroup.users.all():
             skill_grades[user.username] = self.calculate_skill_grade(user)
         return skill_grades
+
+    def calculate_resource_grade(self, user):
+        """
+        Calculate the score for a resource.
+        """
+        resources = self.classgroup.resources.all()
+        grades = {}
+        for r in resources:
+            scores = []
+            if r.resource_type != "vertical" and r.parent is not None:
+                score = get_resource_score(r, user)
+                if score is not None:
+                    grades[r.id] = score
+        return grades
+
+    def calculate_resource_grades(self):
+        resource_grades = {}
+        for user in self.classgroup.users.all():
+            resource_grades[user.username] = self.calculate_resource_grade(user)
+        return resource_grades
+
+    def parse_resource_grades(self, grades):
+        all_ids = []
+        for user in grades:
+            all_ids += grades[user].keys()
+            all_ids = list(set(all_ids))
+
+        all_resources = []
+        for aid in all_ids:
+            r = Resource.objects.get(id=aid)
+            if r.parent is not None:
+                all_resources.append(r)
+
+        all_resources = sorted(all_resources, key=lambda r: r.created)
+
+        mat_view = [[""] + ["{0}: {1}".format(r.parent.name, r.name) for r in all_resources]]
+        for user in grades:
+            row_view = [user]
+            for r in all_resources:
+                row_view.append(grades[user].get(r.id, -1))
+            mat_view.append(row_view)
+
+        return mat_view
+
+
+
+

@@ -27,7 +27,8 @@ $(document).ready(function() {
             $(elem).addClass("current active");
         },
         render_users: function() {
-            $(this.el).html($("#usersDetailTemplate").html());
+            var tmpl = _.template($("#usersDetailTemplate").html());
+            $(this.el).html(tmpl({is_owner: is_owner}));
             this.user_view = new UsersView(this.options);
         },
         render_messages: function() {

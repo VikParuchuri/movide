@@ -8,9 +8,7 @@ from boto.s3.bucket import Bucket
 from copy import deepcopy
 import os
 
-def upload_to_s3(file_obj, class_name):
-    filename = re.sub(r'[^0-9a-zA-Z\.]', '', file_obj.name.lower().encode("ascii", "ignore"))
-    filename = "{0}/{1}_{2}".format(class_name, int(time.mktime(datetime.now().timetuple())), filename)
+def upload_data_to_s3(file_obj, filename):
     file_obj.seek(0)
     if settings.AWS_ACCESS_KEY_ID != "":
         conn = S3Connection(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
@@ -21,7 +19,7 @@ def upload_to_s3(file_obj, class_name):
         file_obj.close()
         url = conn.generate_url(settings.S3_FILE_TIMEOUT, 'GET', bucket=settings.S3_BUCKETNAME, key=filename)
     else:
-        filepath = os.path.abspath(os.path.join(settings.FILE_UPLOAD_PATH, class_name, filename))
+        filepath = os.path.abspath(os.path.join(settings.FILE_UPLOAD_PATH, filename))
         directory = os.path.dirname(filepath)
 
         # Create class directory if it doesn't exist.
@@ -30,9 +28,14 @@ def upload_to_s3(file_obj, class_name):
 
         with open(filepath, "w") as f:
             f.write(file_obj.read())
-        url = os.path.abspath(os.path.join(settings.FILE_UPLOAD_URL, class_name, filename))
+        url = os.path.abspath(os.path.join(settings.FILE_UPLOAD_URL, filename))
 
     return url, filename
+
+def upload_to_s3(file_obj, class_name):
+    filename = re.sub(r'[^0-9a-zA-Z\.]', '', file_obj.name.lower().encode("ascii", "ignore"))
+    filename = "{0}/{1}_{2}".format(class_name, int(time.mktime(datetime.now().timetuple())), filename)
+    return upload_data_to_s3(file_obj, filename)
 
 def get_temporary_s3_url(key):
     if settings.AWS_ACCESS_KEY_ID != "":
