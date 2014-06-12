@@ -5,7 +5,7 @@ django-nose==1.2
 South==0.8.2
 django-celery==3.0.23
 path.py==4.3
-MySQL-python==1.2.5
+MySQL-python
 gunicorn==18.0
 celery-with-redis==3.0
 nltk==2.0.4

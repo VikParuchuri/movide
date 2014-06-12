@@ -46,7 +46,7 @@
   file: path={{ venv_dir }} owner=ubuntu group=adm mode=2775 state=directory
 
 - name: create the virtualenv directory files
-  command: /usr/local/bin/virtualenv {{ venv_dir }} --distribute creates=$venv_dir/bin/activate
+  command: "/usr/local/bin/virtualenv {{ venv_dir }} --distribute creates={{venv_dir}}/bin/activate"
 
 - name: gunicorn
   pip: name=gunicorn virtualenv="{{venv_dir}}" state=present
@@ -101,7 +101,7 @@
 
 #Create directories for repos
 - name:  create movide directory and set permissions
-  file: path=${movide_dir} owner={{movide_user}} group=ar mode=2775 state=directory
+  file: path={{movide_dir}} owner={{movide_user}} group=ar mode=2775 state=directory
 
 #Upload custom git ssh script
 - name: upload ssh script
@@ -112,7 +112,7 @@
 
 #Grab both repos or update
 - name:  git checkout movide repo into movide_dir
-  git: dest=${movide_dir} repo={{movide_source_repo}} version={{movide_branch}}
+  git: dest={{movide_dir}} repo={{movide_source_repo}} version={{movide_branch}}
   environment:
       GIT_SSH: /tmp/git_ssh.sh
   notify:
@@ -121,11 +121,11 @@
 
 #Change cache permissions
 - name: create cache directory
-  file: path=${movide_dir}/cache/ owner=movide group=ar mode=2775 state=directory recurse=yes
+  file: path={{movide_dir}}/cache/ owner=movide group=ar mode=2775 state=directory recurse=yes
 
 #Change media permissions
 - name: create media directory
-  file: path=${movide_dir}/media/ owner=movide group=ar mode=2775 state=directory recurse=yes
+  file: path={{movide_dir}}/media/ owner=movide group=ar mode=2775 state=directory recurse=yes
 
 #Install system packages
 - name:  install movide apt packages
@@ -142,7 +142,7 @@
   file: path={{nltk_data_dir}} owner={{movide_user}} group=ar mode=2775 state=directory
 
 - name:  django syncdb, migrate, and collectstatic for movide
-  shell: ${venv_dir}/bin/python {{movide_dir}}/manage.py {{item}} --noinput --settings={{movide_settings}} --pythonpath={{movide_dir}}
+  shell: "{{venv_dir}}/bin/python {{movide_dir}}/manage.py {{item}} --noinput --settings={{movide_settings}} --pythonpath={{movide_dir}}"
   with_items:
     - syncdb
     - migrate
